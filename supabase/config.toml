@@ -2,3 +2,9 @@ project_id = "etwjtxqjcwyxdamlcorf"
 
 [functions.chat-completion]
 verify_jwt = false
+
+[functions.crawl-url]
+verify_jwt = false
+
+[functions.train-agent]
+verify_jwt = false

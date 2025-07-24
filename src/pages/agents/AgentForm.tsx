@@ -14,10 +14,17 @@ import {
   Save,
   Bot,
   FileText,
-  Loader2
+  Loader2,
+  Link as LinkIcon,
+  Plus,
+  Brain,
+  CheckCircle,
+  XCircle,
+  Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
+import { useAgentLinks } from '@/hooks/useAgentLinks';
 
 interface FileItem {
   id: string;
@@ -33,6 +40,7 @@ export const AgentForm = () => {
   const { toast } = useToast();
   const { createAgent, updateAgent, getAgent } = useAgents();
   const { files, uploadFile, deleteFile, refetchFiles } = useKnowledgeFiles(id || '');
+  const { links, addLink, removeLink, trainAgent, loading: linksLoading } = useAgentLinks(id);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -42,6 +50,7 @@ export const AgentForm = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(isEditing);
+  const [newUrl, setNewUrl] = useState('');
 
   useEffect(() => {
     if (isEditing && id) {
@@ -129,6 +138,50 @@ export const AgentForm = () => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleAddLink = async () => {
+    if (!newUrl.trim() || !id) return;
+    
+    // Basic URL validation
+    try {
+      new URL(newUrl);
+    } catch {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await addLink(newUrl);
+    if (success) {
+      setNewUrl('');
+    }
+  };
+
+  const handleTrainAgent = async () => {
+    if (!id) return;
+    
+    const success = await trainAgent();
+    if (success) {
+      toast({
+        title: "Training Complete",
+        description: "Your agent has been updated with the latest knowledge.",
+      });
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'crawled':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -266,12 +319,84 @@ export const AgentForm = () => {
               </CardContent>
             </Card>
 
+            {/* Training Links */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="h-5 w-5" />
+                  Training Links
+                </CardTitle>
+                <CardDescription>
+                  Add website URLs to train your agent on web content
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="https://example.com"
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                    disabled={!id}
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={handleAddLink} 
+                    disabled={!id || !newUrl.trim() || linksLoading}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Link
+                  </Button>
+                </div>
+                
+                {!id && (
+                  <p className="text-sm text-muted-foreground">
+                    Save the agent first to add training links
+                  </p>
+                )}
+
+                {links.length > 0 && (
+                  <div className="space-y-4">
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-3">Training Links ({links.length})</h4>
+                      <div className="space-y-2">
+                        {links.map((link) => (
+                          <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              {getStatusIcon(link.status)}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{link.title || link.url}</p>
+                                <p className="text-sm text-muted-foreground truncate">
+                                  {link.url}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Status: {link.status}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeLink(link.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Knowledge Base */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="h-5 w-5" />
-                  Knowledge Base
+                  Knowledge Base Files
                 </CardTitle>
                 <CardDescription>
                   Upload files to train your agent with specific knowledge
@@ -339,6 +464,38 @@ export const AgentForm = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Training Actions */}
+            {id && (links.length > 0 || files.length > 0) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    Agent Training
+                  </CardTitle>
+                  <CardDescription>
+                    Train your agent with the uploaded files and links
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {links.length} training links and {files.length} files ready for training
+                      </p>
+                    </div>
+                    <Button 
+                      type="button" 
+                      onClick={handleTrainAgent} 
+                      disabled={linksLoading || isLoading}
+                    >
+                      <Brain className="h-4 w-4 mr-2" />
+                      {linksLoading ? 'Training...' : 'Train Agent'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4 justify-between">

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_links: {
+        Row: {
+          agent_id: string
+          content: string | null
+          created_at: string
+          id: string
+          status: string
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          agent_id: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          agent_id?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       agents: {
         Row: {
           created_at: string
