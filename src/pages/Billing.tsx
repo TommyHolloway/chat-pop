@@ -76,7 +76,7 @@ export const Billing = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               {/* Free Plan */}
               <Card className={`relative ${currentPlan === 'free' ? 'ring-2 ring-primary' : ''}`}>
                 <CardHeader className="text-center">
@@ -84,14 +84,13 @@ export const Billing = () => {
                     <Zap className="h-6 w-6" />
                   </div>
                   <CardTitle>Free</CardTitle>
-                  <CardDescription>Perfect for getting started</CardDescription>
                   <div className="text-3xl font-bold">$0<span className="text-base font-normal">/month</span></div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <ul className="space-y-3">
+                  <ul className="space-y-2">
                     {freeFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-3">
-                        <Check className="h-4 w-4 text-success flex-shrink-0" />
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}
@@ -101,35 +100,82 @@ export const Billing = () => {
                     className="w-full"
                     disabled={currentPlan === 'free'}
                   >
-                    {currentPlan === 'free' ? 'Current Plan' : 'Downgrade'}
+                    {currentPlan === 'free' ? 'Current Plan' : 'Get Started'}
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Pro Plan */}
-              <Card className="relative border-primary shadow-lg">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-                </div>
+              {/* Hobby Plan */}
+              <Card className="relative">
                 <CardHeader className="text-center">
-                  <div className="mx-auto h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Crown className="h-6 w-6 text-primary" />
+                  <div className="mx-auto h-12 w-12 rounded-lg bg-muted flex items-center justify-center mb-4">
+                    <Zap className="h-6 w-6" />
                   </div>
-                  <CardTitle>Pro</CardTitle>
-                  <CardDescription>Best for growing businesses</CardDescription>
-                  <div className="text-3xl font-bold">$29<span className="text-base font-normal">/month</span></div>
+                  <CardTitle>Hobby</CardTitle>
+                  <div className="text-3xl font-bold">$40<span className="text-base font-normal">/month</span></div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <ul className="space-y-3">
-                    {proFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-3">
-                        <Check className="h-4 w-4 text-success flex-shrink-0" />
+                  <ul className="space-y-2">
+                    {hobbyFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <Button className="w-full">
-                    Upgrade to Pro
+                    Subscribe
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Standard Plan */}
+              <Card className="relative border-primary shadow-lg">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-primary text-primary-foreground">Popular</Badge>
+                </div>
+                <CardHeader className="text-center">
+                  <div className="mx-auto h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <Crown className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Standard</CardTitle>
+                  <div className="text-3xl font-bold">$150<span className="text-base font-normal">/month</span></div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {standardFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full">
+                    Subscribe
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Pro Plan */}
+              <Card className="relative">
+                <CardHeader className="text-center">
+                  <div className="mx-auto h-12 w-12 rounded-lg bg-muted flex items-center justify-center mb-4">
+                    <Crown className="h-6 w-6" />
+                  </div>
+                  <CardTitle>Pro</CardTitle>
+                  <div className="text-3xl font-bold">$500<span className="text-base font-normal">/month</span></div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {proFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full">
+                    Subscribe
                   </Button>
                 </CardContent>
               </Card>
@@ -141,20 +187,19 @@ export const Billing = () => {
                     <Building2 className="h-6 w-6" />
                   </div>
                   <CardTitle>Enterprise</CardTitle>
-                  <CardDescription>For large organizations</CardDescription>
-                  <div className="text-3xl font-bold">$99<span className="text-base font-normal">/month</span></div>
+                  <div className="text-2xl font-bold">Let's Talk</div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <ul className="space-y-3">
+                  <ul className="space-y-2">
                     {enterpriseFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-3">
-                        <Check className="h-4 w-4 text-success flex-shrink-0" />
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <Button variant="outline" className="w-full">
-                    Contact Sales
+                    Contact Us
                   </Button>
                 </CardContent>
               </Card>
@@ -203,36 +248,49 @@ export const Billing = () => {
 };
 
 const freeFeatures = [
-  '1,000 conversations/month',
-  'Up to 5 agents',
-  '50 MB knowledge base',
-  'Basic analytics',
-  'Email support',
-  'Standard response time'
+  'Access to fast model',
+  '100 message credits/month',
+  '400 KB knowledge base per AI agent',
+  '1 seat',
+  '1 AI agent',
+  'Limit of 5 links to train on',
+  'Embed on unlimited websites',
+  'Note: AI agents get deleted after 14 days of inactivity on the free plan.'
+];
+
+const hobbyFeatures = [
+  'Everything in Free +',
+  'Access to advanced models',
+  '2,000 message credits/month',
+  '1 AI agent',
+  '1 Seat',
+  '33 MB per AI agent',
+  'Up to 20 links to train on',
+  'Integrations',
+  'Basic analytics'
+];
+
+const standardFeatures = [
+  'Everything in Hobby +',
+  '12,000 message credits/month',
+  '3 seats',
+  '2 AI agents'
 ];
 
 const proFeatures = [
-  '10,000 conversations/month',
-  'Unlimited agents',
-  '500 MB knowledge base',
-  'Advanced analytics',
-  'Priority support',
-  'Custom branding',
-  'API access',
-  'Webhook integrations'
+  'Everything in Standard +',
+  '40,000 message credits/month',
+  '15 AI Actions per AI agent',
+  '5+ seats',
+  '3 AI agents',
+  'Advanced analytics'
 ];
 
 const enterpriseFeatures = [
-  'Unlimited conversations',
-  'Unlimited agents',
-  '5 GB knowledge base',
-  'Advanced analytics & reporting',
-  'Dedicated support manager',
-  'White-label solution',
-  'Full API access',
-  'Custom integrations',
-  'SSO authentication',
-  'SLA guarantee'
+  'Everything in Pro +',
+  'Higher limits',
+  'Priority support',
+  'Success manager (CSM)'
 ];
 
 const mockInvoices = [
