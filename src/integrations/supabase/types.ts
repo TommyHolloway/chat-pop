@@ -14,7 +14,204 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agents: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          instructions: string
+          name: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          instructions: string
+          name: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          instructions?: string
+          name?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_files: {
+        Row: {
+          agent_id: string
+          content_type: string
+          created_at: string
+          file_path: string
+          file_size: number
+          filename: string
+          id: string
+          processed_content: string | null
+        }
+        Insert: {
+          agent_id: string
+          content_type: string
+          created_at?: string
+          file_path: string
+          file_size: number
+          filename: string
+          id?: string
+          processed_content?: string | null
+        }
+        Update: {
+          agent_id?: string
+          content_type?: string
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          filename?: string
+          id?: string
+          processed_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_files_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+          plan: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id?: string
+          plan?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+          plan?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_tracking: {
+        Row: {
+          conversations_count: number | null
+          created_at: string
+          id: string
+          month: string
+          storage_used_bytes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversations_count?: number | null
+          created_at?: string
+          id?: string
+          month: string
+          storage_used_bytes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversations_count?: number | null
+          created_at?: string
+          id?: string
+          month?: string
+          storage_used_bytes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
