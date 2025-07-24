@@ -6,8 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Navbar } from "@/components/Layout/Navbar";
+import { PublicNavbar } from "@/components/Layout/PublicNavbar";
+import { AuthenticatedNavbar } from "@/components/Layout/AuthenticatedNavbar";
+import { AppSidebar } from "@/components/Layout/AppSidebar";
 import { Footer } from "@/components/Layout/Footer";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 // Pages
 import { Landing } from "./pages/Landing";
@@ -18,22 +21,28 @@ import { AgentForm } from "./pages/agents/AgentForm";
 import { Playground } from "./pages/agents/Playground";
 import { Deploy } from "./pages/agents/Deploy";
 import { Billing } from "./pages/Billing";
+import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 // Layout component for authenticated pages
 const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen flex flex-col">
-    <Navbar />
-    <main className="flex-1">{children}</main>
-  </div>
+  <SidebarProvider>
+    <div className="min-h-screen flex w-full">
+      <AppSidebar />
+      <SidebarInset className="flex flex-col flex-1">
+        <AuthenticatedNavbar />
+        <main className="flex-1">{children}</main>
+      </SidebarInset>
+    </div>
+  </SidebarProvider>
 );
 
 // Layout component for public pages
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
-    <Navbar />
+    <PublicNavbar />
     <main className="flex-1">{children}</main>
     <Footer />
   </div>
@@ -99,6 +108,13 @@ const App = () => (
                 <ProtectedRoute>
                   <AuthenticatedLayout>
                     <Billing />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <Settings />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
