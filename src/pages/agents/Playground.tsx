@@ -16,27 +16,17 @@ import {
   Settings,
   RefreshCw
 } from 'lucide-react';
-
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'bot';
-  timestamp: Date;
-}
+import { useChat } from '@/hooks/useChat';
+import { useAgents } from '@/hooks/useAgents';
 
 export const Playground = () => {
   const { id } = useParams();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: 'Hello! I\'m your Customer Support Bot. How can I help you today?',
-      sender: 'bot',
-      timestamp: new Date()
-    }
-  ]);
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { getAgent } = useAgents();
+  const [agent, setAgent] = useState<any>(null);
+  
+  const { messages, isLoading, sendMessage, resetChat, initializeChat } = useChat(id || '');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,68 +36,32 @@ export const Playground = () => {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!inputValue.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      sender: 'user',
-      timestamp: new Date()
+  useEffect(() => {
+    const loadAgent = async () => {
+      if (id) {
+        try {
+          const agentData = await getAgent(id);
+          setAgent(agentData);
+        } catch (error) {
+          console.error('Error loading agent:', error);
+        }
+      }
     };
+    
+    loadAgent();
+    initializeChat();
+  }, [id]);
 
-    setMessages(prev => [...prev, userMessage]);
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
+    await sendMessage(inputValue);
     setInputValue('');
-    setIsLoading(true);
-
-    // Mock AI response - replace with actual API call
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: getBotResponse(inputValue),
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botMessage]);
-      setIsLoading(false);
-    }, 1000 + Math.random() * 1000);
-  };
-
-  const getBotResponse = (userInput: string): string => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('pricing') || input.includes('cost') || input.includes('price')) {
-      return "Our pricing starts at $29/month for the Basic plan, which includes up to 1,000 conversations. We also offer Pro ($99/month) and Enterprise plans. Would you like me to provide more details about any specific plan?";
-    }
-    
-    if (input.includes('refund') || input.includes('cancel')) {
-      return "I understand you're asking about refunds or cancellations. We offer a 30-day money-back guarantee for all new customers. For existing customers, you can cancel your subscription at any time. Would you like me to connect you with our billing team for assistance?";
-    }
-    
-    if (input.includes('support') || input.includes('help') || input.includes('problem')) {
-      return "I'm here to help! Can you tell me more about the specific issue you're experiencing? The more details you provide, the better I can assist you.";
-    }
-    
-    if (input.includes('features') || input.includes('what can') || input.includes('capabilities')) {
-      return "Our platform offers many powerful features including: AI-powered chat responses, knowledge base integration, custom branding, analytics dashboard, and multi-platform deployment. Is there a specific feature you'd like to learn more about?";
-    }
-    
-    return "Thank you for your message! I understand you're asking about: \"" + userInput + "\". Based on our knowledge base, I'd recommend checking our documentation or I can connect you with a human agent for more specialized assistance. Is there anything specific I can help clarify?";
-  };
-
-  const resetChat = () => {
-    setMessages([{
-      id: '1',
-      content: 'Hello! I\'m your Customer Support Bot. How can I help you today?',
-      sender: 'bot',
-      timestamp: new Date()
-    }]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSendMessage();
     }
   };
 
@@ -157,9 +111,9 @@ export const Playground = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h3 className="font-semibold">Customer Support Bot</h3>
+                  <h3 className="font-semibold">{agent?.name || 'Loading...'}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Handles general customer inquiries and support tickets.
+                    {agent?.description || 'Loading agent details...'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -185,39 +139,39 @@ export const Playground = () => {
                 <CardTitle>Test Scenarios</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start text-left h-auto p-3"
-                  onClick={() => setInputValue("What are your pricing plans?")}
-                >
-                  <div>
-                    <div className="font-medium">Pricing Inquiry</div>
-                    <div className="text-xs text-muted-foreground">Ask about pricing plans</div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start text-left h-auto p-3"
-                  onClick={() => setInputValue("I need help with my account")}
-                >
-                  <div>
-                    <div className="font-medium">Support Request</div>
-                    <div className="text-xs text-muted-foreground">General support inquiry</div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start text-left h-auto p-3"
-                  onClick={() => setInputValue("How do I cancel my subscription?")}
-                >
-                  <div>
-                    <div className="font-medium">Cancellation</div>
-                    <div className="text-xs text-muted-foreground">Cancellation request</div>
-                  </div>
-                </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start text-left h-auto p-3"
+                    onClick={() => setInputValue("Hello, what can you help me with?")}
+                  >
+                    <div>
+                      <div className="font-medium">General Greeting</div>
+                      <div className="text-xs text-muted-foreground">Start a conversation</div>
+                    </div>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start text-left h-auto p-3"
+                    onClick={() => setInputValue("Can you tell me about your features?")}
+                  >
+                    <div>
+                      <div className="font-medium">Feature Inquiry</div>
+                      <div className="text-xs text-muted-foreground">Ask about capabilities</div>
+                    </div>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start text-left h-auto p-3"
+                    onClick={() => setInputValue("I need help with something specific")}
+                  >
+                    <div>
+                      <div className="font-medium">Support Request</div>
+                      <div className="text-xs text-muted-foreground">General support inquiry</div>
+                    </div>
+                  </Button>
               </CardContent>
             </Card>
           </div>
@@ -306,7 +260,7 @@ export const Playground = () => {
                     disabled={isLoading}
                     className="flex-1"
                   />
-                  <Button onClick={sendMessage} disabled={isLoading || !inputValue.trim()}>
+                  <Button onClick={handleSendMessage} disabled={isLoading || !inputValue.trim()}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
