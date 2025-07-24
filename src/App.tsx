@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Navbar } from "@/components/Layout/Navbar";
 import { Footer } from "@/components/Layout/Footer";
 
@@ -40,59 +42,73 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={
-              <PublicLayout>
-                <Landing />
-              </PublicLayout>
-            } />
-            
-            {/* Auth Routes */}
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/signup" element={<Signup />} />
-            
-            {/* Authenticated Routes - TODO: Add auth protection */}
-            <Route path="/dashboard" element={
-              <AuthenticatedLayout>
-                <Dashboard />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/agents/new" element={
-              <AuthenticatedLayout>
-                <AgentForm />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/agents/:id/edit" element={
-              <AuthenticatedLayout>
-                <AgentForm />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/agents/:id/playground" element={
-              <AuthenticatedLayout>
-                <Playground />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/agents/:id/deploy" element={
-              <AuthenticatedLayout>
-                <Deploy />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/billing" element={
-              <AuthenticatedLayout>
-                <Billing />
-              </AuthenticatedLayout>
-            } />
-            
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={
+                <PublicLayout>
+                  <Landing />
+                </PublicLayout>
+              } />
+              
+              {/* Auth Routes */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/signup" element={<Signup />} />
+              
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <Dashboard />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/agents/new" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <AgentForm />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/agents/:id/edit" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <AgentForm />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/agents/:id/playground" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <Playground />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/agents/:id/deploy" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <Deploy />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/billing" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <Billing />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
