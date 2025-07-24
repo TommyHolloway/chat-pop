@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Download, Loader2, RefreshCw, CreditCard } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useUsageData } from "@/hooks/useUsageData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 export const Billing = () => {
   const { user } = useAuth();
   const { subscription, checkSubscription, createCheckout, openCustomerPortal } = useSubscription();
+  const { usage } = useUsageData();
   const { toast } = useToast();
 
   const handleUpgrade = async (plan: string) => {
@@ -40,6 +42,20 @@ export const Billing = () => {
   };
 
   const currentPlan = subscription.subscription_tier;
+  
+  // Plan limits for message credits
+  const getPlanLimits = (plan: string) => {
+    switch (plan) {
+      case 'hobby':
+        return { messageCredits: 2000, agents: 2, links: 20 };
+      case 'standard':
+        return { messageCredits: 12000, agents: 5, links: -1 }; // -1 = unlimited
+      default:
+        return { messageCredits: 100, agents: 1, links: 5 };
+    }
+  };
+
+  const planLimits = getPlanLimits(currentPlan);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -85,12 +101,22 @@ export const Billing = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">142</div>
-              <div className="text-sm text-muted-foreground">Conversations this month</div>
+              <div className="text-2xl font-bold text-primary">
+                {usage.message_credits_used} / {planLimits.messageCredits === -1 ? '∞' : planLimits.messageCredits}
+              </div>
+              <div className="text-sm text-muted-foreground">Message credits used this month</div>
+              {planLimits.messageCredits !== -1 && (
+                <div className="w-full bg-muted rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full" 
+                    style={{ width: `${Math.min(100, (usage.message_credits_used / planLimits.messageCredits) * 100)}%` }}
+                  ></div>
+                </div>
+              )}
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">3</div>
-              <div className="text-sm text-muted-foreground">Active agents</div>
+              <div className="text-2xl font-bold text-primary">{usage.conversations_count}</div>
+              <div className="text-sm text-muted-foreground">Conversations this month</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
@@ -243,6 +269,7 @@ export const Billing = () => {
 };
 
 const freeFeatures = [
+  'Up to 100 message credits/month',
   'Up to 5 training links',
   '1 AI agent',
   'Basic chat features',
@@ -251,6 +278,7 @@ const freeFeatures = [
 
 const hobbyFeatures = [
   'Everything in Free +',
+  'Up to 2,000 message credits/month',
   'Up to 20 training links',
   '2 AI agents',
   'Advanced chat features',
@@ -259,6 +287,7 @@ const hobbyFeatures = [
 
 const standardFeatures = [
   'Everything in Hobby +',
+  'Up to 12,000 message credits/month',
   'Unlimited training links',
   '5 AI agents',
   'Advanced analytics',

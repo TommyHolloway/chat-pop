@@ -256,6 +256,8 @@ export type Database = {
           conversations_count: number | null
           created_at: string
           id: string
+          message_credits_used: number | null
+          messages_count: number | null
           month: string
           storage_used_bytes: number | null
           updated_at: string
@@ -265,6 +267,8 @@ export type Database = {
           conversations_count?: number | null
           created_at?: string
           id?: string
+          message_credits_used?: number | null
+          messages_count?: number | null
           month: string
           storage_used_bytes?: number | null
           updated_at?: string
@@ -274,6 +278,8 @@ export type Database = {
           conversations_count?: number | null
           created_at?: string
           id?: string
+          message_credits_used?: number | null
+          messages_count?: number | null
           month?: string
           storage_used_bytes?: number | null
           updated_at?: string
@@ -286,7 +292,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_usage_tracking: {
+        Args: {
+          p_user_id: string
+          p_conversation_id?: string
+          p_message_count?: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
