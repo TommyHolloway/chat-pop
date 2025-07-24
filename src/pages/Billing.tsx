@@ -76,7 +76,7 @@ export const Billing = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Free Plan */}
               <Card className={`relative ${currentPlan === 'free' ? 'ring-2 ring-primary' : ''}`}>
                 <CardHeader className="text-center">
@@ -144,30 +144,6 @@ export const Billing = () => {
                 <CardContent className="space-y-4">
                   <ul className="space-y-2">
                     {standardFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full">
-                    Subscribe
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Pro Plan */}
-              <Card className="relative">
-                <CardHeader className="text-center">
-                  <div className="mx-auto h-12 w-12 rounded-lg bg-muted flex items-center justify-center mb-4">
-                    <Crown className="h-6 w-6" />
-                  </div>
-                  <CardTitle>Pro</CardTitle>
-                  <div className="text-3xl font-bold">$500<span className="text-base font-normal">/month</span></div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2">
-                    {proFeatures.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
@@ -275,15 +251,6 @@ const standardFeatures = [
   '12,000 message credits/month',
   '3 seats',
   '2 AI agents'
-];
-
-const proFeatures = [
-  'Everything in Standard +',
-  '40,000 message credits/month',
-  '15 AI Actions per AI agent',
-  '5+ seats',
-  '3 AI agents',
-  'Advanced analytics'
 ];
 
 const enterpriseFeatures = [
