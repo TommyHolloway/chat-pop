@@ -20,6 +20,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { AgentForm } from "./pages/agents/AgentForm";
 import { Playground } from "./pages/agents/Playground";
 import { Deploy } from "./pages/agents/Deploy";
+import { PublicChat } from "./pages/agents/PublicChat";
 import { Billing } from "./pages/Billing";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -63,6 +64,9 @@ const App = () => (
                   <Landing />
                 </PublicLayout>
               } />
+              
+              {/* Public Agent Routes */}
+              <Route path="/agents/:id/chat" element={<PublicChat />} />
               
               {/* Auth Routes */}
               <Route path="/auth/login" element={<Login />} />

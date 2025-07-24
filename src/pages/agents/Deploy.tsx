@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,14 +18,26 @@ import {
   Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { useAgents } from '@/hooks/useAgents';
 
 export const Deploy = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const { analytics } = useAnalytics(id!);
+  const { agents } = useAgents();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [customDomain, setCustomDomain] = useState('');
+  const [agent, setAgent] = useState<any>(null);
 
-  const agentUrl = `https://chat.eccochat.com/agents/${id}`;
+  useEffect(() => {
+    if (agents && id) {
+      const currentAgent = agents.find(a => a.id === id);
+      setAgent(currentAgent);
+    }
+  }, [agents, id]);
+
+  const agentUrl = `${window.location.origin}/agents/${id}/chat`;
   const embedCode = `<iframe
   src="${agentUrl}"
   width="400"
@@ -34,11 +46,12 @@ export const Deploy = () => {
   title="EccoChat Agent">
 </iframe>`;
 
-  const scriptCode = `<script
-  src="https://cdn.eccochat.com/widget.js"
-  data-agent-id="${id}"
-  data-position="bottom-right"
-  data-theme="light">
+  const scriptCode = `<script>
+(function() {
+  var script = document.createElement('script');
+  script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=${id}&position=bottom-right&theme=light&color=%233b82f6';
+  document.head.appendChild(script);
+})();
 </script>`;
 
   const copyToClipboard = (text: string, type: string) => {
@@ -91,8 +104,8 @@ export const Deploy = () => {
           {/* Agent Status */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Customer Support Bot</span>
+            <CardTitle className="flex items-center justify-between">
+                <span>{agent?.name || 'Loading...'}</span>
                 <Badge variant="default">Live</Badge>
               </CardTitle>
               <CardDescription>
@@ -317,15 +330,21 @@ export const Deploy = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">1,284</div>
+                  <div className="text-2xl font-bold text-primary">
+                    {analytics.isLoading ? '...' : analytics.totalConversations.toLocaleString()}
+                  </div>
                   <div className="text-sm text-muted-foreground">Total Conversations</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">94.2%</div>
+                  <div className="text-2xl font-bold text-primary">
+                    {analytics.isLoading ? '...' : `${analytics.resolutionRate}%`}
+                  </div>
                   <div className="text-sm text-muted-foreground">Resolution Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">1.2s</div>
+                  <div className="text-2xl font-bold text-primary">
+                    {analytics.isLoading ? '...' : `${analytics.avgResponseTime}s`}
+                  </div>
                   <div className="text-sm text-muted-foreground">Avg Response Time</div>
                 </div>
               </div>
