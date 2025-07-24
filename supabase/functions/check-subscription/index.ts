@@ -88,12 +88,12 @@ serve(async (req) => {
       const price = await stripe.prices.retrieve(priceId);
       const amount = price.unit_amount || 0;
       
-      if (amount <= 999) {
+      if (amount <= 4000) { // $35 = 3500 cents
         subscriptionTier = "hobby";
-      } else if (amount <= 2999) {
-        subscriptionTier = "standard";
+      } else if (amount >= 14000) { // $147 = 14700 cents
+        subscriptionTier = "pro";
       } else {
-        subscriptionTier = "standard";
+        subscriptionTier = "pro";
       }
       logStep("Determined subscription tier", { priceId, amount, subscriptionTier });
     } else {
