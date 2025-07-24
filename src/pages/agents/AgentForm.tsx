@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, 
@@ -15,9 +14,10 @@ import {
   Save,
   Bot,
   FileText,
-  Download
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
 
 interface FileItem {
   id: string;
@@ -28,45 +28,99 @@ interface FileItem {
 
 export const AgentForm = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const isEditing = !!id;
   const { toast } = useToast();
+  const { createAgent, updateAgent, getAgent } = useAgents();
+  const { files, uploadFile, deleteFile, refetchFiles } = useKnowledgeFiles(id || '');
   
   const [formData, setFormData] = useState({
-    name: isEditing ? 'Customer Support Bot' : '',
-    description: isEditing ? 'Handles general customer inquiries and support tickets.' : '',
-    instructions: isEditing ? 'You are a helpful customer support assistant. Be polite, professional, and try to resolve customer issues. If you cannot help with something, escalate to a human agent.' : '',
+    name: '',
+    description: '',
+    instructions: '',
   });
   
-  const [files, setFiles] = useState<FileItem[]>(
-    isEditing ? [
-      { id: '1', name: 'faq.txt', size: 15240, type: 'text/plain' },
-      { id: '2', name: 'product-guide.md', size: 28640, type: 'text/markdown' }
-    ] : []
-  );
-  
   const [isLoading, setIsLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(isEditing);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = Array.from(event.target.files || []);
-    
-    uploadedFiles.forEach(file => {
-      const newFile: FileItem = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        size: file.size,
-        type: file.type
-      };
-      setFiles(prev => [...prev, newFile]);
-    });
+  useEffect(() => {
+    if (isEditing && id) {
+      loadAgent();
+    }
+  }, [isEditing, id]);
 
-    toast({
-      title: "Files uploaded",
-      description: `${uploadedFiles.length} file(s) added to knowledge base.`,
-    });
+  const loadAgent = async () => {
+    try {
+      const agent = await getAgent(id!);
+      setFormData({
+        name: agent.name,
+        description: agent.description || '',
+        instructions: agent.instructions,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load agent data.",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+    } finally {
+      setPageLoading(false);
+    }
   };
 
-  const removeFile = (fileId: string) => {
-    setFiles(prev => prev.filter(f => f.id !== fileId));
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "Please save the agent first before uploading files.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const uploadedFiles = Array.from(event.target.files || []);
+    
+    try {
+      setIsLoading(true);
+      
+      for (const file of uploadedFiles) {
+        await uploadFile(file, id);
+      }
+      
+      await refetchFiles();
+      
+      toast({
+        title: "Files uploaded",
+        description: `${uploadedFiles.length} file(s) added to knowledge base.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload files. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const removeFile = async (file: { id: string; file_path: string; filename: string }) => {
+    try {
+      await deleteFile(file.id, file.file_path);
+      await refetchFiles();
+      
+      toast({
+        title: "File removed",
+        description: `${file.filename} has been removed from the knowledge base.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove file. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -82,13 +136,20 @@ export const AgentForm = () => {
     setIsLoading(true);
 
     try {
-      // Mock save - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: isEditing ? "Agent updated" : "Agent created",
-        description: `${formData.name} has been ${isEditing ? 'updated' : 'created'} successfully.`,
-      });
+      if (isEditing && id) {
+        await updateAgent(id, formData);
+        toast({
+          title: "Agent updated",
+          description: `${formData.name} has been updated successfully.`,
+        });
+      } else {
+        const newAgent = await createAgent(formData);
+        toast({
+          title: "Agent created",
+          description: `${formData.name} has been created successfully.`,
+        });
+        navigate(`/agents/${newAgent.id}/edit`);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -99,6 +160,14 @@ export const AgentForm = () => {
       setIsLoading(false);
     }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -226,10 +295,11 @@ export const AgentForm = () => {
                         onChange={handleFileUpload}
                         className="hidden"
                         id="file-upload"
+                        disabled={!id}
                       />
                       <Label htmlFor="file-upload">
-                        <Button variant="outline" asChild>
-                          <span>Choose Files</span>
+                        <Button variant="outline" asChild disabled={!id}>
+                          <span>{!id ? 'Save agent first' : 'Choose Files'}</span>
                         </Button>
                       </Label>
                     </div>
@@ -247,9 +317,9 @@ export const AgentForm = () => {
                             <div className="flex items-center gap-3">
                               <File className="h-4 w-4 text-muted-foreground" />
                               <div>
-                                <p className="font-medium">{file.name}</p>
+                                <p className="font-medium">{file.filename}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {formatFileSize(file.size)}
+                                  {formatFileSize(file.file_size)}
                                 </p>
                               </div>
                             </div>
@@ -257,7 +327,7 @@ export const AgentForm = () => {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              onClick={() => removeFile(file.id)}
+                              onClick={() => removeFile(file)}
                             >
                               <X className="h-4 w-4" />
                             </Button>

@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,8 @@ import {
   Edit,
   Play,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -24,9 +25,39 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAgents } from '@/hooks/useAgents';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export const Dashboard = () => {
-  const [agents] = useState(mockAgents);
+  const { agents, loading, deleteAgent, refetchAgents } = useAgents();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleDeleteAgent = async (agentId: string, agentName: string) => {
+    try {
+      await deleteAgent(agentId);
+      await refetchAgents();
+      toast({
+        title: "Agent deleted",
+        description: `${agentName} has been deleted successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete agent. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -37,7 +68,7 @@ export const Dashboard = () => {
             <div>
               <h1 className="text-3xl font-bold">Dashboard</h1>
               <p className="text-muted-foreground">
-                Welcome back! Here's what's happening with your AI agents.
+                Welcome back, {user?.email?.split('@')[0]}! Here's what's happening with your AI agents.
               </p>
             </div>
             <Link to="/agents/new">
@@ -59,8 +90,8 @@ export const Dashboard = () => {
               <Bot className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4</div>
-              <p className="text-xs text-muted-foreground">+2 from last month</p>
+              <div className="text-2xl font-bold">{agents.length}</div>
+              <p className="text-xs text-muted-foreground">Active agents</p>
             </CardContent>
           </Card>
 
@@ -137,12 +168,12 @@ export const Dashboard = () => {
                       <div>
                         <CardTitle className="text-lg">{agent.name}</CardTitle>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant={agent.status === 'live' ? 'default' : 'secondary'}>
+                          <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
                             {agent.status}
                           </Badge>
                           <span className="text-xs text-muted-foreground flex items-center">
                             <Calendar className="h-3 w-3 mr-1" />
-                            {agent.lastUpdated}
+                            {format(new Date(agent.updated_at), 'MMM d, yyyy')}
                           </span>
                         </div>
                       </div>
@@ -173,7 +204,10 @@ export const Dashboard = () => {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDeleteAgent(agent.id, agent.name)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Agent
                         </DropdownMenuItem>
@@ -182,16 +216,16 @@ export const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <CardDescription className="mb-4">
-                      {agent.description}
+                      {agent.description || 'No description provided'}
                     </CardDescription>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Conversations</span>
-                        <div className="font-semibold">{agent.conversations}</div>
+                        <span className="text-muted-foreground">Status</span>
+                        <div className="font-semibold capitalize">{agent.status}</div>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Accuracy</span>
-                        <div className="font-semibold">{agent.accuracy}%</div>
+                        <span className="text-muted-foreground">Created</span>
+                        <div className="font-semibold">{format(new Date(agent.created_at), 'MMM d')}</div>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4">
@@ -218,42 +252,3 @@ export const Dashboard = () => {
     </div>
   );
 };
-
-const mockAgents = [
-  {
-    id: '1',
-    name: 'Customer Support Bot',
-    description: 'Handles general customer inquiries and support tickets for our main product.',
-    status: 'live' as const,
-    lastUpdated: '2 hours ago',
-    conversations: 234,
-    accuracy: 94
-  },
-  {
-    id: '2', 
-    name: 'Sales Assistant',
-    description: 'Qualifies leads and provides product information to potential customers.',
-    status: 'draft' as const,
-    lastUpdated: '1 day ago',
-    conversations: 0,
-    accuracy: 0
-  },
-  {
-    id: '3',
-    name: 'FAQ Helper',
-    description: 'Answers frequently asked questions about pricing, features, and policies.',
-    status: 'live' as const,
-    lastUpdated: '3 days ago',
-    conversations: 456,
-    accuracy: 97
-  },
-  {
-    id: '4',
-    name: 'Technical Support',
-    description: 'Provides technical assistance and troubleshooting for advanced users.',
-    status: 'live' as const,
-    lastUpdated: '1 week ago',
-    conversations: 89,
-    accuracy: 91
-  }
-];
