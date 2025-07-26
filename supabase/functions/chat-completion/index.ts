@@ -31,18 +31,36 @@ serve(async (req) => {
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get agent details and instructions
+    // Get agent details and user_id
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('name, description, instructions')
+      .select('name, description, instructions, user_id')
       .eq('id', agentId)
       .single();
 
     if (agentError || !agent) {
       throw new Error('Agent not found');
+    }
+
+    // Check message credit limits before processing
+    const { data: limitCheck } = await supabase.rpc('check_user_plan_limits', {
+      p_user_id: agent.user_id,
+      p_feature_type: 'message'
+    });
+
+    if (limitCheck && !limitCheck.can_perform) {
+      return new Response(JSON.stringify({ 
+        error: 'Message credit limit reached',
+        limit: limitCheck.limit,
+        current_usage: limitCheck.current_usage,
+        plan: limitCheck.plan
+      }), {
+        status: 402, // Payment Required
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Get knowledge files for context
@@ -136,6 +154,13 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
         conversation_id: conversationId,
         role: 'assistant',
         content: assistantMessage
+      });
+
+      // Update usage tracking for both user and assistant messages (2 credits total)
+      await supabase.rpc('update_usage_tracking', {
+        p_user_id: agent.user_id,
+        p_conversation_id: conversationId,
+        p_message_count: 2
       });
     }
 

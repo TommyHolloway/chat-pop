@@ -4,6 +4,13 @@ import { useUsageData } from '@/hooks/useUsageData';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface PlanLimitResponse {
+  can_perform: boolean;
+  current_usage: number;
+  limit: number;
+  plan: string;
+}
+
 interface PlanLimits {
   messageCredits: number;
   agents: number;
@@ -24,7 +31,7 @@ interface PlanEnforcement {
   canCreateAgent: boolean;
   canSendMessage: boolean;
   canAddLink: (agentId: string) => Promise<boolean>;
-  canUploadFile: (fileSize: number) => boolean;
+  canUploadFile: (fileSize: number) => Promise<boolean>;
   remainingCredits: number;
   remainingAgents: number;
   isLoading: boolean;
@@ -40,7 +47,7 @@ export const usePlanEnforcement = () => {
     canCreateAgent: true,
     canSendMessage: true,
     canAddLink: async () => true,
-    canUploadFile: () => true,
+    canUploadFile: async () => true,
     remainingCredits: 100,
     remainingAgents: 1,
     isLoading: true
@@ -85,48 +92,50 @@ export const usePlanEnforcement = () => {
       const currentPlan = subscription.subscription_tier || 'free';
       const limits = getPlanLimits(currentPlan);
 
-      // Get current agent count
-      const { count: agentCount } = await supabase
-        .from('agents')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+      // Use database functions to check current usage and limits
+      const { data: agentCheck } = await supabase.rpc('check_user_plan_limits', {
+        p_user_id: user.id,
+        p_feature_type: 'agent'
+      }) as { data: PlanLimitResponse };
 
-      // Get total link count across all agents
-      const userAgentIds = await getUserAgentIds();
-      let linkCount = 0;
-      
-      if (userAgentIds.length > 0) {
-        const { count } = await supabase
-          .from('agent_links')
-          .select('id', { count: 'exact', head: true })
-          .in('agent_id', userAgentIds);
-        linkCount = count || 0;
-      }
+      const { data: messageCheck } = await supabase.rpc('check_user_plan_limits', {
+        p_user_id: user.id,
+        p_feature_type: 'message'
+      }) as { data: PlanLimitResponse };
+
+      const { data: storageCheck } = await supabase.rpc('check_user_plan_limits', {
+        p_user_id: user.id,
+        p_feature_type: 'storage'
+      }) as { data: PlanLimitResponse };
+
       const currentUsage: PlanUsage = {
-        currentAgents: agentCount || 0,
-        currentMessageCredits: usage.message_credits_used,
-        currentLinks: linkCount,
-        currentStorageBytes: usage.storage_used_bytes
+        currentAgents: agentCheck?.current_usage || 0,
+        currentMessageCredits: messageCheck?.current_usage || 0,
+        currentLinks: 0, // Will be checked per agent
+        currentStorageBytes: storageCheck?.current_usage || 0
       };
 
-      const canCreateAgent = limits.agents === -1 || currentUsage.currentAgents < limits.agents;
-      const canSendMessage = limits.messageCredits === -1 || currentUsage.currentMessageCredits < limits.messageCredits;
+      const canCreateAgent = agentCheck?.can_perform || false;
+      const canSendMessage = messageCheck?.can_perform || false;
       
       const canUploadFile = (fileSize: number) => {
-        const currentStorageGB = currentUsage.currentStorageBytes / (1024 * 1024 * 1024);
-        const fileSizeGB = fileSize / (1024 * 1024 * 1024);
-        return limits.storageGB === -1 || (currentStorageGB + fileSizeGB) <= limits.storageGB;
+        return new Promise<boolean>(async (resolve) => {
+          const { data: fileStorageCheck } = await supabase.rpc('check_user_plan_limits', {
+            p_user_id: user.id,
+            p_feature_type: 'storage',
+            p_file_size: fileSize
+          }) as { data: PlanLimitResponse };
+          resolve(fileStorageCheck?.can_perform || false);
+        });
       };
 
       const canAddLink = async (agentId: string) => {
-        if (limits.links === -1) return true;
-        
-        const { count } = await supabase
-          .from('agent_links')
-          .select('id', { count: 'exact', head: true })
-          .eq('agent_id', agentId);
-
-        return (count || 0) < limits.links;
+        const { data: linkCheck } = await supabase.rpc('check_user_plan_limits', {
+          p_user_id: user.id,
+          p_feature_type: 'link',
+          p_agent_id: agentId
+        }) as { data: PlanLimitResponse };
+        return linkCheck?.can_perform || false;
       };
 
       setEnforcement({

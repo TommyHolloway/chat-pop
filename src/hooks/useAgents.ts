@@ -25,6 +25,14 @@ export interface KnowledgeFile {
   created_at: string;
 }
 
+interface PlanLimitResponse {
+  can_perform: boolean;
+  current_usage: number;
+  limit: number;
+  plan: string;
+  new_total_size?: number;
+}
+
 export const useAgents = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,6 +178,18 @@ export const useKnowledgeFiles = (agentId: string) => {
   const uploadFile = async (file: File, agentId: string) => {
     if (!user) throw new Error('User not authenticated');
 
+    // Check storage limits before uploading
+    const { data: limitCheck } = await supabase.rpc('check_user_plan_limits', {
+      p_user_id: user.id,
+      p_feature_type: 'storage',
+      p_file_size: file.size
+    });
+
+    const limitResponse = limitCheck as unknown as PlanLimitResponse;
+    if (limitResponse && !limitResponse.can_perform) {
+      throw new Error(`Storage limit exceeded. Current: ${(limitResponse.current_usage / (1024 * 1024 * 1024)).toFixed(1)}GB, Limit: ${(limitResponse.limit / (1024 * 1024 * 1024)).toFixed(1)}GB`);
+    }
+
     // Upload file to Supabase Storage
     const filePath = `${user.id}/${agentId}/${file.name}`;
     const { error: uploadError } = await supabase.storage
@@ -198,10 +218,26 @@ export const useKnowledgeFiles = (agentId: string) => {
       .single();
 
     if (error) throw error;
+
+    // Update storage usage tracking
+    await supabase.rpc('update_storage_usage', {
+      p_user_id: user.id,
+      p_size_change: file.size
+    });
+
     return data;
   };
 
   const deleteFile = async (fileId: string, filePath: string) => {
+    if (!user) throw new Error('User not authenticated');
+
+    // Get file size before deletion for storage tracking
+    const { data: fileData } = await supabase
+      .from('knowledge_files')
+      .select('file_size')
+      .eq('id', fileId)
+      .single();
+
     // Delete from storage
     const { error: storageError } = await supabase.storage
       .from('agent-files')
@@ -216,6 +252,14 @@ export const useKnowledgeFiles = (agentId: string) => {
       .eq('id', fileId);
 
     if (dbError) throw dbError;
+
+    // Update storage usage tracking (subtract file size)
+    if (fileData) {
+      await supabase.rpc('update_storage_usage', {
+        p_user_id: user.id,
+        p_size_change: -fileData.file_size
+      });
+    }
   };
 
   useEffect(() => {

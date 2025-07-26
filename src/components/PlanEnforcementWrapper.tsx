@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
 import { PlanUpgradeDialog } from './PlanUpgradeDialog';
 import { Button } from './ui/button';
@@ -31,7 +31,7 @@ export const PlanEnforcementWrapper = ({
       case 'link':
         return agentId ? await enforcement.canAddLink(agentId) : false;
       case 'storage':
-        return fileSize ? enforcement.canUploadFile(fileSize) : false;
+        return fileSize ? await enforcement.canUploadFile(fileSize) : false;
       default:
         return true;
     }
@@ -103,5 +103,3 @@ export const PlanEnforcementWrapper = ({
   );
 };
 
-// Add React import
-import React from 'react';
