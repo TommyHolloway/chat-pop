@@ -122,6 +122,7 @@ export const useAgents = () => {
   };
 
   useEffect(() => {
+    console.log('useAgents: User changed:', user?.email);
     fetchAgents();
   }, [user]);
 
