@@ -55,23 +55,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clean up auth state
+      console.log('Starting logout process...');
+      
+      // Clean up auth state more thoroughly
       const cleanupAuthState = () => {
+        // Clear localStorage
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+            console.log('Removing localStorage key:', key);
             localStorage.removeItem(key);
+          }
+        });
+        
+        // Clear sessionStorage as well
+        Object.keys(sessionStorage || {}).forEach((key) => {
+          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+            console.log('Removing sessionStorage key:', key);
+            sessionStorage.removeItem(key);
           }
         });
       };
 
+      // Clean up state first
       cleanupAuthState();
       
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
+      
+      // Attempt Supabase signOut
+      console.log('Calling supabase.auth.signOut...');
       await supabase.auth.signOut({ scope: 'global' });
       
+      console.log('Logout successful, redirecting...');
       // Force page reload for clean state
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
+      
+      // Clear local state even on error
+      setUser(null);
+      setSession(null);
+      
       // Force redirect even on error
       window.location.href = '/';
     }
