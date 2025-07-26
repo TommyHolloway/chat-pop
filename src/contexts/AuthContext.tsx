@@ -27,18 +27,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Check subscription status when user signs in
+        // Check subscription status when user signs in using setTimeout to prevent deadlock
         if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            await supabase.functions.invoke('check-subscription');
-          } catch (error) {
-            console.error('Error checking subscription on sign in:', error);
-          }
+          setTimeout(() => {
+            supabase.functions.invoke('check-subscription').catch((error) => {
+              console.error('Error checking subscription on sign in:', error);
+            });
+          }, 0);
         }
       }
     );
