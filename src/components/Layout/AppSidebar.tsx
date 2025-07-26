@@ -6,8 +6,10 @@ import {
   CreditCard, 
   Settings, 
   User,
-  ChevronRight
+  ChevronRight,
+  Shield
 } from 'lucide-react';
+import { useUserRole } from '@/hooks/useUserRole';
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +38,7 @@ export const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { state } = useSidebar();
+  const { isAdmin } = useUserRole();
   
   const isCollapsed = state === 'collapsed';
   
@@ -102,6 +105,17 @@ export const AppSidebar = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive('/admin')}>
+                    <Link to="/admin">
+                      <Shield className="h-4 w-4" />
+                      <span>Admin Portal</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -24,6 +24,8 @@ import { PublicChat } from "./pages/agents/PublicChat";
 import { Billing } from "./pages/Billing";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import AdminPortal from "./pages/AdminPortal";
+import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +123,14 @@ const App = () => (
                     <Settings />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
+              } />
+              
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AuthenticatedLayout>
+                    <AdminPortal />
+                  </AuthenticatedLayout>
+                </AdminRoute>
               } />
               
               {/* Catch-all */}
