@@ -73,7 +73,7 @@ export const Billing = () => {
               <Badge variant={currentPlan === 'free' ? 'secondary' : 'default'}>
                 {currentPlan === 'free' ? 'Free Plan' : 
                  currentPlan === 'hobby' ? 'Hobby Plan' : 
-                 currentPlan === 'standard' ? 'Standard Plan' : 'Free Plan'}
+                 currentPlan === 'standard' ? 'Pro Plan' : 'Free Plan'}
               </Badge>
               <Button
                 variant="outline"
@@ -177,7 +177,7 @@ export const Billing = () => {
               {currentPlan === 'hobby' && <Badge variant="secondary">Current</Badge>}
             </CardTitle>
             <CardDescription>Perfect for small teams and growing projects</CardDescription>
-            <div className="text-3xl font-bold">$7.99<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <div className="text-3xl font-bold">$35<span className="text-lg font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
@@ -202,11 +202,11 @@ export const Billing = () => {
         <Card className={`relative ${currentPlan === 'standard' ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Standard
+              Pro
               {currentPlan === 'standard' && <Badge variant="secondary">Current</Badge>}
             </CardTitle>
             <CardDescription>For teams that need more power and flexibility</CardDescription>
-            <div className="text-3xl font-bold">$19.99<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <div className="text-3xl font-bold">$147<span className="text-lg font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
@@ -223,7 +223,7 @@ export const Billing = () => {
               disabled={currentPlan === 'standard'}
               onClick={() => handleUpgrade('standard')}
             >
-              {currentPlan === 'standard' ? 'Current Plan' : 'Upgrade to Standard'}
+              {currentPlan === 'standard' ? 'Current Plan' : 'Upgrade to Pro'}
             </Button>
           </CardContent>
         </Card>

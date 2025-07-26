@@ -33,23 +33,24 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    let priceData;
+    let productId;
     if (plan === 'hobby') {
-      priceData = {
-        currency: "usd",
-        product_data: { name: "Hobby Plan" },
-        unit_amount: 799, // $7.99
-        recurring: { interval: "month" },
-      };
+      productId = 'prod_Sk0g0bYZD5o0ho';
     } else if (plan === 'standard') {
-      priceData = {
-        currency: "usd",
-        product_data: { name: "Standard Plan" },
-        unit_amount: 1999, // $19.99
-        recurring: { interval: "month" },
-      };
+      productId = 'prod_Sk0ii5az1WTZXm';
     } else {
       throw new Error("Invalid plan selected");
+    }
+
+    // Get the default price for the product
+    const prices = await stripe.prices.list({
+      product: productId,
+      active: true,
+      limit: 1,
+    });
+
+    if (prices.data.length === 0) {
+      throw new Error(`No active price found for product ${productId}`);
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -57,7 +58,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price_data: priceData,
+          price: prices.data[0].id,
           quantity: 1,
         },
       ],
