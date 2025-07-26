@@ -32,7 +32,10 @@ export const useAgents = () => {
   const { toast } = useToast();
 
   const fetchAgents = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
