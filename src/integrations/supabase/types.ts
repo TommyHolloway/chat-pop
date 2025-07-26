@@ -292,6 +292,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_user_plan_limits: {
+        Args: {
+          p_user_id: string
+          p_feature_type: string
+          p_agent_id?: string
+          p_file_size?: number
+        }
+        Returns: Json
+      }
+      update_storage_usage: {
+        Args: { p_user_id: string; p_size_change: number }
+        Returns: undefined
+      }
       update_usage_tracking: {
         Args: {
           p_user_id: string
