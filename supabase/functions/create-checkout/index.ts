@@ -35,9 +35,17 @@ serve(async (req) => {
 
     let priceId;
     if (plan === 'hobby') {
-      priceId = "prod_Sk0g0bYZD5o0ho"; // $35/month
+      // Get the price from the hobby product
+      const product = await stripe.products.retrieve("prod_Sk0g0bYZD5o0ho");
+      const prices = await stripe.prices.list({ product: "prod_Sk0g0bYZD5o0ho", active: true });
+      if (prices.data.length === 0) throw new Error("No active price found for hobby plan");
+      priceId = prices.data[0].id;
     } else if (plan === 'pro') {
-      priceId = "prod_Sk0ii5az1WTZXm"; // $147/month
+      // Get the price from the pro product
+      const product = await stripe.products.retrieve("prod_Sk0ii5az1WTZXm");
+      const prices = await stripe.prices.list({ product: "prod_Sk0ii5az1WTZXm", active: true });
+      if (prices.data.length === 0) throw new Error("No active price found for pro plan");
+      priceId = prices.data[0].id;
     } else {
       throw new Error("Invalid plan selected");
     }
