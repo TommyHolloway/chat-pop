@@ -47,9 +47,9 @@ export const Billing = () => {
   const getPlanLimits = (plan: string) => {
     switch (plan) {
       case 'hobby':
-        return { messageCredits: 5000, agents: 3, links: 50 };
-      case 'pro':
-        return { messageCredits: 25000, agents: 10, links: -1 }; // -1 = unlimited
+        return { messageCredits: 2000, agents: 2, links: 20 };
+      case 'standard':
+        return { messageCredits: 12000, agents: 5, links: -1 }; // -1 = unlimited
       default:
         return { messageCredits: 100, agents: 1, links: 5 };
     }
@@ -73,7 +73,7 @@ export const Billing = () => {
               <Badge variant={currentPlan === 'free' ? 'secondary' : 'default'}>
                 {currentPlan === 'free' ? 'Free Plan' : 
                  currentPlan === 'hobby' ? 'Hobby Plan' : 
-                 currentPlan === 'pro' ? 'Pro Plan' : 'Free Plan'}
+                 currentPlan === 'standard' ? 'Standard Plan' : 'Free Plan'}
               </Badge>
               <Button
                 variant="outline"
@@ -121,7 +121,7 @@ export const Billing = () => {
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
                 {currentPlan === 'free' ? '5' : 
-                 currentPlan === 'hobby' ? '50' : 'Unlimited'}
+                 currentPlan === 'hobby' ? '20' : 'Unlimited'}
               </div>
               <div className="text-sm text-muted-foreground">Training links limit</div>
             </div>
@@ -177,7 +177,7 @@ export const Billing = () => {
               {currentPlan === 'hobby' && <Badge variant="secondary">Current</Badge>}
             </CardTitle>
             <CardDescription>Perfect for small teams and growing projects</CardDescription>
-            <div className="text-3xl font-bold">$35<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <div className="text-3xl font-bold">$7.99<span className="text-lg font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
@@ -198,19 +198,19 @@ export const Billing = () => {
           </CardContent>
         </Card>
 
-        {/* Pro Plan */}
-        <Card className={`relative ${currentPlan === 'pro' ? 'ring-2 ring-primary' : ''}`}>
+        {/* Standard Plan */}
+        <Card className={`relative ${currentPlan === 'standard' ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Pro
-              {currentPlan === 'pro' && <Badge variant="secondary">Current</Badge>}
+              Standard
+              {currentPlan === 'standard' && <Badge variant="secondary">Current</Badge>}
             </CardTitle>
             <CardDescription>For teams that need more power and flexibility</CardDescription>
-            <div className="text-3xl font-bold">$147<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <div className="text-3xl font-bold">$19.99<span className="text-lg font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
-              {proFeatures.map((feature, index) => (
+              {standardFeatures.map((feature, index) => (
                 <li key={index} className="flex items-center">
                   <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                   <span className="text-sm">{feature}</span>
@@ -219,11 +219,11 @@ export const Billing = () => {
             </ul>
             <Button 
               className="w-full" 
-              variant={currentPlan === 'pro' ? 'default' : 'outline'}
-              disabled={currentPlan === 'pro'}
-              onClick={() => handleUpgrade('pro')}
+              variant={currentPlan === 'standard' ? 'default' : 'outline'}
+              disabled={currentPlan === 'standard'}
+              onClick={() => handleUpgrade('standard')}
             >
-              {currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
+              {currentPlan === 'standard' ? 'Current Plan' : 'Upgrade to Standard'}
             </Button>
           </CardContent>
         </Card>
@@ -278,18 +278,18 @@ const freeFeatures = [
 
 const hobbyFeatures = [
   'Everything in Free +',
-  'Up to 5,000 message credits/month',
-  'Up to 50 training links',
-  '3 AI agents',
+  'Up to 2,000 message credits/month',
+  'Up to 20 training links',
+  '2 AI agents',
   'Advanced chat features',
   'Priority support'
 ];
 
-const proFeatures = [
+const standardFeatures = [
   'Everything in Hobby +',
-  'Up to 25,000 message credits/month',
+  'Up to 12,000 message credits/month',
   'Unlimited training links',
-  '10 AI agents',
+  '5 AI agents',
   'Advanced analytics',
   'Custom integrations',
   'Phone support'
@@ -300,21 +300,21 @@ const mockInvoices = [
     id: '1',
     description: 'Hobby Plan - March 2024',
     date: 'March 1, 2024',
-    amount: '35.00',
+    amount: '7.99',
     status: 'paid' as const
   },
   {
     id: '2',
     description: 'Hobby Plan - February 2024',
     date: 'February 1, 2024',
-    amount: '35.00',
+    amount: '7.99',
     status: 'paid' as const
   },
   {
     id: '3',
     description: 'Hobby Plan - January 2024',
     date: 'January 1, 2024',
-    amount: '35.00',
+    amount: '7.99',
     status: 'paid' as const
   }
 ];

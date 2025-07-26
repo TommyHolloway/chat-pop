@@ -32,10 +32,7 @@ export const useAgents = () => {
   const { toast } = useToast();
 
   const fetchAgents = async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
     try {
       const { data, error } = await supabase
@@ -122,7 +119,6 @@ export const useAgents = () => {
   };
 
   useEffect(() => {
-    console.log('useAgents: User changed:', user?.email);
     fetchAgents();
   }, [user]);
 

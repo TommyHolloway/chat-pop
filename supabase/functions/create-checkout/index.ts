@@ -33,11 +33,21 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    let priceId;
+    let priceData;
     if (plan === 'hobby') {
-      priceId = "prod_Sk0g0bYZD5o0ho"; // $35/month
-    } else if (plan === 'pro') {
-      priceId = "prod_Sk0ii5az1WTZXm"; // $147/month
+      priceData = {
+        currency: "usd",
+        product_data: { name: "Hobby Plan" },
+        unit_amount: 799, // $7.99
+        recurring: { interval: "month" },
+      };
+    } else if (plan === 'standard') {
+      priceData = {
+        currency: "usd",
+        product_data: { name: "Standard Plan" },
+        unit_amount: 1999, // $19.99
+        recurring: { interval: "month" },
+      };
     } else {
       throw new Error("Invalid plan selected");
     }
@@ -47,7 +57,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: priceId,
+          price_data: priceData,
           quantity: 1,
         },
       ],
