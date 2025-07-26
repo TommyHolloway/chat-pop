@@ -28,6 +28,7 @@ import {
 import { useAgents } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
 
 export const Dashboard = () => {
   const { agents, loading, deleteAgent, refetchAgents } = useAgents();
@@ -71,12 +72,14 @@ export const Dashboard = () => {
                 Welcome back, {user?.email?.split('@')[0]}! Here's what's happening with your AI agents.
               </p>
             </div>
-            <Link to="/agents/new">
-              <Button size="lg">
-                <Plus className="mr-2 h-4 w-4" />
-                Create New Agent
-              </Button>
-            </Link>
+            <PlanEnforcementWrapper feature="agent">
+              <Link to="/agents/new">
+                <Button size="lg">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Agent
+                </Button>
+              </Link>
+            </PlanEnforcementWrapper>
           </div>
         </div>
       </div>
@@ -147,12 +150,14 @@ export const Dashboard = () => {
               <p className="text-muted-foreground mb-6">
                 Create your first AI agent to get started with automated customer support.
               </p>
-              <Link to="/agents/new">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Agent
-                </Button>
-              </Link>
+              <PlanEnforcementWrapper feature="agent">
+                <Link to="/agents/new">
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Your First Agent
+                  </Button>
+                </Link>
+              </PlanEnforcementWrapper>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

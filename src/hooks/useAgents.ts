@@ -62,6 +62,7 @@ export const useAgents = () => {
   }) => {
     if (!user) throw new Error('User not authenticated');
 
+    // Check if user can create more agents (enforcement will be checked in UI)
     const { data, error } = await supabase
       .from('agents')
       .insert([
@@ -75,6 +76,9 @@ export const useAgents = () => {
       .single();
 
     if (error) throw error;
+    
+    // Refresh agents list after creation
+    await fetchAgents();
     return data;
   };
 
