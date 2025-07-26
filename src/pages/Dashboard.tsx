@@ -33,10 +33,6 @@ export const Dashboard = () => {
   const { agents, loading, deleteAgent, refetchAgents } = useAgents();
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  console.log('[DASHBOARD] Loading state:', loading);
-  console.log('[DASHBOARD] User:', user ? 'authenticated' : 'not authenticated');
-  console.log('[DASHBOARD] Agents count:', agents.length);
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
     try {

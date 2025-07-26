@@ -8,8 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("[CREATE-CHECKOUT] Function started");
-  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,24 +18,15 @@ serve(async (req) => {
   );
 
   try {
-    console.log("[CREATE-CHECKOUT] Parsing request body");
     const { plan } = await req.json();
-    console.log("[CREATE-CHECKOUT] Plan requested:", plan);
     
-    console.log("[CREATE-CHECKOUT] Getting auth header");
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
-    console.log("[CREATE-CHECKOUT] Authenticating user");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    console.log("[CREATE-CHECKOUT] User authenticated:", user.email);
 
-    console.log("[CREATE-CHECKOUT] Initializing Stripe with secret key");
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY environment variable not found");
-    console.log("[CREATE-CHECKOUT] Stripe secret key found:", stripeSecretKey.substring(0, 7) + "...");
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
@@ -46,17 +35,9 @@ serve(async (req) => {
 
     let priceId;
     if (plan === 'hobby') {
-      // Get the price from the hobby product
-      const product = await stripe.products.retrieve("prod_Sk0g0bYZD5o0ho");
-      const prices = await stripe.prices.list({ product: "prod_Sk0g0bYZD5o0ho", active: true });
-      if (prices.data.length === 0) throw new Error("No active price found for hobby plan");
-      priceId = prices.data[0].id;
+      priceId = "prod_Sk0g0bYZD5o0ho"; // $35/month
     } else if (plan === 'pro') {
-      // Get the price from the pro product
-      const product = await stripe.products.retrieve("prod_Sk0ii5az1WTZXm");
-      const prices = await stripe.prices.list({ product: "prod_Sk0ii5az1WTZXm", active: true });
-      if (prices.data.length === 0) throw new Error("No active price found for pro plan");
-      priceId = prices.data[0].id;
+      priceId = "prod_Sk0ii5az1WTZXm"; // $147/month
     } else {
       throw new Error("Invalid plan selected");
     }
@@ -80,7 +61,6 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("[CREATE-CHECKOUT] Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
