@@ -178,6 +178,13 @@ export const useKnowledgeFiles = (agentId: string) => {
   const uploadFile = async (file: File, agentId: string) => {
     if (!user) throw new Error('User not authenticated');
 
+    // Validate file type
+    const allowedTypes = ['.txt', '.md', '.pdf', '.docx'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!allowedTypes.includes(fileExtension)) {
+      throw new Error(`File type ${fileExtension} is not supported. Please upload .txt, .md, .pdf, or .docx files.`);
+    }
+
     // Check storage limits before uploading
     const { data: limitCheck } = await supabase.rpc('check_user_plan_limits', {
       p_user_id: user.id,
@@ -198,8 +205,17 @@ export const useKnowledgeFiles = (agentId: string) => {
 
     if (uploadError) throw uploadError;
 
-    // Read file content for processing
-    const text = await file.text();
+    // Process file content based on type
+    let processedContent = null;
+    
+    if (fileExtension === '.txt' || fileExtension === '.md') {
+      // Read text files directly
+      processedContent = await file.text();
+    } else {
+      // For PDF and DOCX files, store metadata only for now
+      // Content will be processed server-side later
+      processedContent = `File uploaded: ${file.name} (${fileExtension})`;
+    }
 
     // Store file metadata in database
     const { data, error } = await supabase
@@ -211,7 +227,7 @@ export const useKnowledgeFiles = (agentId: string) => {
           file_path: filePath,
           file_size: file.size,
           content_type: file.type,
-          processed_content: text,
+          processed_content: processedContent,
         },
       ])
       .select()

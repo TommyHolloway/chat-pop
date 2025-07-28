@@ -20,7 +20,10 @@ import {
   Brain,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  FileType,
+  Image,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
@@ -51,6 +54,7 @@ export const AgentForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(isEditing);
   const [newUrl, setNewUrl] = useState('');
+  const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
 
   useEffect(() => {
     if (isEditing && id) {
@@ -92,6 +96,7 @@ export const AgentForm = () => {
     
     try {
       setIsLoading(true);
+      setUploadingFiles(uploadedFiles.map(f => f.name));
       
       for (const file of uploadedFiles) {
         await uploadFile(file, id);
@@ -100,17 +105,20 @@ export const AgentForm = () => {
       await refetchFiles();
       
       toast({
-        title: "Files uploaded",
+        title: "Files uploaded successfully",
         description: `${uploadedFiles.length} file(s) added to knowledge base.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to upload files. Please try again.",
+        title: "Upload failed",
+        description: error.message || "Failed to upload files. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+      setUploadingFiles([]);
+      // Reset the input
+      event.target.value = '';
     }
   };
 
@@ -138,6 +146,23 @@ export const AgentForm = () => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (filename: string) => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return <FileType className="h-4 w-4 text-red-500" />;
+      case 'docx':
+      case 'doc':
+        return <FileSpreadsheet className="h-4 w-4 text-blue-500" />;
+      case 'md':
+        return <FileText className="h-4 w-4 text-green-500" />;
+      case 'txt':
+        return <FileText className="h-4 w-4 text-gray-500" />;
+      default:
+        return <File className="h-4 w-4 text-muted-foreground" />;
+    }
   };
 
   const handleAddLink = async () => {
@@ -431,21 +456,44 @@ export const AgentForm = () => {
                   </div>
                 </div>
 
-                {files.length > 0 && (
+                {(files.length > 0 || uploadingFiles.length > 0) && (
                   <div className="space-y-4">
                     <Separator />
                     <div>
-                      <h4 className="font-semibold mb-3">Uploaded Files ({files.length})</h4>
+                      <h4 className="font-semibold mb-3">
+                        {uploadingFiles.length > 0 ? 'Uploading Files...' : `Uploaded Files (${files.length})`}
+                      </h4>
                       <div className="space-y-2">
-                        {files.map((file) => (
-                          <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        {/* Show uploading files */}
+                        {uploadingFiles.map((fileName) => (
+                          <div key={fileName} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
                             <div className="flex items-center gap-3">
-                              <File className="h-4 w-4 text-muted-foreground" />
+                              {getFileIcon(fileName)}
+                              <div>
+                                <p className="font-medium">{fileName}</p>
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  Uploading...
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {/* Show uploaded files */}
+                        {files.map((file) => (
+                          <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                            <div className="flex items-center gap-3">
+                              {getFileIcon(file.filename)}
                               <div>
                                 <p className="font-medium">{file.filename}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatFileSize(file.file_size)}
-                                </p>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <span>{formatFileSize(file.file_size)}</span>
+                                  <span className="flex items-center gap-1">
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                    Uploaded
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             <Button
@@ -453,6 +501,7 @@ export const AgentForm = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => removeFile(file)}
+                              disabled={isLoading}
                             >
                               <X className="h-4 w-4" />
                             </Button>
