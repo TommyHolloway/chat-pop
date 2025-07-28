@@ -28,6 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
 import { useAgentLinks } from '@/hooks/useAgentLinks';
+import { TrainingSummary } from '@/components/agent/TrainingSummary';
 
 interface FileItem {
   id: string;
@@ -343,6 +344,15 @@ export const AgentForm = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Training Summary - Only show if editing and has training data */}
+            {isEditing && (files.length > 0 || links.length > 0) && (
+              <TrainingSummary 
+                files={files} 
+                links={links} 
+                agentUpdatedAt={undefined} // Will get this from agent data if needed
+              />
+            )}
 
             {/* Training Links */}
             <Card>
