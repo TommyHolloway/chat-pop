@@ -197,16 +197,38 @@ export const useKnowledgeFiles = (agentId: string) => {
       throw new Error(`Storage limit exceeded. Current: ${(limitResponse.current_usage / (1024 * 1024 * 1024)).toFixed(1)}GB, Limit: ${(limitResponse.limit / (1024 * 1024 * 1024)).toFixed(1)}GB`);
     }
 
+    // Generate a unique file path using timestamp to avoid conflicts
+    const timestamp = Date.now();
+    const filePath = `${user.id}/${agentId}/${timestamp}-${file.name}`;
+    
     // Upload file to Supabase Storage
-    const filePath = `${user.id}/${agentId}/${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from('agent-files')
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      // If file already exists, try with a different name
+      if (uploadError.message?.includes('already exists')) {
+        const randomSuffix = Math.random().toString(36).substring(7);
+        const newFilePath = `${user.id}/${agentId}/${timestamp}-${randomSuffix}-${file.name}`;
+        const { error: retryError } = await supabase.storage
+          .from('agent-files')
+          .upload(newFilePath, file);
+        
+        if (retryError) throw retryError;
+        // Update filePath for database insert
+        return await insertFileRecord(newFilePath, file, agentId);
+      }
+      throw uploadError;
+    }
 
+    return await insertFileRecord(filePath, file, agentId);
+  };
+
+  const insertFileRecord = async (filePath: string, file: File, agentId: string) => {
     // Process file content based on type
     let processedContent = null;
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     
     if (fileExtension === '.txt' || fileExtension === '.md') {
       // Read text files directly
@@ -236,10 +258,12 @@ export const useKnowledgeFiles = (agentId: string) => {
     if (error) throw error;
 
     // Update storage usage tracking
-    await supabase.rpc('update_storage_usage', {
-      p_user_id: user.id,
-      p_size_change: file.size
-    });
+    if (user) {
+      await supabase.rpc('update_storage_usage', {
+        p_user_id: user.id,
+        p_size_change: file.size
+      });
+    }
 
     return data;
   };
