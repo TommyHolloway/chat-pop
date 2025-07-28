@@ -226,20 +226,7 @@ export const useKnowledgeFiles = (agentId: string) => {
   };
 
   const insertFileRecord = async (filePath: string, file: File, agentId: string) => {
-    // Process file content based on type
-    let processedContent = null;
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    
-    if (fileExtension === '.txt' || fileExtension === '.md') {
-      // Read text files directly
-      processedContent = await file.text();
-    } else {
-      // For PDF and DOCX files, store metadata only for now
-      // Content will be processed server-side later
-      processedContent = `File uploaded: ${file.name} (${fileExtension})`;
-    }
-
-    // Store file metadata in database
+    // Store file metadata in database with initial processing status
     const { data, error } = await supabase
       .from('knowledge_files')
       .insert([
@@ -249,13 +236,64 @@ export const useKnowledgeFiles = (agentId: string) => {
           file_path: filePath,
           file_size: file.size,
           content_type: file.type,
-          processed_content: processedContent,
+          processed_content: 'Processing file content...',
         },
       ])
       .select()
       .single();
 
     if (error) throw error;
+
+    // Extract content from the uploaded file
+    try {
+      let processedContent: string;
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      
+      if (fileExtension === '.txt' || fileExtension === '.md') {
+        // Read text files directly
+        processedContent = await file.text();
+      } else {
+        // Use the extraction service for other file types
+        const extractResponse = await supabase.functions.invoke('extract-file-content', {
+          body: {
+            filePath: filePath,
+            fileType: file.type
+          }
+        });
+
+        if (extractResponse.data?.success && extractResponse.data?.extractedContent) {
+          processedContent = extractResponse.data.extractedContent;
+        } else if (extractResponse.data?.extractedContent) {
+          // Even if extraction failed, use the fallback content
+          processedContent = extractResponse.data.extractedContent;
+        } else {
+          processedContent = `File uploaded: ${file.name} (${fileExtension}). Content extraction failed.`;
+        }
+      }
+
+      // Update the file record with extracted content
+      const { error: updateError } = await supabase
+        .from('knowledge_files')
+        .update({
+          processed_content: processedContent
+        })
+        .eq('id', data.id);
+
+      if (updateError) {
+        console.error('Failed to update extracted content:', updateError);
+      }
+
+    } catch (extractError) {
+      console.error('Content extraction failed:', extractError);
+      
+      // Update with fallback content
+      await supabase
+        .from('knowledge_files')
+        .update({
+          processed_content: `File uploaded: ${file.name}. Content extraction failed: ${extractError.message}`
+        })
+        .eq('id', data.id);
+    }
 
     // Update storage usage tracking
     if (user) {
