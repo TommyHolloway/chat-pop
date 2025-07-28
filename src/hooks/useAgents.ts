@@ -331,6 +331,7 @@ export const useKnowledgeFiles = (agentId: string) => {
         processedContent = await fileData.text();
       } else {
         // Use the extraction service for other file types
+        console.log(`Calling extract-file-content for: ${filePath}`);
         const extractResponse = await supabase.functions.invoke('extract-file-content', {
           body: {
             filePath: filePath,
@@ -338,13 +339,22 @@ export const useKnowledgeFiles = (agentId: string) => {
           }
         });
 
-        if (extractResponse.data?.success && extractResponse.data?.extractedContent) {
+        console.log('Extract response:', {
+          error: extractResponse.error,
+          success: extractResponse.data?.success,
+          contentLength: extractResponse.data?.extractedContent?.length,
+          dataKeys: Object.keys(extractResponse.data || {})
+        });
+
+        if (extractResponse.error) {
+          throw new Error(`Edge function error: ${extractResponse.error.message}`);
+        }
+
+        if (extractResponse.data?.extractedContent) {
           processedContent = extractResponse.data.extractedContent;
-        } else if (extractResponse.data?.extractedContent) {
-          // Even if extraction failed, use the fallback content
-          processedContent = extractResponse.data.extractedContent;
+          console.log(`Content extracted successfully. Length: ${processedContent.length} characters`);
         } else {
-          throw new Error(extractResponse.data?.error || 'Content extraction failed');
+          throw new Error(extractResponse.data?.error || 'No content extracted from response');
         }
       }
 
