@@ -43,7 +43,7 @@ export const AgentForm = () => {
   const isEditing = !!id;
   const { toast } = useToast();
   const { createAgent, updateAgent, getAgent } = useAgents();
-  const { files, uploadFile, deleteFile, refetchFiles } = useKnowledgeFiles(id || '');
+  const { files, uploadFile, deleteFile, reprocessFile, refetchFiles } = useKnowledgeFiles(id || '');
   const { links, addLink, removeLink, trainAgent, loading: linksLoading } = useAgentLinks(id);
   
   const [formData, setFormData] = useState({
@@ -56,6 +56,8 @@ export const AgentForm = () => {
   const [pageLoading, setPageLoading] = useState(isEditing);
   const [newUrl, setNewUrl] = useState('');
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
+  const [reprocessingFiles, setReprocessingFiles] = useState<string[]>([]);
+  const [viewingContent, setViewingContent] = useState<string | null>(null);
 
   useEffect(() => {
     if (isEditing && id) {
@@ -138,6 +140,56 @@ export const AgentForm = () => {
         description: "Failed to remove file. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleReprocessFile = async (file: { id: string; file_path: string; filename: string; content_type: string }) => {
+    try {
+      setReprocessingFiles(prev => [...prev, file.id]);
+      await reprocessFile(file.id, file.file_path, file.filename, file.content_type);
+      await refetchFiles();
+      
+      toast({
+        title: "File reprocessed",
+        description: `${file.filename} has been successfully reprocessed.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Reprocessing failed",
+        description: error.message || "Failed to reprocess file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setReprocessingFiles(prev => prev.filter(id => id !== file.id));
+    }
+  };
+
+  const getContentStatus = (processedContent: string | null) => {
+    if (!processedContent) return { status: 'failed', message: 'No content' };
+    if (processedContent.includes('Processing file content...') || processedContent.includes('Reprocessing file content...')) {
+      return { status: 'processing', message: 'Processing...' };
+    }
+    if (processedContent.includes('Content extraction failed') || processedContent.includes('Reprocessing failed')) {
+      return { status: 'failed', message: 'Extraction failed' };
+    }
+    if (processedContent.length < 50) {
+      return { status: 'warning', message: 'Limited content' };
+    }
+    return { status: 'success', message: 'Content extracted' };
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'processing':
+        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
+      case 'warning':
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -491,32 +543,86 @@ export const AgentForm = () => {
                         ))}
                         
                         {/* Show uploaded files */}
-                        {files.map((file) => (
-                          <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                            <div className="flex items-center gap-3">
-                              {getFileIcon(file.filename)}
-                              <div>
-                                <p className="font-medium">{file.filename}</p>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                  <span>{formatFileSize(file.file_size)}</span>
-                                  <span className="flex items-center gap-1">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                    Uploaded
-                                  </span>
+                        {files.map((file) => {
+                          const contentStatus = getContentStatus(file.processed_content);
+                          const isReprocessing = reprocessingFiles.includes(file.id);
+                          
+                          return (
+                            <div key={file.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                {getFileIcon(file.filename)}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">{file.filename}</p>
+                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <span>{formatFileSize(file.file_size)}</span>
+                                    <span className="flex items-center gap-1">
+                                      {isReprocessing ? (
+                                        <>
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                          Reprocessing...
+                                        </>
+                                      ) : (
+                                        <>
+                                          {getStatusBadge(contentStatus.status)}
+                                          {contentStatus.message}
+                                        </>
+                                      )}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Content preview for successful extractions */}
+                                  {contentStatus.status === 'success' && file.processed_content && (
+                                    <div className="mt-2">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-auto p-0 text-xs text-blue-600 hover:text-blue-800"
+                                        onClick={() => setViewingContent(viewingContent === file.id ? null : file.id)}
+                                      >
+                                        {viewingContent === file.id ? 'Hide Content' : 'View Content Preview'}
+                                      </Button>
+                                      {viewingContent === file.id && (
+                                        <div className="mt-2 p-3 bg-muted/50 rounded text-xs max-h-32 overflow-y-auto">
+                                          <p className="text-muted-foreground whitespace-pre-wrap">
+                                            {file.processed_content.slice(0, 300)}
+                                            {file.processed_content.length > 300 && '...'}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
+                              
+                              <div className="flex items-center gap-1 ml-4">
+                                {/* Reprocess button for failed or limited content */}
+                                {(contentStatus.status === 'failed' || contentStatus.status === 'warning') && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleReprocessFile(file)}
+                                    disabled={isReprocessing}
+                                    className="text-xs"
+                                  >
+                                    {isReprocessing ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Reprocess'}
+                                  </Button>
+                                )}
+                                
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeFile(file)}
+                                  disabled={isLoading || isReprocessing}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeFile(file)}
-                              disabled={isLoading}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

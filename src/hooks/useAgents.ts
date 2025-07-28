@@ -306,6 +306,74 @@ export const useKnowledgeFiles = (agentId: string) => {
     return data;
   };
 
+  const reprocessFile = async (fileId: string, filePath: string, filename: string, contentType: string) => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      // Update file status to processing
+      await supabase
+        .from('knowledge_files')
+        .update({
+          processed_content: 'Reprocessing file content...'
+        })
+        .eq('id', fileId);
+
+      let processedContent: string;
+      const fileExtension = '.' + filename.split('.').pop()?.toLowerCase();
+      
+      if (fileExtension === '.txt' || fileExtension === '.md') {
+        // For text files, download and read directly
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from('agent-files')
+          .download(filePath);
+        
+        if (downloadError) throw downloadError;
+        processedContent = await fileData.text();
+      } else {
+        // Use the extraction service for other file types
+        const extractResponse = await supabase.functions.invoke('extract-file-content', {
+          body: {
+            filePath: filePath,
+            fileType: contentType
+          }
+        });
+
+        if (extractResponse.data?.success && extractResponse.data?.extractedContent) {
+          processedContent = extractResponse.data.extractedContent;
+        } else if (extractResponse.data?.extractedContent) {
+          // Even if extraction failed, use the fallback content
+          processedContent = extractResponse.data.extractedContent;
+        } else {
+          throw new Error(extractResponse.data?.error || 'Content extraction failed');
+        }
+      }
+
+      // Update the file record with extracted content
+      const { error: updateError } = await supabase
+        .from('knowledge_files')
+        .update({
+          processed_content: processedContent
+        })
+        .eq('id', fileId);
+
+      if (updateError) throw updateError;
+
+      return processedContent;
+    } catch (error) {
+      console.error('Reprocessing failed:', error);
+      
+      // Update with error message
+      await supabase
+        .from('knowledge_files')
+        .update({
+          processed_content: `Reprocessing failed: ${error.message}`
+        })
+        .eq('id', fileId);
+      
+      throw error;
+    }
+  };
+
   const deleteFile = async (fileId: string, filePath: string) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -351,6 +419,7 @@ export const useKnowledgeFiles = (agentId: string) => {
     loading,
     uploadFile,
     deleteFile,
+    reprocessFile,
     refetchFiles: fetchFiles,
   };
 };
