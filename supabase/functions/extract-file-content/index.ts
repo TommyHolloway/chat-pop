@@ -8,6 +8,48 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Content validation function to detect corrupted or binary content
+function validateExtractedContent(content: string): { isValid: boolean; reason: string } {
+  if (!content || content.length === 0) {
+    return { isValid: false, reason: 'No content extracted' };
+  }
+  
+  // Check for minimum length
+  if (content.length < 20) {
+    return { isValid: false, reason: 'Content too short (likely failed extraction)' };
+  }
+  
+  // Check for excessive binary/control characters
+  const binaryCharCount = (content.match(/[\u0000-\u0008\u000E-\u001F\u007F-\u009F]/g) || []).length;
+  const binaryRatio = binaryCharCount / content.length;
+  if (binaryRatio > 0.1) {
+    return { isValid: false, reason: `High binary character ratio: ${(binaryRatio * 100).toFixed(1)}%` };
+  }
+  
+  // Check for readable text patterns
+  const readableChars = content.match(/[a-zA-Z0-9\s\.,!?;:()\-]/g) || [];
+  const readableRatio = readableChars.length / content.length;
+  if (readableRatio < 0.7) {
+    return { isValid: false, reason: `Low readable character ratio: ${(readableRatio * 100).toFixed(1)}%` };
+  }
+  
+  // Check for common corrupted patterns
+  const corruptedPatterns = [
+    /^[A-Za-z0-9+/=]{100,}$/, // Base64-like strings
+    /Skia\/PDF.*Google Docs/, // Common PDF corruption signature
+    /^[^\w\s]{50,}/, // Long strings of non-word characters
+    /\x00{5,}/, // Null character sequences
+  ];
+  
+  for (const pattern of corruptedPatterns) {
+    if (pattern.test(content.substring(0, 500))) {
+      return { isValid: false, reason: 'Content appears corrupted (matches corruption pattern)' };
+    }
+  }
+  
+  return { isValid: true, reason: 'Content validation passed' };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -73,52 +115,68 @@ serve(async (req) => {
             const page = await pdf.getPage(pageNum);
             const textData = await page.getTextContent();
             
-            // Process text items with positioning for better structure
-            const pageText = textData.items
-              .filter(item => item.str && item.str.trim().length > 0)
-              .map(item => {
-                // Clean up text and preserve structure
-                let text = item.str.trim();
-                
-                // Handle common PDF artifacts
-                text = text.replace(/\s+/g, ' ');
-                text = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, ''); // Remove control characters
-                
-                return text;
-              })
-              .filter(text => text.length > 0);
+            console.log(`Processing page ${pageNum} with ${textData.items.length} text items`);
             
-            if (pageText.length > 0) {
-              // Group text by approximate lines based on Y position
-              const lines = [];
-              let currentLine = [];
+            // Sort items by Y position (top to bottom) then X position (left to right)
+            const sortedItems = textData.items
+              .filter(item => item.str && item.str.trim().length > 0)
+              .sort((a, b) => {
+                const yDiff = b.transform[5] - a.transform[5]; // Y position (inverted for top-to-bottom)
+                if (Math.abs(yDiff) > 5) return yDiff > 0 ? 1 : -1; // Different lines
+                return a.transform[4] - b.transform[4]; // Same line, sort by X position
+              });
+            
+            // Group items into lines and build readable text
+            const lines = [];
+            let currentLine = [];
+            let lastY = null;
+            
+            for (const item of sortedItems) {
+              const currentY = Math.round(item.transform[5]);
+              const text = item.str.trim();
               
-              for (let i = 0; i < textData.items.length; i++) {
-                const item = textData.items[i];
-                const nextItem = textData.items[i + 1];
-                
-                if (item.str && item.str.trim()) {
-                  currentLine.push(item.str.trim());
-                  
-                  // If next item is on a different line or this is the last item
-                  if (!nextItem || Math.abs(item.transform[5] - nextItem.transform[5]) > 5) {
-                    if (currentLine.length > 0) {
-                      lines.push(currentLine.join(' ').trim());
-                      currentLine = [];
-                    }
+              // Clean up text
+              const cleanText = text
+                .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+                .replace(/\s+/g, ' ') // Normalize whitespace
+                .trim();
+              
+              if (!cleanText) continue;
+              
+              // If this is a new line (Y position changed significantly)
+              if (lastY !== null && Math.abs(currentY - lastY) > 5) {
+                if (currentLine.length > 0) {
+                  const lineText = currentLine.join(' ').trim();
+                  if (lineText.length > 0) {
+                    lines.push(lineText);
                   }
+                  currentLine = [];
                 }
               }
               
+              currentLine.push(cleanText);
+              lastY = currentY;
+            }
+            
+            // Add the last line
+            if (currentLine.length > 0) {
+              const lineText = currentLine.join(' ').trim();
+              if (lineText.length > 0) {
+                lines.push(lineText);
+              }
+            }
+            
+            if (lines.length > 0) {
               textContent.push(`--- Page ${pageNum} ---`);
-              textContent.push(...lines.filter(line => line.length > 0));
+              textContent.push(...lines);
+              console.log(`Extracted ${lines.length} lines from page ${pageNum}`);
             }
             
             // Cleanup page resources
             page.cleanup();
           } catch (pageError) {
             console.error(`Error extracting page ${pageNum}:`, pageError);
-            textContent.push(`[Error extracting page ${pageNum}]`);
+            textContent.push(`[Error extracting page ${pageNum}: ${pageError.message}]`);
           }
         }
         
@@ -126,6 +184,16 @@ serve(async (req) => {
         pdf.destroy();
         
         extractedContent = textContent.join('\n').trim();
+        
+        // Validate content quality
+        const validationResult = validateExtractedContent(extractedContent);
+        console.log(`Content validation: ${validationResult.isValid ? 'PASSED' : 'FAILED'} - ${validationResult.reason}`);
+        
+        // If content validation fails, the extracted content might be corrupted
+        if (!validationResult.isValid) {
+          console.log('Content appears corrupted, attempting fallback extraction');
+          throw new Error(`Content validation failed: ${validationResult.reason}`);
+        }
         
         // Post-processing: clean up and structure the content
         if (extractedContent) {
@@ -135,8 +203,7 @@ serve(async (req) => {
           // Detect and format tables (basic detection)
           extractedContent = extractedContent.replace(/(\$[\d,]+\.?\d*)\s+(\$[\d,]+\.?\d*)/g, '$1 | $2');
           
-          // Clean up common PDF artifacts
-          extractedContent = extractedContent.replace(/([a-z])([A-Z])/g, '$1 $2'); // Add spaces between words
+          // Clean up common PDF artifacts but preserve readability
           extractedContent = extractedContent.replace(/\s+/g, ' '); // Normalize spaces
           extractedContent = extractedContent.replace(/\n /g, '\n'); // Remove leading spaces on lines
         }
