@@ -8,16 +8,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Configure PDF.js for Deno environment - set worker source before any PDF operations
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.mjs";
+
 // Enhanced PDF text extraction using pdf.js
 async function extractPDFTextWithPdfJs(buffer: ArrayBuffer): Promise<string> {
   try {
     console.log('Starting PDF.js text extraction');
     
-    // Load the PDF document
+    // Load the PDF document with Deno-compatible configuration
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(buffer),
       useSystemFonts: true,
       disableFontFace: false,
+      useWorkerFetch: false,
+      isEvalSupported: false,
       cMapUrl: 'https://esm.sh/pdfjs-dist@4.0.379/cmaps/',
       cMapPacked: true
     });
