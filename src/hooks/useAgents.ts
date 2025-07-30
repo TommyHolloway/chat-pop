@@ -281,7 +281,10 @@ export const useKnowledgeFiles = (agentId: string) => {
 
       if (updateError) {
         console.error('Failed to update extracted content:', updateError);
+        throw updateError; // Make sure the error propagates
       }
+
+      console.log(`Successfully updated file ${data.id} with content length: ${processedContent.length}`);
 
     } catch (extractError) {
       console.error('Content extraction failed:', extractError);
