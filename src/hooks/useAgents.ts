@@ -272,6 +272,7 @@ export const useKnowledgeFiles = (agentId: string) => {
       }
 
       // Update the file record with extracted content
+      console.log(`Attempting to update file ${data.id} with content length: ${processedContent.length}`);
       const { error: updateError } = await supabase
         .from('knowledge_files')
         .update({
@@ -285,6 +286,9 @@ export const useKnowledgeFiles = (agentId: string) => {
       }
 
       console.log(`Successfully updated file ${data.id} with content length: ${processedContent.length}`);
+      
+      // Refresh the files list to show updated status
+      await fetchFiles();
 
     } catch (extractError) {
       console.error('Content extraction failed:', extractError);
