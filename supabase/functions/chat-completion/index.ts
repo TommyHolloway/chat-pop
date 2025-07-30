@@ -12,6 +12,31 @@ interface ChatMessage {
   content: string;
 }
 
+// Simple keyword-based relevance scoring
+function calculateRelevance(chunkText: string, query: string): number {
+  const queryWords = query.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+  const chunkWords = chunkText.toLowerCase().split(/\s+/);
+  
+  let score = 0;
+  for (const queryWord of queryWords) {
+    for (const chunkWord of chunkWords) {
+      if (chunkWord.includes(queryWord) || queryWord.includes(chunkWord)) {
+        score += 1;
+      }
+    }
+  }
+  
+  return score / Math.max(queryWords.length, 1);
+}
+
+// Simple in-memory cache for responses
+const responseCache = new Map<string, { response: string; timestamp: number }>();
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+function getCacheKey(agentId: string, message: string): string {
+  return `${agentId}:${message.toLowerCase().slice(0, 100)}`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -45,6 +70,21 @@ serve(async (req) => {
       throw new Error('Agent not found');
     }
 
+    console.log(`Processing chat for agent: ${agent.name}`);
+
+    // Check cache first
+    const cacheKey = getCacheKey(agentId, message);
+    const cached = responseCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log('Cache hit for query');
+      return new Response(JSON.stringify({ 
+        message: cached.response,
+        cached: true 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Check message credit limits before processing
     const { data: limitCheck } = await supabase.rpc('check_user_plan_limits', {
       p_user_id: agent.user_id,
@@ -63,19 +103,65 @@ serve(async (req) => {
       });
     }
 
-    // Get knowledge files for context
-    const { data: knowledgeFiles } = await supabase
-      .from('knowledge_files')
-      .select('processed_content')
-      .eq('agent_id', agentId);
+    // Get relevant knowledge chunks using intelligent selection
+    const { data: chunks, error: chunksError } = await supabase
+      .from('agent_knowledge_chunks')
+      .select('chunk_text, metadata_json, token_count')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false });
 
-    // Build context from knowledge files
     let knowledgeContext = '';
-    if (knowledgeFiles && knowledgeFiles.length > 0) {
-      knowledgeContext = knowledgeFiles
-        .map(file => file.processed_content)
-        .filter(Boolean)
+    
+    if (chunks && chunks.length > 0) {
+      console.log(`Found ${chunks.length} knowledge chunks`);
+      
+      // Score and select relevant chunks
+      const scoredChunks = chunks.map(chunk => ({
+        ...chunk,
+        relevance: calculateRelevance(chunk.chunk_text, message)
+      }));
+      
+      // Sort by relevance and select top 5 chunks
+      const selectedChunks = scoredChunks
+        .sort((a, b) => b.relevance - a.relevance)
+        .slice(0, 5);
+      
+      console.log(`Selected ${selectedChunks.length} relevant chunks`);
+      
+      knowledgeContext = selectedChunks
+        .map(chunk => chunk.chunk_text)
         .join('\n\n');
+        
+      // Limit context size to ~3000 tokens (rough estimate)
+      if (knowledgeContext.length > 12000) {
+        knowledgeContext = knowledgeContext.slice(0, 12000) + '\n\n[Content truncated for length]';
+      }
+    } else {
+      console.log('No knowledge chunks found, falling back to legacy content');
+      
+      // Fallback: Get legacy knowledge files AND agent links (THIS WAS MISSING!)
+      const { data: knowledgeFiles } = await supabase
+        .from('knowledge_files')
+        .select('processed_content')
+        .eq('agent_id', agentId);
+
+      const { data: agentLinks } = await supabase
+        .from('agent_links')
+        .select('content')
+        .eq('agent_id', agentId)
+        .eq('status', 'crawled');
+
+      const allContent = [
+        ...(knowledgeFiles || []).map(file => file.processed_content || ''),
+        ...(agentLinks || []).map(link => link.content || '')
+      ].filter(content => content.trim());
+
+      knowledgeContext = allContent.join('\n\n');
+      
+      // Limit legacy content to prevent token explosion
+      if (knowledgeContext.length > 12000) {
+        knowledgeContext = knowledgeContext.slice(0, 12000) + '\n\n[Content truncated for length]';
+      }
     }
 
     // Get recent conversation history if conversationId provided
@@ -140,6 +226,8 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
     const data = await openAIResponse.json();
     const assistantMessage = data.choices[0].message.content;
 
+    console.log('Received response from OpenAI');
+
     // Store conversation and messages if conversationId provided
     if (conversationId) {
       // Store user message
@@ -162,6 +250,24 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
         p_conversation_id: conversationId,
         p_message_count: 2
       });
+
+      console.log('Stored messages and updated usage tracking');
+    }
+
+    // Cache the response
+    responseCache.set(cacheKey, {
+      response: assistantMessage,
+      timestamp: Date.now()
+    });
+
+    // Clean old cache entries periodically
+    if (responseCache.size > 1000) {
+      const now = Date.now();
+      for (const [key, value] of responseCache.entries()) {
+        if (now - value.timestamp > CACHE_DURATION) {
+          responseCache.delete(key);
+        }
+      }
     }
 
     return new Response(JSON.stringify({ 

@@ -63,6 +63,8 @@ export const useChat = (agentId: string) => {
     setIsLoading(true);
 
     try {
+      console.log('Sending message to agent:', agentId);
+      
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           agentId,
@@ -81,6 +83,12 @@ export const useChat = (agentId: string) => {
       };
 
       setMessages(prev => [...prev, botMessage]);
+
+      // Log successful response
+      if (data.cached) {
+        console.log('Response served from cache');
+      }
+      
     } catch (error) {
       console.error('Error sending message:', error);
       toast({

@@ -25,7 +25,17 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting agent training for agent:', agentId);
+    console.log(`Starting intelligent training for agent: ${agentId}`);
+
+    // Clear existing chunks for this agent
+    const { error: clearError } = await supabase
+      .from('agent_knowledge_chunks')
+      .delete()
+      .eq('agent_id', agentId);
+
+    if (clearError) {
+      console.error('Error clearing old chunks:', clearError);
+    }
 
     // Fetch all knowledge sources for the agent
     const [linksResult, filesResult] = await Promise.all([
@@ -48,23 +58,51 @@ serve(async (req) => {
 
     console.log(`Training with ${links.length} links and ${files.length} files`);
 
-    // Combine all knowledge content
-    let combinedKnowledge = '';
+    let totalChunks = 0;
 
-    // Add link content
-    for (const link of links) {
-      if (link.content) {
-        combinedKnowledge += `\n\n=== Content from ${link.url} ===\n`;
-        combinedKnowledge += `Title: ${link.title || 'Unknown'}\n`;
-        combinedKnowledge += link.content;
-      }
-    }
-
-    // Add file content
+    // Process knowledge files into chunks
     for (const file of files) {
       if (file.processed_content) {
-        combinedKnowledge += `\n\n=== Content from ${file.filename} ===\n`;
-        combinedKnowledge += file.processed_content;
+        console.log(`Chunking file: ${file.filename}`);
+        
+        const { data: chunkResult, error: chunkError } = await supabase.functions.invoke('chunk-content', {
+          body: {
+            agentId,
+            sourceId: file.id,
+            sourceType: 'file',
+            content: file.processed_content
+          }
+        });
+
+        if (chunkError) {
+          console.error(`Error chunking file ${file.filename}:`, chunkError);
+        } else {
+          totalChunks += chunkResult?.chunks_created || 0;
+          console.log(`Chunked file ${file.filename}: ${chunkResult?.chunks_created} chunks`);
+        }
+      }
+    }
+    
+    // Process agent links into chunks
+    for (const link of links) {
+      if (link.content) {
+        console.log(`Chunking link: ${link.url}`);
+        
+        const { data: chunkResult, error: chunkError } = await supabase.functions.invoke('chunk-content', {
+          body: {
+            agentId,
+            sourceId: link.id,
+            sourceType: 'link',
+            content: link.content
+          }
+        });
+
+        if (chunkError) {
+          console.error(`Error chunking link ${link.url}:`, chunkError);
+        } else {
+          totalChunks += chunkResult?.chunks_created || 0;
+          console.log(`Chunked link ${link.url}: ${chunkResult?.chunks_created} chunks`);
+        }
       }
     }
 
@@ -78,14 +116,15 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    console.log('Agent training completed successfully');
+    console.log(`Agent training completed successfully with ${totalChunks} total chunks`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Agent training completed',
-      knowledgeSize: combinedKnowledge.length,
+      message: 'Agent training completed with intelligent chunking',
+      totalChunks,
       linksCount: links.length,
-      filesCount: files.length
+      filesCount: files.length,
+      chunkingEnabled: true
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_knowledge_chunks: {
+        Row: {
+          agent_id: string
+          chunk_index: number
+          chunk_text: string
+          created_at: string
+          id: string
+          metadata_json: Json | null
+          source_id: string
+          source_type: string
+          token_count: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          chunk_index: number
+          chunk_text: string
+          created_at?: string
+          id?: string
+          metadata_json?: Json | null
+          source_id: string
+          source_type: string
+          token_count?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          chunk_index?: number
+          chunk_text?: string
+          created_at?: string
+          id?: string
+          metadata_json?: Json | null
+          source_id?: string
+          source_type?: string
+          token_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_links: {
         Row: {
           agent_id: string
