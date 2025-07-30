@@ -3,28 +3,73 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Helper function to decompress FlateDecode streams
-const decompressFlateDecode = (data: Uint8Array): Uint8Array => {
+const decompressFlateDecode = async (data: Uint8Array): Promise<string> => {
   try {
-    // This is a simplified decompression - in a real implementation,
-    // you'd use a proper zlib/deflate decompression library
-    return data;
+    console.log(`Attempting to decompress FlateDecode data, length: ${data.length}`);
+    
+    // Use Deno's built-in DecompressionStream for deflate decompression
+    const readable = new ReadableStream({
+      start(controller) {
+        controller.enqueue(data);
+        controller.close();
+      }
+    });
+    
+    const decompressed = readable.pipeThrough(new DecompressionStream('deflate-raw'));
+    const chunks: Uint8Array[] = [];
+    const reader = decompressed.getReader();
+    
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    
+    // Combine all chunks
+    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    const decompressed_str = new TextDecoder('latin1').decode(result);
+    console.log(`Decompression successful, output length: ${decompressed_str.length}`);
+    return decompressed_str;
   } catch (error) {
-    console.error('FlateDecode decompression failed:', error);
-    return data;
+    console.log(`FlateDecode decompression failed: ${error.message}`);
+    // Fallback to treating as uncompressed
+    return new TextDecoder('latin1').decode(data);
   }
 };
 
 // Helper function to extract text from PDF streams
-const extractTextFromStream = (streamData: string, streamDict: string): string[] => {
+const extractTextFromStream = async (streamData: string, streamDict: string): Promise<string[]> => {
   const textObjects = [];
+  let processedStreamData = streamData;
   
   // Check if stream uses FlateDecode compression
   const isCompressed = streamDict.includes('/FlateDecode') || streamDict.includes('/Fl');
   
   if (isCompressed) {
     console.log('Detected compressed stream (FlateDecode)');
-    // For compressed streams, look for text patterns after decompression
-    // This is a simplified approach - real implementation would decompress first
+    try {
+      // Convert stream data to Uint8Array for decompression
+      const encoder = new TextEncoder();
+      const streamBytes = encoder.encode(streamData);
+      
+      // Decompress the stream
+      processedStreamData = await decompressFlateDecode(streamBytes);
+      console.log(`Stream decompressed from ${streamData.length} to ${processedStreamData.length} characters`);
+    } catch (error) {
+      console.log(`Stream decompression failed: ${error.message}, using original data`);
+      processedStreamData = streamData;
+    }
   }
   
   // Extract text using various patterns
@@ -36,7 +81,7 @@ const extractTextFromStream = (streamData: string, streamDict: string): string[]
   ];
   
   for (const pattern of patterns) {
-    const matches = streamData.match(pattern);
+    const matches = processedStreamData.match(pattern);
     if (matches) {
       for (const match of matches) {
         let text = match.slice(1, -1); // Remove brackets/parentheses
@@ -90,7 +135,7 @@ const extractPDFText = async (buffer: ArrayBuffer): Promise<string> => {
       console.log(`Processing stream ${streamCount}, header length: ${streamHeader.length}, data length: ${streamData.length}`);
       
       // Extract text from this stream
-      const streamTexts = extractTextFromStream(streamData, streamHeader);
+      const streamTexts = await extractTextFromStream(streamData, streamHeader);
       extractedTexts.push(...streamTexts);
     }
     
