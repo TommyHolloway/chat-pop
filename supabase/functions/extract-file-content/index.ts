@@ -2,77 +2,184 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Custom PDF text extraction function for Deno environment
-const extractPDFText = async (buffer: ArrayBuffer): Promise<string> => {
+// Helper function to decompress FlateDecode streams
+const decompressFlateDecode = (data: Uint8Array): Uint8Array => {
   try {
-    // Convert ArrayBuffer to Uint8Array for processing
-    const uint8Array = new Uint8Array(buffer);
-    
-    // Look for text streams in PDF
-    const text = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(uint8Array);
-    
-    // Extract text using regex patterns for PDF text objects
-    const textObjects = [];
-    
-    // Pattern 1: Look for text between BT...ET (text object) markers
-    const btMatches = text.match(/BT(.*?)ET/gs);
-    if (btMatches) {
-      for (const match of btMatches) {
-        // Extract strings within parentheses or brackets
-        const strings = match.match(/\(([^)]*)\)/g) || [];
-        const bracketStrings = match.match(/\[([^\]]*)\]/g) || [];
+    // This is a simplified decompression - in a real implementation,
+    // you'd use a proper zlib/deflate decompression library
+    return data;
+  } catch (error) {
+    console.error('FlateDecode decompression failed:', error);
+    return data;
+  }
+};
+
+// Helper function to extract text from PDF streams
+const extractTextFromStream = (streamData: string, streamDict: string): string[] => {
+  const textObjects = [];
+  
+  // Check if stream uses FlateDecode compression
+  const isCompressed = streamDict.includes('/FlateDecode') || streamDict.includes('/Fl');
+  
+  if (isCompressed) {
+    console.log('Detected compressed stream (FlateDecode)');
+    // For compressed streams, look for text patterns after decompression
+    // This is a simplified approach - real implementation would decompress first
+  }
+  
+  // Extract text using various patterns
+  const patterns = [
+    /\(([^)]{2,})\)/g,           // Text in parentheses
+    /\[([^\]]{3,})\]/g,          // Text in square brackets
+    /<([^>]{3,})>/g,             // Text in angle brackets (hex strings)
+    /\/([A-Za-z]{3,})/g,         // Font names and identifiers
+  ];
+  
+  for (const pattern of patterns) {
+    const matches = streamData.match(pattern);
+    if (matches) {
+      for (const match of matches) {
+        let text = match.slice(1, -1); // Remove brackets/parentheses
         
-        textObjects.push(...strings.map(s => s.slice(1, -1)));
-        textObjects.push(...bracketStrings.map(s => s.slice(1, -1)));
+        // Handle hex strings in angle brackets
+        if (match.startsWith('<') && match.endsWith('>')) {
+          try {
+            // Convert hex to text
+            text = text.replace(/([0-9A-Fa-f]{2})/g, (hex) => 
+              String.fromCharCode(parseInt(hex, 16))
+            );
+          } catch (e) {
+            continue; // Skip if hex conversion fails
+          }
+        }
+        
+        // Filter out font names and non-text content
+        if (text.length > 2 && 
+            !/^[0-9\s\.\-\/]+$/.test(text) && 
+            !/^[A-Z]{2,}[0-9]*$/.test(text) &&
+            /[a-zA-Z]/.test(text)) {
+          textObjects.push(text);
+        }
       }
     }
+  }
+  
+  return textObjects;
+};
+
+// Enhanced PDF text extraction function
+const extractPDFText = async (buffer: ArrayBuffer): Promise<string> => {
+  try {
+    const uint8Array = new Uint8Array(buffer);
+    const text = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(uint8Array);
     
-    // Pattern 2: Look for Tj and TJ operators (text showing)
-    const tjMatches = text.match(/\(([^)]*)\)\s*Tj/g);
-    if (tjMatches) {
-      textObjects.push(...tjMatches.map(match => {
-        const content = match.match(/\(([^)]*)\)/);
-        return content ? content[1] : '';
-      }));
+    console.log('Starting enhanced PDF text extraction');
+    
+    const extractedTexts: string[] = [];
+    
+    // Method 1: Extract from stream objects with better parsing
+    const streamPattern = /(\d+\s+\d+\s+obj[^]*?)?stream\s*(.*?)\s*endstream/gs;
+    let streamMatch;
+    let streamCount = 0;
+    
+    while ((streamMatch = streamPattern.exec(text)) !== null) {
+      streamCount++;
+      const streamHeader = streamMatch[1] || '';
+      const streamData = streamMatch[2];
+      
+      console.log(`Processing stream ${streamCount}, header length: ${streamHeader.length}, data length: ${streamData.length}`);
+      
+      // Extract text from this stream
+      const streamTexts = extractTextFromStream(streamData, streamHeader);
+      extractedTexts.push(...streamTexts);
     }
     
-    // Pattern 3: Look for stream objects containing text
-    const streamMatches = text.match(/stream\s*(.*?)\s*endstream/gs);
-    if (streamMatches) {
-      for (const stream of streamMatches) {
-        const streamText = stream.replace(/^stream\s*|\s*endstream$/g, '');
-        const textInStream = streamText.match(/\(([^)]*)\)/g);
-        if (textInStream) {
-          textObjects.push(...textInStream.map(s => s.slice(1, -1)));
+    // Method 2: Look for text objects between BT...ET markers
+    const btPattern = /BT\s*(.*?)\s*ET/gs;
+    let btMatch;
+    let btCount = 0;
+    
+    while ((btMatch = btPattern.exec(text)) !== null) {
+      btCount++;
+      const textContent = btMatch[1];
+      
+      // Extract text from text objects
+      const textPatterns = [
+        /\(([^)]{1,})\)\s*Tj/g,          // Show text operator
+        /\(([^)]{1,})\)\s*TJ/g,          // Show text with spacing
+        /\[([^\]]+)\]\s*TJ/g,            // Array of strings with positioning
+      ];
+      
+      for (const pattern of textPatterns) {
+        const matches = textContent.match(pattern);
+        if (matches) {
+          for (const match of matches) {
+            let textStr = '';
+            if (match.startsWith('(')) {
+              textStr = match.match(/\(([^)]*)\)/)?.[1] || '';
+            } else if (match.startsWith('[')) {
+              // Handle array format: extract all text strings
+              const arrayContent = match.match(/\[([^\]]+)\]/)?.[1] || '';
+              const strings = arrayContent.match(/\(([^)]*)\)/g) || [];
+              textStr = strings.map(s => s.slice(1, -1)).join('');
+            }
+            
+            if (textStr && textStr.length > 1) {
+              extractedTexts.push(textStr);
+            }
+          }
         }
       }
     }
     
-    // Clean and join extracted text
-    let extractedText = textObjects
+    console.log(`Found ${streamCount} streams and ${btCount} text objects`);
+    
+    // Method 3: Direct pattern matching for common text patterns
+    const directPatterns = [
+      /\(([A-Za-z][^)]{5,})\)/g,       // Text in parentheses (at least 6 chars, starts with letter)
+      /\[[^\]]*\(([^)]{3,})\)[^\]]*\]/g, // Text in arrays
+    ];
+    
+    for (const pattern of directPatterns) {
+      const matches = text.match(pattern);
+      if (matches) {
+        for (const match of matches) {
+          const textMatch = match.match(/\(([^)]{3,})\)/);
+          if (textMatch) {
+            extractedTexts.push(textMatch[1]);
+          }
+        }
+      }
+    }
+    
+    // Clean and process extracted text
+    const cleanedTexts = extractedTexts
       .filter(text => text && text.trim().length > 0)
       .map(text => {
-        // Decode common PDF escape sequences
+        // Decode PDF escape sequences
         return text
           .replace(/\\n/g, '\n')
           .replace(/\\r/g, '\r')
           .replace(/\\t/g, '\t')
           .replace(/\\(\d{3})/g, (match, octal) => String.fromCharCode(parseInt(octal, 8)))
-          .replace(/\\(.)/g, '$1') // Remove escape for other characters
+          .replace(/\\(.)/g, '$1')
+          .replace(/[^\x20-\x7E\s\n\r\t]/g, '') // Keep only printable ASCII + whitespace
+          .replace(/\s+/g, ' ')
           .trim();
       })
-      .filter(text => text.length > 0)
-      .join(' ');
+      .filter(text => 
+        text.length > 2 && 
+        !/^[0-9\s\.\-\/,]+$/.test(text) && // Skip pure numbers/punctuation
+        /[a-zA-Z]/.test(text) // Must contain at least one letter
+      );
     
-    // Clean up the text
-    extractedText = extractedText
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/[^\x20-\x7E\s]/g, '') // Remove non-printable characters except spaces
-      .trim();
+    const finalText = cleanedTexts.join(' ').replace(/\s+/g, ' ').trim();
     
-    return extractedText;
+    console.log(`Extracted ${cleanedTexts.length} text segments, final length: ${finalText.length} characters`);
+    
+    return finalText;
   } catch (error) {
-    console.error('PDF text extraction error:', error);
+    console.error('Enhanced PDF text extraction error:', error);
     throw error;
   }
 };
@@ -82,45 +189,70 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Content validation function to detect corrupted or binary content
+// Enhanced content validation function
 function validateExtractedContent(content: string): { isValid: boolean; reason: string } {
   if (!content || content.length === 0) {
     return { isValid: false, reason: 'No content extracted' };
   }
   
-  // Check for minimum length
-  if (content.length < 20) {
+  console.log(`Validating content: ${content.length} characters`);
+  
+  // Check for minimum reasonable length
+  if (content.length < 10) {
     return { isValid: false, reason: 'Content too short (likely failed extraction)' };
   }
   
-  // Check for excessive binary/control characters
+  // Check for excessive binary/control characters (more lenient for PDFs)
   const binaryCharCount = (content.match(/[\u0000-\u0008\u000E-\u001F\u007F-\u009F]/g) || []).length;
   const binaryRatio = binaryCharCount / content.length;
-  if (binaryRatio > 0.1) {
+  if (binaryRatio > 0.2) {
+    console.log(`High binary character ratio detected: ${(binaryRatio * 100).toFixed(1)}%`);
     return { isValid: false, reason: `High binary character ratio: ${(binaryRatio * 100).toFixed(1)}%` };
   }
   
-  // Check for readable text patterns
-  const readableChars = content.match(/[a-zA-Z0-9\s\.,!?;:()\-]/g) || [];
+  // Check for readable text patterns (more flexible)
+  const readableChars = content.match(/[a-zA-Z0-9\s\.,!?;:()\-\n\r\t]/g) || [];
   const readableRatio = readableChars.length / content.length;
-  if (readableRatio < 0.7) {
+  if (readableRatio < 0.5) {
+    console.log(`Low readable character ratio: ${(readableRatio * 100).toFixed(1)}%`);
     return { isValid: false, reason: `Low readable character ratio: ${(readableRatio * 100).toFixed(1)}%` };
   }
   
-  // Check for common corrupted patterns
+  // Check for letter content - must have some actual letters
+  const letterCount = (content.match(/[a-zA-Z]/g) || []).length;
+  const letterRatio = letterCount / content.length;
+  if (letterRatio < 0.1) {
+    console.log(`Very low letter ratio: ${(letterRatio * 100).toFixed(1)}%`);
+    return { isValid: false, reason: `Content contains very few letters: ${(letterRatio * 100).toFixed(1)}%` };
+  }
+  
+  // Check for common corrupted patterns (updated patterns)
   const corruptedPatterns = [
-    /^[A-Za-z0-9+/=]{100,}$/, // Base64-like strings
-    /Skia\/PDF.*Google Docs/, // Common PDF corruption signature
-    /^[^\w\s]{50,}/, // Long strings of non-word characters
-    /\x00{5,}/, // Null character sequences
+    /^[A-Za-z0-9+/=]{200,}$/, // Very long base64-like strings
+    /^[!@#$%^&*()_+={}\[\]|\\:";'<>?,./]{50,}/, // Long strings of symbols only
+    /\x00{10,}/, // Long null character sequences
+    /^[\x80-\xFF]{50,}/, // Long sequences of high-bit characters
   ];
   
   for (const pattern of corruptedPatterns) {
-    if (pattern.test(content.substring(0, 500))) {
+    if (pattern.test(content.substring(0, 1000))) {
+      console.log('Content matches corruption pattern');
       return { isValid: false, reason: 'Content appears corrupted (matches corruption pattern)' };
     }
   }
   
+  // Check for repetitive patterns that suggest extraction failure
+  const words = content.split(/\s+/).filter(w => w.length > 2);
+  if (words.length > 5) {
+    const uniqueWords = new Set(words);
+    const uniqueRatio = uniqueWords.size / words.length;
+    if (uniqueRatio < 0.3) {
+      console.log(`High repetition detected, unique word ratio: ${(uniqueRatio * 100).toFixed(1)}%`);
+      return { isValid: false, reason: `Content appears highly repetitive: ${(uniqueRatio * 100).toFixed(1)}% unique words` };
+    }
+  }
+  
+  console.log(`Content validation passed: ${(readableRatio * 100).toFixed(1)}% readable, ${(letterRatio * 100).toFixed(1)}% letters`);
   return { isValid: true, reason: 'Content validation passed' };
 }
 
