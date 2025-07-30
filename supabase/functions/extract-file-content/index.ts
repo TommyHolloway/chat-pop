@@ -2,50 +2,60 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Helper function to decompress FlateDecode streams
+// Enhanced decompression helper for FlateDecode streams with multiple methods
 const decompressFlateDecode = async (data: Uint8Array): Promise<string> => {
-  try {
-    console.log(`Attempting to decompress FlateDecode data, length: ${data.length}`);
-    
-    // Use Deno's built-in DecompressionStream for deflate decompression
-    const readable = new ReadableStream({
-      start(controller) {
-        controller.enqueue(data);
-        controller.close();
-      }
-    });
-    
-    const decompressed = readable.pipeThrough(new DecompressionStream('deflate'));
-    const chunks: Uint8Array[] = [];
-    const reader = decompressed.getReader();
-    
+  console.log(`Attempting to decompress FlateDecode data, length: ${data.length}`);
+  
+  // Try multiple decompression methods as PDF streams can use different formats
+  const methods = ['deflate', 'deflate-raw'];
+  
+  for (const method of methods) {
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) chunks.push(value);
+      console.log(`Trying decompression method: ${method}`);
+      
+      const readable = new ReadableStream({
+        start(controller) {
+          controller.enqueue(data);
+          controller.close();
+        }
+      });
+      
+      const decompressed = readable.pipeThrough(new DecompressionStream(method));
+      const chunks: Uint8Array[] = [];
+      const reader = decompressed.getReader();
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) chunks.push(value);
+        }
+      } finally {
+        reader.releaseLock();
       }
-    } finally {
-      reader.releaseLock();
+      
+      // Combine all chunks
+      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const result = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+      
+      const decompressed_str = new TextDecoder('latin1').decode(result);
+      console.log(`Successfully decompressed using ${method}, output length: ${decompressed_str.length}`);
+      return decompressed_str;
+      
+    } catch (error) {
+      console.log(`${method} decompression failed: ${error.message}`);
+      continue;
     }
-    
-    // Combine all chunks
-    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      result.set(chunk, offset);
-      offset += chunk.length;
-    }
-    
-    const decompressed_str = new TextDecoder('latin1').decode(result);
-    console.log(`Decompression successful, output length: ${decompressed_str.length}`);
-    return decompressed_str;
-  } catch (error) {
-    console.log(`FlateDecode decompression failed: ${error.message}`);
-    // Fallback to treating as uncompressed
-    return new TextDecoder('latin1').decode(data);
   }
+  
+  // If all decompression methods fail, return original data as text
+  console.log('All decompression methods failed, returning original data as text');
+  return new TextDecoder('latin1').decode(data);
 };
 
 // Helper function to extract text from PDF streams
@@ -151,21 +161,48 @@ const extractPDFText = async (buffer: ArrayBuffer): Promise<string> => {
         if (objHeader.includes('/FlateDecode') || objHeader.includes('/Filter')) {
           console.log('Detected compressed stream (FlateDecode)');
           try {
-            // Extract the actual binary stream data
-            const streamStart = objMatch.index + objContent.indexOf('stream') + 6;
-            const streamEnd = streamStart + streamData.length;
-            const streamBytes = uint8Array.slice(streamStart, streamEnd);
+            // Find the exact position of the stream data in the PDF binary
+            const objStartIndex = objMatch.index;
+            const streamKeyword = 'stream';
+            const streamStartInObj = objContent.indexOf(streamKeyword);
             
-            // Try to decompress
-            const decompressedText = await decompressFlateDecode(streamBytes);
-            console.log(`Stream decompressed from ${streamData.length} to ${decompressedText.length} characters`);
-            
-            // Extract text from decompressed content
-            const streamTexts = await extractTextFromStream(decompressedText, objHeader);
-            extractedTexts.push(...streamTexts);
+            if (streamStartInObj !== -1) {
+              // Calculate the actual byte position in the original binary data
+              const actualStreamStart = objStartIndex + streamStartInObj + streamKeyword.length;
+              
+              // Skip any whitespace after 'stream' keyword
+              let streamDataStart = actualStreamStart;
+              while (streamDataStart < uint8Array.length && 
+                     (uint8Array[streamDataStart] === 0x20 || 
+                      uint8Array[streamDataStart] === 0x0A || 
+                      uint8Array[streamDataStart] === 0x0D)) {
+                streamDataStart++;
+              }
+              
+              // Find end of stream
+              const endstreamKeyword = 'endstream';
+              const endstreamIndex = objContent.indexOf(endstreamKeyword);
+              const actualStreamEnd = endstreamIndex !== -1 ? 
+                objStartIndex + endstreamIndex : 
+                objStartIndex + objContent.indexOf('endobj');
+              
+              // Extract the raw binary stream data
+              const streamLength = actualStreamEnd - streamDataStart;
+              console.log(`Extracting raw stream data from byte ${streamDataStart} to ${actualStreamEnd} (${streamLength} bytes)`);
+              
+              const rawStreamBytes = uint8Array.slice(streamDataStart, actualStreamEnd);
+              
+              // Try to decompress the raw binary data
+              const decompressedText = await decompressFlateDecode(rawStreamBytes);
+              console.log(`Stream decompressed from ${rawStreamBytes.length} bytes to ${decompressedText.length} characters`);
+              
+              // Extract text from decompressed content using improved patterns
+              const streamTexts = await extractTextFromStream(decompressedText, objHeader);
+              extractedTexts.push(...streamTexts);
+            }
           } catch (error) {
-            console.log(`FlateDecode decompression failed: ${error.message}`);
-            // Fallback to treating as uncompressed
+            console.log(`Binary stream extraction failed: ${error.message}`);
+            // Fallback to string-based extraction
             const streamTexts = await extractTextFromStream(streamData, objHeader);
             extractedTexts.push(...streamTexts);
           }
