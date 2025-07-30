@@ -583,12 +583,15 @@ export const AgentForm = () => {
                                         {viewingContent === file.id ? 'Hide Content' : 'View Content Preview'}
                                       </Button>
                                       {viewingContent === file.id && (
-                                        <div className="mt-2 p-3 bg-muted/50 rounded text-xs max-h-32 overflow-y-auto">
-                                          <p className="text-muted-foreground whitespace-pre-wrap">
-                                            {file.processed_content.slice(0, 300)}
-                                            {file.processed_content.length > 300 && '...'}
-                                          </p>
-                                        </div>
+                                         <div className="mt-2 p-3 bg-muted/50 rounded text-xs max-h-40 overflow-y-auto">
+                                           <div className="mb-2 text-xs text-muted-foreground border-b pb-1">
+                                             Content Preview ({file.processed_content.length.toLocaleString()} characters, {file.processed_content.split(' ').length.toLocaleString()} words)
+                                           </div>
+                                           <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                             {file.processed_content.slice(0, 500).replace(/\s+/g, ' ').trim()}
+                                             {file.processed_content.length > 500 && '...'}
+                                           </p>
+                                         </div>
                                       )}
                                     </div>
                                   )}
