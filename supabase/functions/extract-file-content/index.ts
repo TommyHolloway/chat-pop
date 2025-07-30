@@ -15,7 +15,7 @@ const decompressFlateDecode = async (data: Uint8Array): Promise<string> => {
       }
     });
     
-    const decompressed = readable.pipeThrough(new DecompressionStream('deflate-raw'));
+    const decompressed = readable.pipeThrough(new DecompressionStream('deflate'));
     const chunks: Uint8Array[] = [];
     const reader = decompressed.getReader();
     
@@ -112,66 +112,102 @@ const extractTextFromStream = async (streamData: string, streamDict: string): Pr
   return textObjects;
 };
 
-// Enhanced PDF text extraction function
+// Enhanced PDF text extraction function with proper binary handling
 const extractPDFText = async (buffer: ArrayBuffer): Promise<string> => {
   try {
     const uint8Array = new Uint8Array(buffer);
-    const text = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(uint8Array);
-    
-    console.log('Starting enhanced PDF text extraction');
+    console.log('Starting enhanced PDF text extraction with proper binary handling');
     
     const extractedTexts: string[] = [];
     
-    // Method 1: Extract from stream objects with better parsing
-    const streamPattern = /(\d+\s+\d+\s+obj[^]*?)?stream\s*(.*?)\s*endstream/gs;
-    let streamMatch;
+    // First, let's find the PDF structure using binary patterns
+    // Look for obj declarations to find stream objects
+    let binaryText = '';
+    try {
+      binaryText = new TextDecoder('latin1').decode(uint8Array);
+    } catch {
+      console.log('Failed to decode as latin1, trying utf-8');
+      binaryText = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(uint8Array);
+    }
+    
+    // Method 1: Extract stream objects properly with binary handling
+    const objPattern = /(\d+\s+\d+\s+obj[\s\S]*?)endobj/g;
+    let objMatch;
     let streamCount = 0;
     
-    while ((streamMatch = streamPattern.exec(text)) !== null) {
-      streamCount++;
-      const streamHeader = streamMatch[1] || '';
-      const streamData = streamMatch[2];
+    while ((objMatch = objPattern.exec(binaryText)) !== null) {
+      const objContent = objMatch[1];
       
-      console.log(`Processing stream ${streamCount}, header length: ${streamHeader.length}, data length: ${streamData.length}`);
-      
-      // Extract text from this stream
-      const streamTexts = await extractTextFromStream(streamData, streamHeader);
-      extractedTexts.push(...streamTexts);
+      // Look for stream within this object
+      const streamMatch = objContent.match(/stream\s*([\s\S]*?)\s*endstream/);
+      if (streamMatch) {
+        streamCount++;
+        const streamData = streamMatch[1];
+        const objHeader = objContent.substring(0, objContent.indexOf('stream'));
+        
+        console.log(`Processing stream ${streamCount}, header length: ${objHeader.length}, data length: ${streamData.length}`);
+        
+        // Check if this stream contains text-related content
+        if (objHeader.includes('/FlateDecode') || objHeader.includes('/Filter')) {
+          console.log('Detected compressed stream (FlateDecode)');
+          try {
+            // Extract the actual binary stream data
+            const streamStart = objMatch.index + objContent.indexOf('stream') + 6;
+            const streamEnd = streamStart + streamData.length;
+            const streamBytes = uint8Array.slice(streamStart, streamEnd);
+            
+            // Try to decompress
+            const decompressedText = await decompressFlateDecode(streamBytes);
+            console.log(`Stream decompressed from ${streamData.length} to ${decompressedText.length} characters`);
+            
+            // Extract text from decompressed content
+            const streamTexts = await extractTextFromStream(decompressedText, objHeader);
+            extractedTexts.push(...streamTexts);
+          } catch (error) {
+            console.log(`FlateDecode decompression failed: ${error.message}`);
+            // Fallback to treating as uncompressed
+            const streamTexts = await extractTextFromStream(streamData, objHeader);
+            extractedTexts.push(...streamTexts);
+          }
+        } else {
+          // Uncompressed stream
+          const streamTexts = await extractTextFromStream(streamData, objHeader);
+          extractedTexts.push(...streamTexts);
+        }
+      }
     }
     
     // Method 2: Look for text objects between BT...ET markers
-    const btPattern = /BT\s*(.*?)\s*ET/gs;
+    const btPattern = /BT\s*([\s\S]*?)\s*ET/g;
     let btMatch;
     let btCount = 0;
     
-    while ((btMatch = btPattern.exec(text)) !== null) {
+    while ((btMatch = btPattern.exec(binaryText)) !== null) {
       btCount++;
       const textContent = btMatch[1];
       
-      // Extract text from text objects
+      // Extract text from text objects using multiple patterns
       const textPatterns = [
-        /\(([^)]{1,})\)\s*Tj/g,          // Show text operator
-        /\(([^)]{1,})\)\s*TJ/g,          // Show text with spacing
-        /\[([^\]]+)\]\s*TJ/g,            // Array of strings with positioning
+        /\(([^)]+)\)\s*Tj/g,          // Show text operator
+        /\(([^)]+)\)\s*TJ/g,          // Show text with spacing
+        /\[([^\]]+)\]\s*TJ/g,         // Array of strings with positioning
       ];
       
       for (const pattern of textPatterns) {
-        const matches = textContent.match(pattern);
-        if (matches) {
-          for (const match of matches) {
-            let textStr = '';
-            if (match.startsWith('(')) {
-              textStr = match.match(/\(([^)]*)\)/)?.[1] || '';
-            } else if (match.startsWith('[')) {
-              // Handle array format: extract all text strings
-              const arrayContent = match.match(/\[([^\]]+)\]/)?.[1] || '';
-              const strings = arrayContent.match(/\(([^)]*)\)/g) || [];
-              textStr = strings.map(s => s.slice(1, -1)).join('');
-            }
-            
-            if (textStr && textStr.length > 1) {
-              extractedTexts.push(textStr);
-            }
+        let patternMatch;
+        while ((patternMatch = pattern.exec(textContent)) !== null) {
+          let textStr = '';
+          if (patternMatch[0].startsWith('(')) {
+            textStr = patternMatch[1];
+          } else if (patternMatch[0].startsWith('[')) {
+            // Handle array format: extract all text strings
+            const arrayContent = patternMatch[1];
+            const strings = arrayContent.match(/\(([^)]*)\)/g) || [];
+            textStr = strings.map(s => s.slice(1, -1)).join(' ');
+          }
+          
+          if (textStr && textStr.length > 1) {
+            extractedTexts.push(textStr);
           }
         }
       }
@@ -179,20 +215,18 @@ const extractPDFText = async (buffer: ArrayBuffer): Promise<string> => {
     
     console.log(`Found ${streamCount} streams and ${btCount} text objects`);
     
-    // Method 3: Direct pattern matching for common text patterns
+    // Method 3: Direct pattern matching for text content
     const directPatterns = [
-      /\(([A-Za-z][^)]{5,})\)/g,       // Text in parentheses (at least 6 chars, starts with letter)
-      /\[[^\]]*\(([^)]{3,})\)[^\]]*\]/g, // Text in arrays
+      /\(([A-Za-z][^)]{2,})\)/g,       // Text in parentheses (at least 3 chars, starts with letter)
+      /\[[^\]]*\(([^)]{2,})\)[^\]]*\]/g, // Text in arrays
     ];
     
     for (const pattern of directPatterns) {
-      const matches = text.match(pattern);
-      if (matches) {
-        for (const match of matches) {
-          const textMatch = match.match(/\(([^)]{3,})\)/);
-          if (textMatch) {
-            extractedTexts.push(textMatch[1]);
-          }
+      let match;
+      while ((match = pattern.exec(binaryText)) !== null) {
+        const text = match[1];
+        if (text && text.length > 2 && /[a-zA-Z]/.test(text)) {
+          extractedTexts.push(text);
         }
       }
     }
@@ -201,26 +235,44 @@ const extractPDFText = async (buffer: ArrayBuffer): Promise<string> => {
     const cleanedTexts = extractedTexts
       .filter(text => text && text.trim().length > 0)
       .map(text => {
-        // Decode PDF escape sequences
+        // Decode PDF escape sequences and clean up
         return text
           .replace(/\\n/g, '\n')
           .replace(/\\r/g, '\r')
           .replace(/\\t/g, '\t')
-          .replace(/\\(\d{3})/g, (match, octal) => String.fromCharCode(parseInt(octal, 8)))
+          .replace(/\\(\d{3})/g, (match, octal) => {
+            try {
+              return String.fromCharCode(parseInt(octal, 8));
+            } catch {
+              return match;
+            }
+          })
           .replace(/\\(.)/g, '$1')
-          .replace(/[^\x20-\x7E\s\n\r\t]/g, '') // Keep only printable ASCII + whitespace
+          .replace(/[\x00-\x08\x0E-\x1F\x7F-\x9F]/g, '') // Remove control characters
           .replace(/\s+/g, ' ')
           .trim();
       })
       .filter(text => 
         text.length > 2 && 
         !/^[0-9\s\.\-\/,]+$/.test(text) && // Skip pure numbers/punctuation
-        /[a-zA-Z]/.test(text) // Must contain at least one letter
+        /[a-zA-Z]/.test(text) && // Must contain at least one letter
+        !/^[A-Z]{2,}[0-9]*$/.test(text) // Skip font names like "F1", "ARIAL"
       );
     
-    const finalText = cleanedTexts.join(' ').replace(/\s+/g, ' ').trim();
+    // Remove duplicates while preserving order
+    const uniqueTexts = [];
+    const seen = new Set();
+    for (const text of cleanedTexts) {
+      const normalized = text.toLowerCase().trim();
+      if (!seen.has(normalized) && normalized.length > 0) {
+        seen.add(normalized);
+        uniqueTexts.push(text);
+      }
+    }
     
-    console.log(`Extracted ${cleanedTexts.length} text segments, final length: ${finalText.length} characters`);
+    const finalText = uniqueTexts.join(' ').replace(/\s+/g, ' ').trim();
+    
+    console.log(`Extracted ${uniqueTexts.length} text segments, final length: ${finalText.length} characters`);
     
     return finalText;
   } catch (error) {
