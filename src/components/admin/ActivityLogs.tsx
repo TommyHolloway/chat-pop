@@ -97,6 +97,8 @@ export function ActivityLogs() {
       setLogs(formattedLogs);
     } catch (error) {
       console.error('Error fetching activity logs:', error);
+      // Show empty state instead of crashing
+      setLogs([]);
     } finally {
       setLoading(false);
     }

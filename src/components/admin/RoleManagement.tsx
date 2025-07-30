@@ -61,21 +61,25 @@ export function RoleManagement() {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('user_roles')
+      // Get all profiles with their roles (including users without explicit roles)
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
         .select(`
           user_id,
-          role,
-          profiles!inner(email, display_name)
+          email,
+          display_name,
+          user_roles (
+            role
+          )
         `);
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      const formattedRoles = data?.map(item => ({
-        user_id: item.user_id,
-        role: item.role,
-        email: (item.profiles as any).email,
-        display_name: (item.profiles as any).display_name,
+      const formattedRoles = profiles?.map(profile => ({
+        user_id: profile.user_id,
+        email: profile.email,
+        display_name: profile.display_name,
+        role: (profile.user_roles as any)?.[0]?.role || 'user',
       })) || [];
 
       setUserRoles(formattedRoles);
@@ -103,13 +107,13 @@ export function RoleManagement() {
   const updateUserRole = async (userId: string, newRole: string) => {
     setUpdating(userId);
     try {
-      // Delete existing role
+      // Delete existing role first
       await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', userId);
 
-      // Insert new role
+      // Insert new role (even for 'user' role for consistency)
       const { error } = await supabase
         .from('user_roles')
         .insert({
@@ -121,16 +125,21 @@ export function RoleManagement() {
 
       // Log the action
       const userEmail = userRoles.find(u => u.user_id === userId)?.email;
-      await supabase.functions.invoke('log-admin-action', {
-        body: {
-          action: 'role_updated',
-          details: {
-            target_user_id: userId,
-            target_user_email: userEmail,
-            new_role: newRole,
+      try {
+        await supabase.functions.invoke('log-admin-action', {
+          body: {
+            action: 'role_updated',
+            details: {
+              target_user_id: userId,
+              target_user_email: userEmail,
+              new_role: newRole,
+            },
           },
-        },
-      });
+        });
+      } catch (logError) {
+        console.warn('Failed to log admin action:', logError);
+        // Don't fail the entire operation if logging fails
+      }
 
       toast({
         title: 'Success',

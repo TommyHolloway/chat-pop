@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfileModal } from './UserProfileModal';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 interface User {
   id: string;
@@ -33,6 +34,7 @@ interface User {
 }
 
 export function UserManagement() {
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,37 +59,47 @@ export function UserManagement() {
     try {
       setLoading(true);
       
-      // First get all profiles with their plans
+      // Get users from profiles with their roles using the new structure
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, email, display_name, plan');
+        .select(`
+          user_id,
+          email,
+          display_name,
+          plan,
+          created_at,
+          updated_at,
+          user_roles (
+            role
+          )
+        `);
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
 
-      // Get user roles
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-
-      if (rolesError) throw rolesError;
-
-      // Call edge function to get auth data
-      const { data: authData, error: authError } = await supabase.functions.invoke('get-users-admin');
-      
-      if (authError) throw authError;
+      // Get auth data for additional info
+      let authData = null;
+      try {
+        const { data } = await supabase.functions.invoke('get-users-admin');
+        authData = data;
+      } catch (authError) {
+        console.warn('Could not fetch auth data:', authError);
+        // Continue without auth data - we'll show what we can
+      }
 
       // Combine the data
       const combinedUsers = profiles?.map(profile => {
         const authUser = authData?.users?.find((u: any) => u.id === profile.user_id);
-        const userRole = roles?.find(r => r.user_id === profile.user_id);
         
         return {
           id: profile.user_id,
           email: profile.email,
           display_name: profile.display_name,
           plan: profile.plan || 'free',
-          role: userRole?.role || 'user',
-          created_at: authUser?.created_at || '',
+          role: (profile.user_roles as any)?.[0]?.role || 'user',
+          created_at: profile.created_at || '',
           last_sign_in_at: authUser?.last_sign_in_at || null,
           email_confirmed_at: authUser?.email_confirmed_at || null
         };
@@ -96,6 +108,11 @@ export function UserManagement() {
       setUsers(combinedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch users. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

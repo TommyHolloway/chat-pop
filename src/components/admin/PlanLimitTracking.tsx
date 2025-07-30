@@ -81,7 +81,10 @@ export function PlanLimitTracking() {
         `)
         .eq('month', currentMonth);
 
-      if (usageError) throw usageError;
+      if (usageError) {
+        console.error('Error fetching usage data:', usageError);
+        throw usageError;
+      }
 
       // Get agent counts for each user
       const { data: agentCounts, error: agentError } = await supabase
@@ -148,6 +151,14 @@ export function PlanLimitTracking() {
 
     } catch (error) {
       console.error('Error fetching usage data:', error);
+      // If there's an error, at least show empty state rather than crash
+      setUserUsages([]);
+      setStats({
+        total_users: 0,
+        users_near_limits: 0,
+        total_storage_used: 0,
+        total_credits_used: 0,
+      });
     } finally {
       setLoading(false);
     }
