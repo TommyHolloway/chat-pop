@@ -1,86 +1,101 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import * as pdfjsLib from 'https://esm.sh/pdfjs-dist@4.0.379/build/pdf.mjs';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Configure PDF.js for Deno environment - set worker source before any PDF operations
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.mjs";
-
-// Enhanced PDF text extraction using pdf.js
-async function extractPDFTextWithPdfJs(buffer: ArrayBuffer): Promise<string> {
+// Enhanced PDF text extraction using multiple strategies
+async function extractPDFTextWithPatterns(buffer: ArrayBuffer): Promise<string> {
   try {
-    console.log('Starting PDF.js text extraction');
+    console.log('Starting pattern-based PDF text extraction');
     
-    // Load the PDF document with Deno-compatible configuration
-    const loadingTask = pdfjsLib.getDocument({
-      data: new Uint8Array(buffer),
-      useSystemFonts: true,
-      disableFontFace: false,
-      useWorkerFetch: false,
-      isEvalSupported: false,
-      cMapUrl: 'https://esm.sh/pdfjs-dist@4.0.379/cmaps/',
-      cMapPacked: true
-    });
+    const data = new Uint8Array(buffer);
+    const textContent = new TextDecoder('latin1').decode(data);
     
-    const pdf = await loadingTask.promise;
-    console.log(`PDF loaded successfully, ${pdf.numPages} pages`);
+    console.log(`Processing PDF buffer of ${data.length} bytes`);
     
     let extractedText = '';
+    const foundTexts = new Set<string>(); // Prevent duplicates
     
-    // Process each page
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      try {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        
-        // Extract text items with proper spacing
-        let pageText = '';
-        let lastY = null;
-        
-        for (const item of textContent.items) {
-          if ('str' in item) {
-            // Add line break if we moved to a new line (different Y position)
-            if (lastY !== null && Math.abs(lastY - item.transform[5]) > 5) {
-              pageText += '\n';
-            }
-            
-            // Add the text with a space if needed
-            if (pageText && !pageText.endsWith(' ') && !pageText.endsWith('\n')) {
-              pageText += ' ';
-            }
-            
-            pageText += item.str;
-            lastY = item.transform[5];
+    // Strategy 1: Extract text from text objects (Tj and TJ operators)
+    const textObjectPatterns = [
+      // Single text strings
+      /\(([^)\\]+(?:\\.[^)\\]*)*)\)\s*Tj/g,
+      // Text arrays
+      /\[([^\]]+)\]\s*TJ/g,
+      // BT...ET blocks (text objects)
+      /BT\s+.*?\((.*?)\).*?ET/gs,
+      // Alternative text patterns
+      /\/F\d+\s+\d+\s+Tf\s*\((.*?)\)/g
+    ];
+    
+    for (const pattern of textObjectPatterns) {
+      let match;
+      while ((match = pattern.exec(textContent)) !== null) {
+        if (match[1]) {
+          let text = match[1];
+          
+          // Clean up text arrays (TJ operator format)
+          if (text.includes('[') || text.includes(']')) {
+            text = text.replace(/[\[\]]/g, '').replace(/\)\s*\d*\s*\(/g, ' ');
+          }
+          
+          // Clean escape sequences
+          text = text
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, '\r')
+            .replace(/\\t/g, '\t')
+            .replace(/\\'/g, "'")
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\')
+            .replace(/\\(\d{3})/g, (_, octal) => String.fromCharCode(parseInt(octal, 8)));
+          
+          // Filter out very short or non-meaningful text
+          if (text.length > 1 && /[a-zA-Z0-9]/.test(text)) {
+            foundTexts.add(text.trim());
           }
         }
-        
-        if (pageText.trim()) {
-          extractedText += pageText.trim() + '\n\n';
-        }
-        
-        console.log(`Extracted text from page ${pageNum}: ${pageText.length} characters`);
-        
-      } catch (pageError) {
-        console.error(`Error processing page ${pageNum}:`, pageError);
       }
     }
     
-    // Clean up the extracted text
-    const cleanedText = extractedText
-      .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
-      .replace(/\n\s*\n/g, '\n\n')  // Clean up multiple newlines
-      .trim();
+    // Strategy 2: Look for stream objects that might contain text
+    const streamPattern = /stream\s*(.*?)\s*endstream/gs;
+    let streamMatch;
+    while ((streamMatch = streamPattern.exec(textContent)) !== null) {
+      const streamData = streamMatch[1];
+      
+      // Try to extract readable text from streams
+      const readableText = streamData.replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      if (readableText.length > 10 && /[a-zA-Z]{3,}/.test(readableText)) {
+        foundTexts.add(readableText);
+      }
+    }
     
-    console.log(`PDF.js extraction completed: ${cleanedText.length} characters`);
-    return cleanedText;
+    // Strategy 3: Look for direct readable text in the PDF
+    const readableTextPattern = /[a-zA-Z][a-zA-Z0-9\s\.,!?;:()\-'"{}\[\]]{10,}/g;
+    let readableMatch;
+    while ((readableMatch = readableTextPattern.exec(textContent)) !== null) {
+      const text = readableMatch[0].trim();
+      if (text.length > 15) {
+        foundTexts.add(text);
+      }
+    }
+    
+    // Combine and clean all found texts
+    extractedText = Array.from(foundTexts).join('\n').trim();
+    
+    console.log(`Pattern extraction found ${foundTexts.size} text segments, total length: ${extractedText.length}`);
+    
+    return extractedText;
     
   } catch (error) {
-    console.error('PDF.js extraction failed:', error);
+    console.error('Pattern-based PDF extraction failed:', error);
     throw error;
   }
 }
@@ -187,31 +202,43 @@ serve(async (req) => {
     const contentType = fileType || '';
 
     if (contentType === 'application/pdf' || filePath.toLowerCase().endsWith('.pdf')) {
-      console.log('Processing PDF file with pdf.js');
+      console.log('Processing PDF file with pattern-based extraction');
       
       try {
-        content = await extractPDFTextWithPdfJs(fileBuffer);
+        // Use pattern-based extraction (no external dependencies)
+        content = await extractPDFTextWithPatterns(fileBuffer);
         
+        // If pattern extraction fails or yields minimal content, try fallback
         if (!content || content.length < 20) {
-          console.log('PDF.js extraction yielded minimal content, trying fallback');
+          console.log('Pattern extraction yielded minimal content, trying enhanced fallback');
           content = await extractPDFTextFallback(fileBuffer);
         }
         
-        if (!content || content.length < 20) {
-          content = 'Content extraction failed: PDF appears to be empty, encrypted, or image-based. Please try converting it to a text file first.';
-        } else {
+        // Validate and clean content
+        if (content && content.length >= 20) {
           console.log(`Successfully extracted ${content.length} characters from PDF`);
           
           // Validate content quality
           const validation = validateExtractedContent(content);
           if (!validation.isValid) {
             console.log(`Content quality warning: ${validation.reason}`);
+            // Still use the content but warn about quality
           }
+          
+          // Clean up the final content
+          content = content
+            .replace(/\s+/g, ' ')           // Normalize whitespace
+            .replace(/[^\x20-\x7E\s]/g, ' ') // Remove non-printable chars
+            .replace(/\s{2,}/g, ' ')        // Remove extra spaces
+            .trim();
+            
+        } else {
+          content = 'Content extraction failed: PDF appears to be empty, encrypted, image-based, or uses unsupported encoding. Please try converting it to a text file first.';
         }
         
       } catch (pdfError) {
         console.error('PDF processing failed:', pdfError);
-        content = `PDF processing failed: ${pdfError.message}. Please try converting the PDF to a text file.`;
+        content = `PDF processing failed: ${pdfError.message}. Please try converting the PDF to a text file or check if the file is corrupted.`;
       }
       
     } else {
