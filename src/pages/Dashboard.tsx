@@ -28,12 +28,14 @@ import {
 import { useAgents } from '@/hooks/useAgents';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
 import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
 
 export const Dashboard = () => {
   const { agents, loading, deleteAgent, refetchAgents } = useAgents();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { analytics } = useDashboardAnalytics();
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
     try {
@@ -93,7 +95,9 @@ export const Dashboard = () => {
               <Bot className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{agents.length}</div>
+              <div className="text-2xl font-bold">
+                {analytics.isLoading ? "..." : analytics.totalAgents}
+              </div>
               <p className="text-xs text-muted-foreground">Active agents</p>
             </CardContent>
           </Card>
@@ -104,8 +108,10 @@ export const Dashboard = () => {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,284</div>
-              <p className="text-xs text-muted-foreground">+180 from yesterday</p>
+              <div className="text-2xl font-bold">
+                {analytics.isLoading ? "..." : analytics.totalConversations}
+              </div>
+              <p className="text-xs text-muted-foreground">Total conversations</p>
             </CardContent>
           </Card>
 
@@ -115,8 +121,10 @@ export const Dashboard = () => {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">98.2%</div>
-              <p className="text-xs text-muted-foreground">+2.1% from last week</p>
+              <div className="text-2xl font-bold">
+                {analytics.isLoading ? "..." : `${analytics.responseRate}%`}
+              </div>
+              <p className="text-xs text-muted-foreground">Agent response rate</p>
             </CardContent>
           </Card>
 
@@ -126,8 +134,10 @@ export const Dashboard = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">573</div>
-              <p className="text-xs text-muted-foreground">+25 this hour</p>
+              <div className="text-2xl font-bold">
+                {analytics.isLoading ? "..." : analytics.activeUsers}
+              </div>
+              <p className="text-xs text-muted-foreground">Unique chat users</p>
             </CardContent>
           </Card>
         </div>

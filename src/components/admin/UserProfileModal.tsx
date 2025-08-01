@@ -178,9 +178,9 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="hobby">Hobby</SelectItem>
-                      <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="hobby">Hobby</SelectItem>
+                  <SelectItem value="standard">Pro</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

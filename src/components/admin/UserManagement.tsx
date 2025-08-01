@@ -188,7 +188,7 @@ export function UserManagement() {
                   <TableCell>{user.display_name || '-'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
-                      {user.plan}
+                      {user.plan === 'standard' ? 'Pro' : user.plan}
                     </Badge>
                   </TableCell>
                   <TableCell>
