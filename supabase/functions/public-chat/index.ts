@@ -5,7 +5,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'text/html',
 };
 
 serve(async (req) => {
@@ -413,7 +412,14 @@ serve(async (req) => {
 </html>
     `;
 
-    return new Response(html, { headers: corsHeaders });
+    return new Response(html, { 
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'text/html; charset=utf-8',
+        'X-Frame-Options': 'ALLOWALL',
+        'X-Content-Type-Options': 'nosniff'
+      } 
+    });
   } catch (error) {
     console.error('Error in public-chat function:', error);
     return new Response('Internal Server Error', { 

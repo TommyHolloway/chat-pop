@@ -98,6 +98,15 @@ serve(async (req) => {
       border-radius: 12px;
     \`;
 
+    // Add iframe load event debugging
+    iframe.addEventListener('load', function() {
+      console.log('EccoChat iframe loaded successfully');
+    });
+
+    iframe.addEventListener('error', function() {
+      console.error('EccoChat iframe failed to load');
+    });
+
     overlay.appendChild(iframe);
     document.body.appendChild(overlay);
   }
