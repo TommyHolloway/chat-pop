@@ -238,7 +238,12 @@ export function UserManagement() {
           setIsModalOpen(false);
           setSelectedUser(null);
         }}
-        onUpdate={fetchUsers}
+        onUpdate={() => {
+          // Add a small delay to ensure database changes are committed
+          setTimeout(() => {
+            fetchUsers();
+          }, 500);
+        }}
       />
     </>
   );

@@ -403,6 +403,10 @@ export const AgentForm = () => {
                 files={files} 
                 links={links} 
                 agentUpdatedAt={undefined} // Will get this from agent data if needed
+                agentId={id!}
+                onTrainingComplete={() => {
+                  refetchFiles();
+                }}
               />
             )}
 

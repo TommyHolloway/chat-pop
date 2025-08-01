@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { TrainingProgress } from './TrainingProgress';
+
 import { useStreamingChat } from '@/hooks/useStreamingChat';
 import { Loader2, TestTube2, MessageSquare, Database, Zap } from 'lucide-react';
 
@@ -155,11 +155,6 @@ export const AgentTestSuite: React.FC<AgentTestSuiteProps> = ({
         </CardContent>
       </Card>
 
-      {/* Training Component */}
-      <TrainingProgress 
-        agentId={agentId} 
-        onTrainingComplete={fetchKnowledgeStats}
-      />
 
       {/* Cache Testing */}
       <Card>
