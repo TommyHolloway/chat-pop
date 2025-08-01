@@ -39,6 +39,38 @@ export const ConversationManager = ({ agentId }: ConversationManagerProps) => {
 
   useEffect(() => {
     fetchConversations();
+    
+    // Set up real-time subscription for conversations
+    const channel = supabase
+      .channel('conversations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `agent_id=eq.${agentId}`
+        },
+        () => {
+          fetchConversations(); // Refresh when conversations change
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages'
+        },
+        () => {
+          fetchConversations(); // Refresh when messages change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [agentId]);
 
   const fetchConversations = async () => {

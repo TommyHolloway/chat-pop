@@ -45,6 +45,27 @@ export const ConversationDetail = ({ conversationId, onBack, agentId }: Conversa
   useEffect(() => {
     fetchConversationDetails();
     fetchMessages();
+    
+    // Set up real-time subscription for messages
+    const channel = supabase
+      .channel('messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        () => {
+          fetchMessages(); // Refresh when messages change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [conversationId]);
 
   useEffect(() => {
