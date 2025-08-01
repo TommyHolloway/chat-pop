@@ -14,6 +14,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 // Pages
 import { Landing } from "./pages/Landing";
+import { Pricing } from "./pages/Pricing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
 import { Dashboard } from "./pages/Dashboard";
@@ -65,6 +66,11 @@ const App = () => (
               <Route path="/" element={
                 <PublicLayout>
                   <Landing />
+                </PublicLayout>
+              } />
+              <Route path="/pricing" element={
+                <PublicLayout>
+                  <Pricing />
                 </PublicLayout>
               } />
               
