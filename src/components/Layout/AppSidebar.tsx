@@ -85,6 +85,14 @@ export const AppSidebar = () => {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={isActive('/agents')}>
+                          <Link to="/agents">
+                            <Bot className="h-4 w-4" />
+                            <span>View All</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild isActive={isActive('/agents/new')}>
                           <Link to="/agents/new">
                             <Plus className="h-4 w-4" />

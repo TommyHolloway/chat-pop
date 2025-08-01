@@ -17,6 +17,7 @@ import { Landing } from "./pages/Landing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
 import { Dashboard } from "./pages/Dashboard";
+import { Agents } from "./pages/Agents";
 import { AgentForm } from "./pages/agents/AgentForm";
 import { Playground } from "./pages/agents/Playground";
 import { Deploy } from "./pages/agents/Deploy";
@@ -79,6 +80,13 @@ const App = () => (
                 <ProtectedRoute>
                   <AuthenticatedLayout>
                     <Dashboard />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/agents" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <Agents />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />

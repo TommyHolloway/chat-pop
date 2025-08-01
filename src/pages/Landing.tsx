@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Sparkles
 } from 'lucide-react';
+import { PricingSection } from '@/components/PricingSection';
 
 export const Landing = () => {
   return (
@@ -113,6 +114,9 @@ export const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Pricing */}
+      <PricingSection />
 
       {/* Social Proof */}
       <section className="py-20 bg-muted/30">
