@@ -637,37 +637,6 @@ export const AgentForm = () => {
               </CardContent>
             </Card>
 
-            {/* Training Actions */}
-            {id && (links.length > 0 || files.length > 0) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="h-5 w-5" />
-                    Agent Training
-                  </CardTitle>
-                  <CardDescription>
-                    Train your agent with the uploaded files and links
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {links.length} training links and {files.length} files ready for training
-                      </p>
-                    </div>
-                    <Button 
-                      type="button" 
-                      onClick={handleTrainAgent} 
-                      disabled={linksLoading || isLoading}
-                    >
-                      <Brain className="h-4 w-4 mr-2" />
-                      {linksLoading ? 'Training...' : 'Train Agent'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
