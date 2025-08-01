@@ -261,11 +261,11 @@ export const useKnowledgeFiles = (agentId: string) => {
           }
         });
 
-        if (extractResponse.data?.success && extractResponse.data?.extractedContent) {
-          processedContent = extractResponse.data.extractedContent;
-        } else if (extractResponse.data?.extractedContent) {
+        if (extractResponse.data?.success && extractResponse.data?.content) {
+          processedContent = extractResponse.data.content;
+        } else if (extractResponse.data?.content) {
           // Even if extraction failed, use the fallback content
-          processedContent = extractResponse.data.extractedContent;
+          processedContent = extractResponse.data.content;
         } else {
           processedContent = `File uploaded: ${file.name} (${fileExtension}). Content extraction failed.`;
         }
@@ -361,7 +361,7 @@ export const useKnowledgeFiles = (agentId: string) => {
         console.log('Extract response:', {
           error: extractResponse.error,
           success: extractResponse.data?.success,
-          contentLength: extractResponse.data?.extractedContent?.length,
+          contentLength: extractResponse.data?.content?.length,
           dataKeys: Object.keys(extractResponse.data || {})
         });
 
@@ -369,8 +369,8 @@ export const useKnowledgeFiles = (agentId: string) => {
           throw new Error(`Edge function error: ${extractResponse.error.message}`);
         }
 
-        if (extractResponse.data?.extractedContent) {
-          processedContent = extractResponse.data.extractedContent;
+        if (extractResponse.data?.content) {
+          processedContent = extractResponse.data.content;
           console.log(`Content extracted successfully. Length: ${processedContent.length} characters`);
         } else {
           throw new Error(extractResponse.data?.error || 'No content extracted from response');
