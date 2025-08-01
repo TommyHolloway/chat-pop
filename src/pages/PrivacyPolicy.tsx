@@ -25,7 +25,7 @@ export const PrivacyPolicy = () => {
             </p>
             
             <p className="text-sm text-muted-foreground">
-              Last updated: January 1, 2024
+              Last updated: August 01, 2025
             </p>
           </div>
         </div>
@@ -62,90 +62,82 @@ const privacySections = [
   {
     title: "1. Information We Collect",
     content: [
-      "We collect information you provide directly to us, such as when you create an account, upload content, or contact us for support. This may include your name, email address, and any content you choose to upload to our platform.",
-      "We automatically collect certain information about your device and how you interact with our services, including your IP address, browser type, operating system, and usage patterns.",
-      "If you choose to integrate with third-party services, we may collect information from those services in accordance with their privacy policies and your authorization."
+      "We collect information that identifies, relates to, describes, or could reasonably be linked to you (\"Personal Information\"). The types of information we collect include:",
+      "Account Information: When you create an account, we collect your email address, username, and password. We may also collect optional details like your name or company information.",
+      "Usage Data: Automatically collected data such as IP address, browser type, device identifiers, pages viewed, time spent on the Service, and interaction details (e.g., clicks, scrolls).",
+      "Content Data: Information you upload or provide, such as text files, documents, URLs for crawling, chat histories, and knowledge bases used to train AI agents.",
+      "Payment Information: If you subscribe to paid plans, we collect billing details through our payment processor (Stripe), but we do not store credit card numbers.",
+      "Cookies and Similar Technologies: We use cookies for session management, analytics, and preferences. You can manage cookie preferences through your browser settings.",
+      "We do not collect sensitive personal information (e.g., race, religion, health data) unless you voluntarily provide it in your content."
     ]
   },
   {
     title: "2. How We Use Your Information",
     content: [
-      "We use the information we collect to provide, maintain, and improve our services, including processing your content to train and deploy your chatbots.",
-      "We may use your information to communicate with you about your account, provide customer support, and send you important service updates.",
-      "We use aggregated and anonymized data to analyze usage patterns and improve our platform. This data cannot be used to identify individual users."
+      "We use your information to:",
+      "Provide and maintain the Service, including creating, testing, and deploying AI chat agents powered by OpenAI.",
+      "Process uploads and generate responses based on your knowledge base.",
+      "Improve the Service through analytics and usage patterns.",
+      "Communicate with you, such as sending service updates, security alerts, or marketing emails (with opt-out options).",
+      "Handle payments, enforce terms, and comply with legal obligations.",
+      "For AI processing: Your content is sent to OpenAI for generating responses, but we do not allow them to use it for training their models."
     ]
   },
   {
-    title: "3. Information Sharing",
+    title: "3. How We Share Your Information",
     content: [
-      "We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.",
-      "We may share your information with trusted service providers who assist us in operating our platform, provided they agree to protect your information.",
-      "We may disclose your information if required by law or if we believe disclosure is necessary to protect our rights, property, or safety, or that of our users."
+      "We share information only as necessary:",
+      "Service Providers: With vendors like OpenAI (for AI generation), Supabase (for storage and database), and Stripe (for billing), bound by contracts to protect your data.",
+      "Legal Requirements: If required by law, subpoena, or to protect rights/safety.",
+      "Business Transfers: In mergers, acquisitions, or asset sales, with notice to you.",
+      "Aggregated Data: Anonymous, aggregated insights for research or marketing.",
+      "We do not sell your Personal Information."
     ]
   },
   {
     title: "4. Data Security",
     content: [
-      "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.",
-      "All data transmission is encrypted using industry-standard SSL/TLS protocols. We store your data in secure, access-controlled environments.",
-      "While we strive to protect your information, no method of transmission over the internet or electronic storage is 100% secure. We cannot guarantee absolute security."
+      "We implement reasonable security measures, including encryption in transit and at rest, access controls, and regular audits. However, no system is completely secure, and we cannot guarantee absolute security."
     ]
   },
   {
-    title: "5. Data Retention",
+    title: "5. Your Privacy Rights",
     content: [
-      "We retain your personal information for as long as your account is active or as needed to provide you services.",
-      "If you delete your account, we will delete your personal information within 30 days, except where we are required to retain it for legal purposes.",
-      "Aggregated and anonymized data may be retained indefinitely for analytical purposes."
+      "Depending on your location (e.g., GDPR for EU users, CCPA for California), you may have rights to:",
+      "Access, correct, or delete your data.",
+      "Opt out of data processing or marketing.",
+      "Request data portability.",
+      "To exercise rights, email privacy@eccochat.com. We respond within 30 days (or 45 for CCPA)."
     ]
   },
   {
-    title: "6. Your Rights",
+    title: "6. Cookies and Tracking",
     content: [
-      "You have the right to access, update, or delete your personal information at any time through your account settings.",
-      "You may request a copy of your personal data or ask us to transfer it to another service (data portability).",
-      "You can opt out of marketing communications at any time by following the unsubscribe links in our emails or contacting us directly."
+      "We use essential cookies for functionality and analytics cookies (e.g., Google Analytics) for improvements. You can opt out via browser settings or our consent banner."
     ]
   },
   {
-    title: "7. Cookies and Tracking",
+    title: "7. Children's Privacy",
     content: [
-      "We use cookies and similar technologies to enhance your experience, analyze usage, and provide personalized content.",
-      "You can control cookie settings through your browser preferences. However, disabling cookies may affect the functionality of our services.",
-      "We do not track users across third-party websites or services."
+      "The Service is not intended for children under 16. We do not knowingly collect data from minors. If we discover such data, we delete it."
     ]
   },
   {
     title: "8. International Data Transfers",
     content: [
-      "Your information may be transferred to and processed in countries other than your own, including the United States.",
-      "We ensure that any international transfers comply with applicable data protection laws and provide adequate safeguards for your information.",
-      "By using our services, you consent to the transfer of your information as described in this policy."
+      "Data may be processed in the US or other countries. We use safeguards like standard contractual clauses for transfers."
     ]
   },
   {
-    title: "9. Children's Privacy",
+    title: "9. Changes to This Policy",
     content: [
-      "Our services are not intended for children under the age of 13. We do not knowingly collect personal information from children under 13.",
-      "If we learn that we have collected personal information from a child under 13, we will delete that information as quickly as possible.",
-      "If you believe we have collected information from a child under 13, please contact us immediately."
+      "We may update this policy. Changes are posted here with the updated date. Continued use constitutes acceptance."
     ]
   },
   {
-    title: "10. Changes to This Policy",
+    title: "10. Contact Us",
     content: [
-      "We may update this privacy policy from time to time. We will notify you of any material changes by email or through our platform.",
-      "Your continued use of our services after any changes indicates your acceptance of the updated policy.",
-      "We encourage you to review this policy periodically to stay informed about how we protect your information."
-    ]
-  },
-  {
-    title: "11. Contact Us",
-    content: [
-      "If you have any questions about this Privacy Policy or our data practices, please contact us at:",
-      "Email: privacy@eccochat.com",
-      "Address: [Company Address]",
-      "We will respond to your inquiry within 30 days."
+      "For questions, contact privacy@eccochat.com."
     ]
   }
 ];

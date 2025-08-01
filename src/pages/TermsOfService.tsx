@@ -25,7 +25,7 @@ export const TermsOfService = () => {
             </p>
             
             <p className="text-sm text-muted-foreground">
-              Last updated: January 1, 2024
+              Last updated: August 01, 2025
             </p>
           </div>
         </div>
@@ -62,82 +62,95 @@ const termsSection = [
   {
     title: "1. Acceptance of Terms",
     content: [
-      "By accessing and using EccoChat services, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.",
-      "These Terms of Service may be updated from time to time. We will notify users of any material changes via email or through our platform."
+      "You must be 18 or older to use the Service. By creating an account, you represent that you meet this requirement and agree to these Terms."
     ]
   },
   {
-    title: "2. Description of Service",
+    title: "2. Account Registration and Responsibilities",
     content: [
-      "EccoChat provides AI-powered chatbot creation and deployment services. Our platform allows users to create, customize, and deploy intelligent chatbots for various business purposes.",
-      "We reserve the right to modify, suspend, or discontinue any aspect of the service at any time, with or without notice."
+      "You must provide accurate information during registration and keep your account secure.",
+      "You are responsible for all activity on your account.",
+      "Prohibited uses: Uploading illegal/harmful content, reverse-engineering the Service, or violating laws."
     ]
   },
   {
-    title: "3. User Accounts and Registration",
+    title: "3. Service Description",
     content: [
-      "You must provide accurate and complete information when creating an account. You are responsible for maintaining the confidentiality of your account and password.",
-      "You agree to accept responsibility for all activities that occur under your account or password. You must notify us immediately of any unauthorized use of your account."
+      "The Service allows you to create, test, and deploy AI chat agents using OpenAI. It is provided \"as is\" and may include beta features with limitations."
     ]
   },
   {
-    title: "4. Acceptable Use Policy",
+    title: "4. Intellectual Property",
     content: [
-      "You agree not to use the service for any unlawful purposes or to conduct any unlawful activity, including but not limited to fraud, embezzlement, money laundering or insider trading.",
-      "You may not upload, transmit, or distribute any content that is harmful, offensive, obscene, abusive, invasive of privacy, defamatory, hateful or otherwise objectionable.",
-      "You may not attempt to gain unauthorized access to our systems or engage in any activity that disrupts or interferes with our services."
+      "We own all rights to the Service and its IP.",
+      "You own your content (e.g., knowledge bases) but grant us a license to process it for the Service (e.g., sending to OpenAI).",
+      "Do not infringe third-party IP."
     ]
   },
   {
-    title: "5. Content and Data",
+    title: "5. Payments and Subscriptions",
     content: [
-      "You retain ownership of all content you upload to our platform. By uploading content, you grant us a license to process, store, and transmit your content as necessary to provide our services.",
-      "We implement appropriate technical and organizational measures to protect your data. However, you acknowledge that no system is completely secure.",
-      "You are responsible for ensuring that your content does not violate any third-party rights or applicable laws."
+      "Plans: Free (limited), Hobby ($35/month), Pro ($147/month). All include 14-day trial.",
+      "Billing via Stripe; auto-renews monthly. No refunds after trial.",
+      "We may change pricing with notice.",
+      "Termination: We can suspend for non-payment or violations; you lose access to data upon termination."
     ]
   },
   {
-    title: "6. Payment and Billing",
+    title: "6. Usage Limits and Restrictions",
     content: [
-      "Paid services are billed in advance on a monthly or annual basis. All fees are non-refundable except as expressly stated in these terms.",
-      "We reserve the right to change our pricing at any time. We will provide notice of pricing changes at least 30 days in advance.",
-      "Failure to pay fees may result in suspension or termination of your account."
+      "Adhere to plan limits (e.g., message credits, agents).",
+      "No abuse: Overloading servers, spamming, or using for illegal purposes.",
+      "We monitor usage and may throttle excessive activity."
     ]
   },
   {
-    title: "7. Intellectual Property",
+    title: "7. Warranties and Disclaimers",
     content: [
-      "The EccoChat platform and all related technology are the intellectual property of EccoChat and are protected by copyright, trademark, and other laws.",
-      "You may not copy, modify, distribute, or reverse engineer any part of our platform without written permission."
+      "The Service is provided \"as is\" without warranties. AI responses may be inaccurate; use at your risk.",
+      "We disclaim liability for data loss, interruptions, or third-party actions (e.g., OpenAI downtime)."
     ]
   },
   {
     title: "8. Limitation of Liability",
     content: [
-      "EccoChat shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.",
-      "Our total liability shall not exceed the amount you paid to us in the twelve months preceding the claim."
+      "Our liability is limited to fees paid in the last 12 months.",
+      "No indirect, consequential, or punitive damages."
     ]
   },
   {
-    title: "9. Termination",
+    title: "9. Indemnification",
     content: [
-      "Either party may terminate this agreement at any time. Upon termination, your access to the service will cease immediately.",
-      "We may terminate your account if you violate these terms or engage in behavior that we deem inappropriate or harmful to our service or other users."
+      "You agree to indemnify us against claims arising from your content or misuse of the Service."
     ]
   },
   {
-    title: "10. Governing Law",
+    title: "10. Termination",
     content: [
-      "These terms shall be governed by and construed in accordance with the laws of the jurisdiction in which EccoChat is incorporated.",
-      "Any disputes arising from these terms shall be resolved through binding arbitration in accordance with the rules of the applicable arbitration association."
+      "You can cancel anytime.",
+      "We can terminate for violations, with or without notice.",
+      "Upon termination, data may be deleted after 30 days."
     ]
   },
   {
-    title: "11. Contact Information",
+    title: "11. Governing Law and Disputes",
     content: [
-      "If you have any questions about these Terms of Service, please contact us at:",
-      "Email: legal@eccochat.com",
-      "Address: [Company Address]"
+      "Governed by [Your State/Country] laws.",
+      "Disputes resolved through arbitration in [Your Location]; no class actions."
+    ]
+  },
+  {
+    title: "12. Changes to Terms",
+    content: [
+      "We may update Terms. Continued use constitutes acceptance."
+    ]
+  },
+  {
+    title: "13. Miscellaneous",
+    content: [
+      "Severability: Invalid provisions don't affect others.",
+      "Entire Agreement: These Terms supersede prior agreements.",
+      "For questions, contact support@eccochat.com."
     ]
   }
 ];
