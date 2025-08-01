@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,25 @@ import { PricingSection } from '@/components/PricingSection';
 
 export const Landing = () => {
   const { activeVideo, loading: videoLoading } = useSiteContent("landing_video");
+  
+  useEffect(() => {
+    // Add chat widget script
+    const script = document.createElement('script');
+    script.innerHTML = `
+      (function() {
+        var script = document.createElement('script');
+        script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=light&color=%233b82f6';
+        document.head.appendChild(script);
+      })();
+    `;
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup on unmount
+      document.head.removeChild(script);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}

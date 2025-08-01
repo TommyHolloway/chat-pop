@@ -139,13 +139,19 @@ export const Agents = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
+                          <Link to={`/agents/${agent.id}`} className="flex items-center">
+                            <Settings className="mr-2 h-4 w-4" />
+                            View Details
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                           <Link to={`/agents/${agent.id}/edit`} className="flex items-center">
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Agent
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to={`/agents/${agent.id}/playground`} className="flex items-center">
+                          <Link to={`/agents/${agent.id}/test`} className="flex items-center">
                             <Play className="mr-2 h-4 w-4" />
                             Test Agent
                           </Link>
@@ -182,16 +188,16 @@ export const Agents = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <Link to={`/agents/${agent.id}/playground`} className="flex-1">
+                      <Link to={`/agents/${agent.id}/test`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full">
                           <Play className="mr-2 h-3 w-3" />
                           Test
                         </Button>
                       </Link>
-                      <Link to={`/agents/${agent.id}/edit`} className="flex-1">
+                      <Link to={`/agents/${agent.id}`} className="flex-1">
                         <Button size="sm" className="w-full">
-                          <Edit className="mr-2 h-3 w-3" />
-                          Edit
+                          <Settings className="mr-2 h-3 w-3" />
+                          Manage
                         </Button>
                       </Link>
                     </div>

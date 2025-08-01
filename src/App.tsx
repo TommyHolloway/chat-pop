@@ -23,6 +23,7 @@ import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
 import { Dashboard } from "./pages/Dashboard";
 import { Agents } from "./pages/Agents";
+import { AgentDetail } from "./pages/agents/AgentDetail";
 import { AgentForm } from "./pages/agents/AgentForm";
 import { Playground } from "./pages/agents/Playground";
 import { Deploy } from "./pages/agents/Deploy";
@@ -127,24 +128,17 @@ const App = () => (
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/agents/:id/edit" element={
+              <Route path="/agents/:id" element={
                 <ProtectedRoute>
                   <AuthenticatedLayout>
-                    <AgentForm />
+                    <AgentDetail />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/agents/:id/playground" element={
+              <Route path="/agents/:id/:tab" element={
                 <ProtectedRoute>
                   <AuthenticatedLayout>
-                    <Playground />
-                  </AuthenticatedLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/agents/:id/deploy" element={
-                <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <Deploy />
+                    <AgentDetail />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />

@@ -23,7 +23,6 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/features" className="hover:text-foreground transition-colors">Features</Link></li>
               <li><Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
-              <li><Link to="/api" className="hover:text-foreground transition-colors">API</Link></li>
             </ul>
           </div>
 
@@ -33,8 +32,9 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/about" className="hover:text-foreground transition-colors">About</Link></li>
               <li><Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link></li>
-              <li><Link to="/careers" className="hover:text-foreground transition-colors">Careers</Link></li>
-              <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
+              <li>
+                <span className="text-muted-foreground">Contact: support@eccochat.com</span>
+              </li>
             </ul>
           </div>
 
@@ -49,12 +49,9 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t mt-8 pt-8 flex justify-center">
           <p className="text-sm text-muted-foreground">
             © 2024 EccoChat. All rights reserved.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2 md:mt-0">
-            Powered by Vercel & OpenAI
           </p>
         </div>
       </div>
