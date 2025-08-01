@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, UserCog, Activity, BarChart3 } from 'lucide-react';
+import { Users, UserCog, Activity, BarChart3, Video } from 'lucide-react';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { RoleManagement } from '@/components/admin/RoleManagement';
 import { ActivityLogs } from '@/components/admin/ActivityLogs';
 import { PlanLimitTracking } from '@/components/admin/PlanLimitTracking';
+import { SiteContentManagement } from '@/components/admin/SiteContentManagement';
 
 export default function AdminPortal() {
   const [activeTab, setActiveTab] = useState('users');
@@ -21,7 +22,7 @@ export default function AdminPortal() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
@@ -37,6 +38,10 @@ export default function AdminPortal() {
             <TabsTrigger value="limits" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Plan Limits
+            </TabsTrigger>
+            <TabsTrigger value="content" className="flex items-center gap-2">
+              <Video className="h-4 w-4" />
+              Site Content
             </TabsTrigger>
           </TabsList>
 
@@ -92,6 +97,20 @@ export default function AdminPortal() {
               </CardHeader>
               <CardContent>
                 <PlanLimitTracking />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="content" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Site Content Management</CardTitle>
+                <CardDescription>
+                  Upload and manage landing page videos and other site content
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SiteContentManagement />
               </CardContent>
             </Card>
           </TabsContent>

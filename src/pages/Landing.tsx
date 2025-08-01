@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useSiteContent } from '@/hooks/useSiteContent';
 import { 
   Bot, 
   Zap, 
@@ -12,49 +13,87 @@ import {
   BarChart3,
   CheckCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Play
 } from 'lucide-react';
 import { PricingSection } from '@/components/PricingSection';
 
 export const Landing = () => {
+  const { activeVideo, loading: videoLoading } = useSiteContent("landing_video");
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-5"></div>
         <div className="container mx-auto px-4 relative">
-          <div className="text-center space-y-8 max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-4 animate-fade-in">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Free to start • No credit card required
-            </Badge>
-            
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight animate-slide-up">
-              Automate Real Estate Inquiries with AI Chatbots—{' '}
-              <span className="text-gradient-hero">Capture Leads 24/7 and Close More Deals</span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in">
-              Tired of missing off-hour queries or wasting time on tire-kickers? EccoChat lets you build intelligent chat agents in minutes—upload listings, qualify buyers, and schedule viewings with OpenAI power.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-scale-in">
-              <Link to="/auth/signup">
-                <Button size="lg" className="text-lg px-8 py-4 h-auto">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/demo">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto">
-                  Watch Demo
-                </Button>
-              </Link>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Text Content */}
+            <div className="space-y-8">
+              <Badge variant="secondary" className="mb-4 animate-fade-in">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Free to start • No credit card required
+              </Badge>
+              
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight animate-slide-up">
+                Automate Real Estate Inquiries with AI Chatbots—{' '}
+                <span className="text-gradient-hero">Capture Leads 24/7 and Close More Deals</span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-muted-foreground animate-fade-in">
+                Tired of missing off-hour queries or wasting time on tire-kickers? EccoChat lets you build intelligent chat agents in minutes—upload listings, qualify buyers, and schedule viewings with OpenAI power.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 animate-scale-in">
+                <Link to="/auth/signup">
+                  <Button size="lg" className="text-lg px-8 py-4 h-auto">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/demo">
+                  <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto">
+                    Learn More
+                  </Button>
+                </Link>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                ✨ 1,000+ businesses trust EccoChat • No setup fees • Cancel anytime
+              </p>
             </div>
-            
-            <p className="text-sm text-muted-foreground">
-              ✨ 1,000+ businesses trust EccoChat • No setup fees • Cancel anytime
-            </p>
+
+            {/* Right Column - Video Demo */}
+            <div className="lg:pl-8">
+              {videoLoading ? (
+                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : activeVideo ? (
+                <div className="relative">
+                  <video
+                    controls
+                    className="w-full rounded-lg shadow-2xl"
+                    preload="metadata"
+                    poster={activeVideo.thumbnail_url || undefined}
+                  >
+                    <source src={activeVideo.file_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  {activeVideo.title && (
+                    <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
+                      {activeVideo.title}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20">
+                  <div className="text-center space-y-3">
+                    <Play className="h-16 w-16 mx-auto text-muted-foreground" />
+                    <p className="text-muted-foreground">Demo video coming soon</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

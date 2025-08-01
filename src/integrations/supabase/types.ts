@@ -322,6 +322,45 @@ export type Database = {
           },
         ]
       }
+      site_content: {
+        Row: {
+          content_type: string
+          created_at: string
+          description: string | null
+          display_order: number
+          file_url: string
+          id: string
+          is_active: boolean
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_url: string
+          id?: string
+          is_active?: boolean
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_url?: string
+          id?: string
+          is_active?: boolean
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
