@@ -30,13 +30,12 @@ export const Landing = () => {
             </Badge>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight animate-slide-up">
-              Build AI Chat Agents{' '}
-              <span className="text-gradient-hero">in Minutes</span>
+              Automate Real Estate Inquiries with AI Chatbots—{' '}
+              <span className="text-gradient-hero">Capture Leads 24/7 and Close More Deals</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in">
-              Create, test, and deploy intelligent chatbots for your business without any coding. 
-              Simply upload your knowledge base and let AI handle customer support.
+              Tired of missing off-hour queries or wasting time on tire-kickers? EccoChat lets you build intelligent chat agents in minutes—upload listings, qualify buyers, and schedule viewings with OpenAI power.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-scale-in">
@@ -60,13 +59,41 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Benefits Section */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-4xl font-bold">
-              Everything you need to build{' '}
-              <span className="text-gradient-primary">smart chatbots</span>
+              Why Real Estate Agents Choose EccoChat for{' '}
+              <span className="text-gradient-primary">Smarter Client Engagement</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-20">
+            {benefits.map((benefit, index) => (
+              <Card key={index} className="hover-lift border-0 shadow-soft bg-gradient-card p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <benefit.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
+                    <p className="text-muted-foreground">{benefit.description}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Everything You Need to Build{' '}
+              <span className="text-gradient-primary">Smart Chatbots for Real Estate</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               From knowledge upload to deployment, we've got you covered with powerful features.
@@ -90,14 +117,14 @@ export const Landing = () => {
       </section>
 
       {/* How it Works */}
-      <section className="py-20">
+      <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-4xl font-bold">
-              How it works
+              Get Your AI Chatbot Up and Running in Just Three Simple Steps
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get your AI chatbot up and running in just three simple steps.
+              From setup to deployment, everything is designed for real estate professionals.
             </p>
           </div>
 
@@ -118,13 +145,25 @@ export const Landing = () => {
       {/* Pricing */}
       <PricingSection />
 
-      {/* Social Proof */}
-      <section className="py-20 bg-muted/30">
+      {/* Testimonials & Social Proof */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8">
             <h2 className="text-3xl md:text-4xl font-bold">
-              Trusted by growing businesses
+              Trusted by Growing Businesses
             </h2>
+            
+            {/* Testimonials */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
+              <Card className="p-6 shadow-soft bg-gradient-card">
+                <p className="text-lg mb-4 italic">"Automated 60% of my inquiries—now I focus on closings!"</p>
+                <p className="text-sm text-muted-foreground">– Sarah T., Independent Agent</p>
+              </Card>
+              <Card className="p-6 shadow-soft bg-gradient-card">
+                <p className="text-lg mb-4 italic">"Qualified leads jumped 20%; best tool for small brokerages."</p>
+                <p className="text-sm text-muted-foreground">– Mike R., Broker Owner</p>
+              </Card>
+            </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-60">
               {['TechCorp', 'StartupLab', 'BusinessPro', 'InnovateInc'].map((company) => (
@@ -163,7 +202,7 @@ export const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center space-y-8 p-8 rounded-2xl bg-gradient-card shadow-large">
             <h2 className="text-3xl md:text-4xl font-bold">
-              Ready to transform your customer support?
+              Ready to Transform Your Customer Support?
             </h2>
             <p className="text-xl text-muted-foreground">
               Join thousands of businesses using EccoChat to provide instant, intelligent customer support.
@@ -187,6 +226,29 @@ export const Landing = () => {
     </div>
   );
 };
+
+const benefits = [
+  {
+    icon: MessageSquare,
+    title: 'Capture Every Lead, Day or Night',
+    description: 'Handle 70% of inquiries after hours with embedded AI chat on your site—qualify budgets/preferences instantly, turning browsers into buyers.'
+  },
+  {
+    icon: Bot,
+    title: 'Save 20-30 Hours/Week on Admin',
+    description: 'Automate scheduling, follow-ups, and FAQs—upload MLS listings or neighborhood stats for precise, trust-building responses.'
+  },
+  {
+    icon: Zap,
+    title: 'Build Client Trust Effortlessly',
+    description: 'Personalized, empathetic chats confirm privacy and share market insights—boost credibility in a competitive field where delayed replies lose deals.'
+  },
+  {
+    icon: BarChart3,
+    title: 'Outperform Bigger Firms on a Budget',
+    description: 'Low-cost plans let small agents scale leads 15-25% with analytics and custom embeds, navigating volatility like high rates/low inventory.'
+  }
+];
 
 const features = [
   {

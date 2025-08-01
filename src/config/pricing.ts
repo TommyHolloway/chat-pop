@@ -63,6 +63,18 @@ export const pricingPlans: PricingPlan[] = [
 
 export const faqItems = [
   {
+    question: "What is real estate chatbot architecture?",
+    answer: "A simple setup to automate inquiries with OpenAI—upload MLS data, property details, and market insights to create intelligent responses for buyer qualification and lead nurturing."
+  },
+  {
+    question: "How does EccoChat automate real estate inquiries?",
+    answer: "Upload your property data and market information for 24/7 lead qualification and automated scheduling. The AI handles initial buyer questions, qualifies prospects, and books viewings automatically."
+  },
+  {
+    question: "Is it secure for real estate data?",
+    answer: "Yes, we use enterprise-grade encryption with compliance standards specifically designed for real estate professionals handling sensitive client and property information."
+  },
+  {
     question: "What are message credits?",
     answer: "Message credits are used each time your AI agent responds to a user. Each response consumes one credit, regardless of length."
   },
