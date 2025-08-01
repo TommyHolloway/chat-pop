@@ -202,7 +202,7 @@ export const ConversationManager = ({ agentId }: ConversationManagerProps) => {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })}
+                          {conversation.created_at ? formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true }) : 'Unknown time'}
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />

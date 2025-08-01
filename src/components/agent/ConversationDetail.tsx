@@ -236,7 +236,7 @@ export const ConversationDetail = ({ conversationId, onBack, agentId }: Conversa
                           {message.content}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                          {message.created_at ? formatDistanceToNow(new Date(message.created_at), { addSuffix: true }) : 'Unknown time'}
                         </div>
                       </div>
                     </div>
@@ -284,7 +284,7 @@ export const ConversationDetail = ({ conversationId, onBack, agentId }: Conversa
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>Started {formatDistanceToNow(new Date(conversationInfo?.created_at || ''), { addSuffix: true })}</span>
+                  <span>Started {conversationInfo?.created_at ? formatDistanceToNow(new Date(conversationInfo.created_at), { addSuffix: true }) : 'Unknown time'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
