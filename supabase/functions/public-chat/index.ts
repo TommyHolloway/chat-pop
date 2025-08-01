@@ -414,10 +414,9 @@ serve(async (req) => {
 
     return new Response(html, { 
       headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'text/html; charset=utf-8',
-        'X-Frame-Options': 'ALLOWALL',
-        'X-Content-Type-Options': 'nosniff'
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        'Content-Type': 'text/html; charset=utf-8'
       } 
     });
   } catch (error) {
