@@ -284,6 +284,44 @@ export type Database = {
         }
         Relationships: []
       }
+      query_cache: {
+        Row: {
+          agent_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          metadata: Json | null
+          query_hash: string
+          response_text: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          metadata?: Json | null
+          query_hash: string
+          response_text: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          metadata?: Json | null
+          query_hash?: string
+          response_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "query_cache_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -393,6 +431,10 @@ export type Database = {
           p_file_size?: number
         }
         Returns: Json
+      }
+      cleanup_expired_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       get_user_role: {
         Args: { _user_id: string }
