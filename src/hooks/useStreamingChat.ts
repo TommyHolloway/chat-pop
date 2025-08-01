@@ -1,23 +1,23 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
-export interface ChatMessage {
+export interface StreamingChatMessage {
   id: string;
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
-export const useChat = (agentId: string) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export const useStreamingChat = (agentId: string) => {
+  const [messages, setMessages] = useState<StreamingChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const initializeChat = async () => {
     try {
-      // Create a new conversation
       const { data: conversation, error } = await supabase
         .from('conversations')
         .insert({
@@ -28,11 +28,9 @@ export const useChat = (agentId: string) => {
         .single();
 
       if (error) throw error;
-
       setConversationId(conversation.id);
       
-      // Add welcome message
-      const welcomeMessage: ChatMessage = {
+      const welcomeMessage: StreamingChatMessage = {
         id: '1',
         content: 'Hello! How can I help you today?',
         sender: 'bot',
@@ -49,10 +47,10 @@ export const useChat = (agentId: string) => {
     }
   };
 
-  const sendMessage = async (content: string, enableStreaming = true) => {
+  const sendMessage = useCallback(async (content: string, enableStreaming = true) => {
     if (!content.trim() || !conversationId) return;
 
-    const userMessage: ChatMessage = {
+    const userMessage: StreamingChatMessage = {
       id: Date.now().toString(),
       content,
       sender: 'user',
@@ -62,20 +60,18 @@ export const useChat = (agentId: string) => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Create placeholder bot message for streaming
     const botMessageId = (Date.now() + 1).toString();
-    const botMessage: ChatMessage = {
+    const botMessage: StreamingChatMessage = {
       id: botMessageId,
       content: '',
       sender: 'bot',
-      timestamp: new Date()
+      timestamp: new Date(),
+      isStreaming: enableStreaming
     };
 
     setMessages(prev => [...prev, botMessage]);
 
     try {
-      console.log('Sending message to agent:', agentId);
-      
       if (enableStreaming) {
         // Try streaming first
         try {
@@ -118,10 +114,15 @@ export const useChat = (agentId: string) => {
                     if (data.content && !data.done) {
                       accumulatedContent += data.content;
                       
-                      // Update the bot message with accumulated content
                       setMessages(prev => prev.map(msg => 
                         msg.id === botMessageId 
-                          ? { ...msg, content: accumulatedContent }
+                          ? { ...msg, content: accumulatedContent, isStreaming: true }
+                          : msg
+                      ));
+                    } else if (data.done) {
+                      setMessages(prev => prev.map(msg => 
+                        msg.id === botMessageId 
+                          ? { ...msg, isStreaming: false }
                           : msg
                       ));
                     }
@@ -137,7 +138,6 @@ export const useChat = (agentId: string) => {
           }
         } catch (streamError) {
           console.log('Streaming failed, falling back to regular request:', streamError);
-          // Fall through to regular request
         }
       }
 
@@ -153,14 +153,12 @@ export const useChat = (agentId: string) => {
 
       if (error) throw error;
 
-      // Update the bot message with the complete response
       setMessages(prev => prev.map(msg => 
         msg.id === botMessageId 
-          ? { ...msg, content: data.message }
+          ? { ...msg, content: data.message, isStreaming: false }
           : msg
       ));
 
-      // Log successful response
       if (data.cached) {
         console.log('Response served from cache');
       }
@@ -173,16 +171,16 @@ export const useChat = (agentId: string) => {
         variant: "destructive",
       });
       
-      // Remove both user and bot messages on error
       setMessages(prev => prev.filter(msg => 
         msg.id !== userMessage.id && msg.id !== botMessageId
       ));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [agentId, conversationId, toast]);
 
   const resetChat = async () => {
+    setMessages([]);
     await initializeChat();
   };
 

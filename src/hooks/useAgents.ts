@@ -310,6 +310,18 @@ export const useKnowledgeFiles = (agentId: string) => {
       });
     }
 
+    // Trigger automatic training after file upload
+    try {
+      console.log('Triggering agent training after file upload...');
+      await supabase.functions.invoke('train-agent', {
+        body: { agentId }
+      });
+      console.log('Agent training triggered successfully');
+    } catch (trainError) {
+      console.warn('Failed to trigger agent training:', trainError);
+      // Don't throw here as the file upload was successful
+    }
+
     return data;
   };
 
@@ -374,6 +386,18 @@ export const useKnowledgeFiles = (agentId: string) => {
         .eq('id', fileId);
 
       if (updateError) throw updateError;
+
+      // Trigger chunking for the agent after successful content extraction
+      try {
+        console.log('Triggering agent training after file processing...');
+        await supabase.functions.invoke('train-agent', {
+          body: { agentId }
+        });
+        console.log('Agent training triggered successfully');
+      } catch (trainError) {
+        console.warn('Failed to trigger agent training:', trainError);
+        // Don't throw here as the file processing was successful
+      }
 
       return processedContent;
     } catch (error) {

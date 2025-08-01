@@ -43,7 +43,7 @@ serve(async (req) => {
   }
 
   try {
-    const { agentId, message, conversationId } = await req.json();
+    const { agentId, message, conversationId, stream = false } = await req.json();
     
     if (!agentId || !message) {
       throw new Error('Agent ID and message are required');
@@ -72,13 +72,22 @@ serve(async (req) => {
 
     console.log(`Processing chat for agent: ${agent.name}`);
 
-    // Check cache first
+    // Check database cache first
     const cacheKey = getCacheKey(agentId, message);
-    const cached = responseCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log('Cache hit for query');
+    const queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_'); // URL-safe hash
+    
+    const { data: cachedResponse } = await supabase
+      .from('query_cache')
+      .select('response_text, created_at')
+      .eq('agent_id', agentId)
+      .eq('query_hash', queryHash)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+    
+    if (cachedResponse) {
+      console.log('Cache hit for query from database');
       return new Response(JSON.stringify({ 
-        message: cached.response,
+        message: cachedResponse.response_text,
         cached: true 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -203,7 +212,7 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
       { role: 'user', content: message }
     ];
 
-    // Call OpenAI API
+    // Call OpenAI API with streaming support
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -215,6 +224,7 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
         messages: messages,
         temperature: 0.7,
         max_tokens: 1000,
+        stream: stream,
       }),
     });
 
@@ -223,6 +233,98 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
       throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
+    // Handle streaming responses
+    if (stream) {
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      let fullResponse = '';
+      
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            const reader = openAIResponse.body?.getReader();
+            if (!reader) throw new Error('No reader available');
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  if (data === '[DONE]') continue;
+                  
+                  try {
+                    const json = JSON.parse(data);
+                    const delta = json.choices?.[0]?.delta?.content;
+                    if (delta) {
+                      fullResponse += delta;
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: delta, done: false })}\n\n`));
+                    }
+                  } catch (e) {
+                    // Skip invalid JSON
+                  }
+                }
+              }
+            }
+
+            // Signal completion
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: '', done: true })}\n\n`));
+            controller.close();
+
+            // Store conversation and cache after streaming completes
+            if (conversationId && fullResponse) {
+              await supabase.from('messages').insert({
+                conversation_id: conversationId,
+                role: 'user',
+                content: message
+              });
+
+              await supabase.from('messages').insert({
+                conversation_id: conversationId,
+                role: 'assistant',
+                content: fullResponse
+              });
+
+              await supabase.rpc('update_usage_tracking', {
+                p_user_id: agent.user_id,
+                p_conversation_id: conversationId,
+                p_message_count: 2
+              });
+            }
+
+            // Cache the complete response
+            if (fullResponse) {
+              const queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
+              await supabase.from('query_cache').insert({
+                agent_id: agentId,
+                query_hash: queryHash,
+                response_text: fullResponse,
+                metadata: { stream: true, tokens: fullResponse.length / 4 }
+              });
+            }
+
+          } catch (error) {
+            controller.error(error);
+          }
+        }
+      });
+
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // Non-streaming response (fallback)
     const data = await openAIResponse.json();
     const assistantMessage = data.choices[0].message.content;
 
@@ -230,21 +332,18 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
 
     // Store conversation and messages if conversationId provided
     if (conversationId) {
-      // Store user message
       await supabase.from('messages').insert({
         conversation_id: conversationId,
         role: 'user',
         content: message
       });
 
-      // Store assistant response
       await supabase.from('messages').insert({
         conversation_id: conversationId,
         role: 'assistant',
         content: assistantMessage
       });
 
-      // Update usage tracking for both user and assistant messages (2 credits total)
       await supabase.rpc('update_usage_tracking', {
         p_user_id: agent.user_id,
         p_conversation_id: conversationId,
@@ -254,21 +353,14 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
       console.log('Stored messages and updated usage tracking');
     }
 
-    // Cache the response
-    responseCache.set(cacheKey, {
-      response: assistantMessage,
-      timestamp: Date.now()
+    // Cache the response in database
+    const queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
+    await supabase.from('query_cache').insert({
+      agent_id: agentId,
+      query_hash: queryHash,
+      response_text: assistantMessage,
+      metadata: { stream: false, usage: data.usage }
     });
-
-    // Clean old cache entries periodically
-    if (responseCache.size > 1000) {
-      const now = Date.now();
-      for (const [key, value] of responseCache.entries()) {
-        if (now - value.timestamp > CACHE_DURATION) {
-          responseCache.delete(key);
-        }
-      }
-    }
 
     return new Response(JSON.stringify({ 
       message: assistantMessage,
