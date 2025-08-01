@@ -14,6 +14,10 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 // Pages
 import { Landing } from "./pages/Landing";
+import { Demo } from "./pages/Demo";
+import { Contact } from "./pages/Contact";
+import { TermsOfService } from "./pages/TermsOfService";
+import { PrivacyPolicy } from "./pages/PrivacyPolicy";
 import { Pricing } from "./pages/Pricing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
@@ -66,6 +70,26 @@ const App = () => (
               <Route path="/" element={
                 <PublicLayout>
                   <Landing />
+                </PublicLayout>
+              } />
+              <Route path="/demo" element={
+                <PublicLayout>
+                  <Demo />
+                </PublicLayout>
+              } />
+              <Route path="/contact" element={
+                <PublicLayout>
+                  <Contact />
+                </PublicLayout>
+              } />
+              <Route path="/terms" element={
+                <PublicLayout>
+                  <TermsOfService />
+                </PublicLayout>
+              } />
+              <Route path="/privacy" element={
+                <PublicLayout>
+                  <PrivacyPolicy />
                 </PublicLayout>
               } />
               <Route path="/pricing" element={
