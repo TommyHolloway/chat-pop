@@ -299,7 +299,7 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
 
             // Cache the complete response
             if (fullResponse) {
-              const queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
+              queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
               await supabase.from('query_cache').insert({
                 agent_id: agentId,
                 query_hash: queryHash,
@@ -354,7 +354,7 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
     }
 
     // Cache the response in database
-    const queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
+    queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
     await supabase.from('query_cache').insert({
       agent_id: agentId,
       query_hash: queryHash,
