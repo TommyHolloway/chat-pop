@@ -26,9 +26,6 @@ export const Navbar = () => {
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </Link>
-            <Link to="/docs" className="text-muted-foreground hover:text-foreground transition-colors">
-              Documentation
-            </Link>
           </div>
 
           {/* Right side - Auth & Theme */}
@@ -76,9 +73,6 @@ export const Navbar = () => {
               </Link>
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
-              </Link>
-              <Link to="/docs" className="text-muted-foreground hover:text-foreground transition-colors">
-                Documentation
               </Link>
               <div className="flex flex-col space-y-2 pt-4 border-t">
                 <Link to="/auth/login">
