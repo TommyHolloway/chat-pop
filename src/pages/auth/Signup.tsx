@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bot, Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
+import { Bot, Mail, Lock, Eye, EyeOff, User, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -148,6 +148,13 @@ export const Signup = () => {
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md shadow-large">
         <CardHeader className="text-center space-y-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              <span className="text-sm">Back to Home</span>
+            </Link>
+            <div></div>
+          </div>
           <div className="flex justify-center">
             <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
               <Bot className="h-6 w-6 text-primary" />

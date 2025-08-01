@@ -25,18 +25,29 @@ export const Landing = () => {
   useEffect(() => {
     // Add chat widget script
     const script = document.createElement('script');
-    script.innerHTML = `
-      (function() {
-        var script = document.createElement('script');
-        script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=light&color=%233b82f6';
-        document.head.appendChild(script);
-      })();
-    `;
+    script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=light&color=%233b82f6';
+    script.async = true;
+    
+    const handleScriptLoad = () => {
+      console.log('Chat widget loaded successfully');
+    };
+    
+    const handleScriptError = () => {
+      console.error('Failed to load chat widget');
+    };
+    
+    script.addEventListener('load', handleScriptLoad);
+    script.addEventListener('error', handleScriptError);
+    
     document.head.appendChild(script);
 
     return () => {
       // Cleanup on unmount
-      document.head.removeChild(script);
+      script.removeEventListener('load', handleScriptLoad);
+      script.removeEventListener('error', handleScriptError);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, []);
 
