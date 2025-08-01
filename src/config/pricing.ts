@@ -18,25 +18,25 @@ export const pricingPlans: PricingPlan[] = [
     features: [
       "1 AI agent",
       "100 message credits/month",
-      "5 knowledge sources per agent",
-      "Basic chat widget",
-      "Community support"
+      "5 training links",
+      "Basic chat features",
+      "Email support"
     ],
     buttonText: "Get Started Free",
     buttonVariant: "outline"
   },
   {
     name: "Hobby",
-    price: "$19",
+    price: "$35",
     period: "per month",
-    description: "Great for small businesses",
+    description: "Perfect for small teams and growing projects",
     features: [
-      "5 AI agents",
-      "1,000 message credits/month",
-      "20 knowledge sources per agent",
-      "Custom chat widget",
-      "Email support",
-      "Analytics dashboard"
+      "Everything in Free +",
+      "2,000 message credits/month",
+      "20 training links",
+      "2 AI agents",
+      "Advanced chat features",
+      "Priority support"
     ],
     highlighted: true,
     buttonText: "Start Free Trial",
@@ -44,17 +44,17 @@ export const pricingPlans: PricingPlan[] = [
   },
   {
     name: "Pro",
-    price: "$49",
+    price: "$147",
     period: "per month",
-    description: "For growing teams",
+    description: "For teams that need more power and flexibility",
     features: [
-      "Unlimited AI agents",
-      "10,000 message credits/month",
-      "Unlimited knowledge sources",
-      "Advanced customization",
-      "Priority support",
-      "API access",
-      "Team collaboration"
+      "Everything in Hobby +",
+      "12,000 message credits/month",
+      "Unlimited training links",
+      "5 AI agents",
+      "Advanced analytics",
+      "Custom integrations",
+      "Phone support"
     ],
     buttonText: "Start Free Trial",
     buttonVariant: "outline"
