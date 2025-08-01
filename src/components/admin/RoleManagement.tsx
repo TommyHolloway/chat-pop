@@ -61,7 +61,24 @@ export function RoleManagement() {
     try {
       setLoading(true);
       
-      // Get all profiles with their roles (including users without explicit roles)
+      // Get auth users data first using the admin function
+      let authData = null;
+      try {
+        const { data, error } = await supabase.functions.invoke('get-users-admin', {
+          headers: {
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+        });
+        if (error) {
+          console.error('Auth function error:', error);
+        } else {
+          authData = data;
+        }
+      } catch (authError) {
+        console.warn('Could not fetch auth data:', authError);
+      }
+
+      // Get all profiles with their roles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select(`
@@ -75,12 +92,29 @@ export function RoleManagement() {
 
       if (profilesError) throw profilesError;
 
-      const formattedRoles = profiles?.map(profile => ({
-        user_id: profile.user_id,
-        email: profile.email,
-        display_name: profile.display_name,
-        role: (profile.user_roles as any)?.[0]?.role || 'user',
-      })) || [];
+      // If we have auth data, merge it with profiles; otherwise use profiles only
+      let formattedRoles: UserRole[];
+      
+      if (authData?.users) {
+        // Merge auth data with profiles
+        formattedRoles = authData.users.map((authUser: any) => {
+          const profile = profiles?.find(p => p.user_id === authUser.id);
+          return {
+            user_id: authUser.id,
+            email: authUser.email || profile?.email || '',
+            display_name: profile?.display_name || null,
+            role: (profile?.user_roles as any)?.[0]?.role || 'user',
+          };
+        });
+      } else {
+        // Fallback to profiles only
+        formattedRoles = profiles?.map(profile => ({
+          user_id: profile.user_id,
+          email: profile.email,
+          display_name: profile.display_name,
+          role: (profile.user_roles as any)?.[0]?.role || 'user',
+        })) || [];
+      }
 
       setUserRoles(formattedRoles);
 

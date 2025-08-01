@@ -82,8 +82,16 @@ export function UserManagement() {
       // Get auth data for additional info
       let authData = null;
       try {
-        const { data } = await supabase.functions.invoke('get-users-admin');
-        authData = data;
+        const { data, error } = await supabase.functions.invoke('get-users-admin', {
+          headers: {
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+        });
+        if (error) {
+          console.error('Auth function error:', error);
+        } else {
+          authData = data;
+        }
       } catch (authError) {
         console.warn('Could not fetch auth data:', authError);
         // Continue without auth data - we'll show what we can
