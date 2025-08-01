@@ -76,49 +76,79 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) return;
 
+    console.log('Updating user profile:', {
+      userId: user.id,
+      currentValues: { plan: user.plan, role: user.role },
+      newValues: values
+    });
+
     setLoading(true);
     try {
       // Update profile
-      const { error: profileError } = await supabase
+      console.log('Updating profile with:', { display_name: values.display_name || null, plan: values.plan });
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .update({
           display_name: values.display_name || null,
           plan: values.plan,
         })
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .select();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile update error:', profileError);
+        throw profileError;
+      }
+      console.log('Profile updated successfully:', profileData);
 
       // Update role if changed
       if (values.role !== user.role) {
+        console.log('Role changed from', user.role, 'to', values.role);
+        
         // First delete existing role
-        await supabase
+        const { error: deleteError } = await supabase
           .from('user_roles')
           .delete()
           .eq('user_id', user.id);
 
+        if (deleteError) {
+          console.error('Role deletion error:', deleteError);
+          throw deleteError;
+        }
+
         // Insert new role
-        const { error: roleError } = await supabase
+        const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: user.id,
             role: values.role,
-          });
+          })
+          .select();
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error('Role insertion error:', roleError);
+          throw roleError;
+        }
+        console.log('Role updated successfully:', roleData);
       }
 
       // Log the action
-      await supabase.functions.invoke('log-admin-action', {
-        body: {
-          action: 'user_profile_updated',
-          details: {
-            target_user_id: user.id,
-            target_user_email: user.email,
-            changes: values,
+      try {
+        await supabase.functions.invoke('log-admin-action', {
+          body: {
+            action: 'user_profile_updated',
+            details: {
+              target_user_id: user.id,
+              target_user_email: user.email,
+              changes: values,
+              previous_values: { plan: user.plan, role: user.role }
+            },
           },
-        },
-      });
+        });
+      } catch (logError) {
+        console.warn('Failed to log admin action:', logError);
+        // Don't fail the whole operation if logging fails
+      }
 
       toast({
         title: 'Success',
@@ -127,11 +157,11 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
 
       onUpdate();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating user:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update user profile',
+        description: error.message || 'Failed to update user profile',
         variant: 'destructive',
       });
     } finally {
@@ -171,16 +201,16 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Plan</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a plan" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="hobby">Hobby</SelectItem>
-                  <SelectItem value="standard">Pro</SelectItem>
+                   <SelectItem value="free">Free</SelectItem>
+                   <SelectItem value="hobby">Hobby</SelectItem>
+                   <SelectItem value="standard">Pro</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -194,7 +224,7 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
