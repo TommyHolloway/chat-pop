@@ -33,12 +33,14 @@ import {
 } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAgents } from '@/hooks/useAgents';
 
 export const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { state } = useSidebar();
   const { isAdmin } = useUserRole();
+  const { agents } = useAgents();
   
   const isCollapsed = state === 'collapsed';
   
@@ -84,6 +86,20 @@ export const AppSidebar = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
+                      {agents.slice(0, 5).map((agent) => (
+                        <SidebarMenuSubItem key={agent.id}>
+                          <SidebarMenuSubButton asChild isActive={location.pathname.includes(`/agents/${agent.id}`)}>
+                            <Link to={`/agents/${agent.id}/edit`}>
+                              <Avatar className="h-4 w-4">
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                  {agent.name.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="truncate">{agent.name}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild isActive={isActive('/agents')}>
                           <Link to="/agents">

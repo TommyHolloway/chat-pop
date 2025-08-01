@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Bot, 
   Plus, 
@@ -10,13 +12,44 @@ import {
   MessageSquare, 
   ExternalLink,
   Loader2,
-  FileText
+  FileText,
+  Calendar,
+  MoreHorizontal,
+  Edit,
+  Play,
+  Trash2
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAgents } from '@/hooks/useAgents';
 import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
+import { useToast } from '@/hooks/use-toast';
 
 export const Agents = () => {
-  const { agents, loading } = useAgents();
+  const { agents, loading, deleteAgent, refetchAgents } = useAgents();
+  const { toast } = useToast();
+
+  const handleDeleteAgent = async (agentId: string, agentName: string) => {
+    try {
+      await deleteAgent(agentId);
+      await refetchAgents();
+      toast({
+        title: "Agent deleted",
+        description: `${agentName} has been deleted successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete agent. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     // Agents are automatically fetched by the hook
@@ -75,60 +108,92 @@ export const Agents = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {agents.map((agent) => (
-                <Card key={agent.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Bot className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="truncate">{agent.name}</CardTitle>
-                          {agent.description && (
-                            <CardDescription className="line-clamp-2">
-                              {agent.description}
-                            </CardDescription>
-                          )}
+                <Card key={agent.id} className="hover-lift">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {agent.name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-lg">{agent.name}</CardTitle>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
+                            {agent.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {format(new Date(agent.updated_at), 'MMM d, yyyy')}
+                          </span>
                         </div>
                       </div>
-                      <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
-                        {agent.status}
-                      </Badge>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/agents/${agent.id}/edit`} className="flex items-center">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Agent
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to={`/agents/${agent.id}/playground`} className="flex items-center">
+                            <Play className="mr-2 h-4 w-4" />
+                            Test Agent
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to={`/agents/${agent.id}/deploy`} className="flex items-center">
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Deploy
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDeleteAgent(agent.id, agent.name)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Agent
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {agent.instructions && (
-                        <div className="flex items-start gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {agent.instructions}
-                          </p>
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-2 pt-2">
-                        <Link to={`/agents/${agent.id}/edit`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            <Settings className="h-4 w-4 mr-2" />
-                            Configure
-                          </Button>
-                        </Link>
-                        <Link to={`/playground?agent=${agent.id}`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Test
-                          </Button>
-                        </Link>
-                        <Link to={`/deploy?agent=${agent.id}`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Deploy
-                          </Button>
-                        </Link>
+                    <CardDescription className="mb-4">
+                      {agent.description || 'No description provided'}
+                    </CardDescription>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Status</span>
+                        <div className="font-semibold capitalize">{agent.status}</div>
                       </div>
+                      <div>
+                        <span className="text-muted-foreground">Created</span>
+                        <div className="font-semibold">{format(new Date(agent.created_at), 'MMM d')}</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Link to={`/agents/${agent.id}/playground`} className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Play className="mr-2 h-3 w-3" />
+                          Test
+                        </Button>
+                      </Link>
+                      <Link to={`/agents/${agent.id}/edit`} className="flex-1">
+                        <Button size="sm" className="w-full">
+                          <Edit className="mr-2 h-3 w-3" />
+                          Edit
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>
