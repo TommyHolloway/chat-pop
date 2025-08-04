@@ -413,10 +413,10 @@ serve(async (req) => {
     `;
 
     return new Response(html, { 
+      status: 200,
       headers: { 
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        'Content-Type': 'text/html; charset=utf-8'
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache'
       } 
     });
   } catch (error) {

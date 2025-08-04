@@ -91,6 +91,7 @@ serve(async (req) => {
 
     iframe = document.createElement('iframe');
     iframe.src = chatUrl;
+    iframe.sandbox = 'allow-same-origin allow-scripts allow-forms';
     iframe.style.cssText = \`
       width: 100%;
       height: 100%;
