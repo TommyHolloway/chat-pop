@@ -91,12 +91,14 @@ serve(async (req) => {
 
     iframe = document.createElement('iframe');
     iframe.src = chatUrl;
-    iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups';
+    iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation-by-user-activation allow-downloads';
+    iframe.allow = 'fullscreen';
     iframe.style.cssText = \`
       width: 100%;
       height: 100%;
       border: none;
       border-radius: 12px;
+      background: white;
     \`;
 
     // Enhanced iframe load event handling
