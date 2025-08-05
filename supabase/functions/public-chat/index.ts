@@ -420,7 +420,7 @@ serve(async (req) => {
         'Content-Type': 'text/html; charset=utf-8',
         'X-Content-Type-Options': 'nosniff',
         'Content-Security-Policy': "default-src *; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; img-src * data:; font-src *; connect-src *; frame-ancestors *;",
-        'X-Frame-Options': 'SAMEORIGIN',
+        'X-Frame-Options': 'ALLOWALL',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         ...corsHeaders
       } 
