@@ -43,7 +43,9 @@ serve(async (req) => {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>${agent.name} - Chat</title>
     <style>
         * {
@@ -416,11 +418,11 @@ serve(async (req) => {
       status: 200,
       headers: { 
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src *; frame-ancestors *;",
-        'X-Frame-Options': 'ALLOWALL',
-        'Cache-Control': 'no-cache',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': "default-src *; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; img-src * data:; font-src *; connect-src *; frame-ancestors *;",
+        'X-Frame-Options': 'SAMEORIGIN',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        ...corsHeaders
       } 
     });
   } catch (error) {
