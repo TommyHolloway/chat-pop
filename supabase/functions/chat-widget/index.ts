@@ -91,7 +91,7 @@ serve(async (req) => {
 
     iframe = document.createElement('iframe');
     iframe.src = chatUrl;
-    iframe.sandbox = 'allow-same-origin allow-scripts allow-forms';
+    iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups';
     iframe.style.cssText = \`
       width: 100%;
       height: 100%;
@@ -99,17 +99,51 @@ serve(async (req) => {
       border-radius: 12px;
     \`;
 
-    // Add iframe load event debugging
+    // Enhanced iframe load event handling
     iframe.addEventListener('load', function() {
       console.log('EccoChat iframe loaded successfully');
+      // Check if content is actually rendering as HTML
+      setTimeout(() => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          if (!iframeDoc || iframeDoc.body.textContent.includes('<!DOCTYPE html>')) {
+            console.error('EccoChat iframe showing raw HTML instead of rendering');
+            showErrorFallback();
+          }
+        } catch (e) {
+          // Cross-origin restrictions prevent access, assume it's working
+          console.log('EccoChat iframe cross-origin access blocked (normal)');
+        }
+      }, 1000);
     });
 
     iframe.addEventListener('error', function() {
       console.error('EccoChat iframe failed to load');
+      showErrorFallback();
     });
+
+    // Timeout fallback
+    setTimeout(() => {
+      if (!iframe.contentDocument && !iframe.contentWindow) {
+        console.error('EccoChat iframe timeout - failed to load');
+        showErrorFallback();
+      }
+    }, 5000);
 
     overlay.appendChild(iframe);
     document.body.appendChild(overlay);
+  }
+
+  // Show error fallback
+  function showErrorFallback() {
+    if (overlay) {
+      overlay.innerHTML = \`
+        <div style="padding: 20px; text-align: center; color: #64748b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <h3 style="margin: 0 0 10px 0; color: #1e293b;">Chat Unavailable</h3>
+          <p style="margin: 0; font-size: 14px;">Sorry, the chat interface failed to load. Please try refreshing the page.</p>
+        </div>
+      \`;
+    }
   }
 
   // Toggle chat
