@@ -414,14 +414,18 @@ serve(async (req) => {
 </html>
     `;
 
+    // Log response details for debugging
+    console.log('Sending HTML response for agentId:', agentId);
+    console.log('Response headers:', {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache'
+    });
+
     return new Response(html, { 
       status: 200,
       headers: { 
         'Content-Type': 'text/html; charset=utf-8',
-        'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy': "default-src *; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; img-src * data:; font-src *; connect-src *; frame-ancestors *;",
-        'X-Frame-Options': 'ALLOWALL',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache',
         ...corsHeaders
       } 
     });
