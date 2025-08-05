@@ -91,7 +91,7 @@ serve(async (req) => {
 
     iframe = document.createElement('iframe');
     iframe.src = chatUrl;
-    iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation-by-user-activation allow-downloads';
+    iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads';
     iframe.allow = 'fullscreen';
     iframe.style.cssText = \`
       width: 100%;
@@ -108,9 +108,11 @@ serve(async (req) => {
       setTimeout(() => {
         try {
           const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-          if (!iframeDoc || iframeDoc.body.textContent.includes('<!DOCTYPE html>')) {
-            console.error('EccoChat iframe showing raw HTML instead of rendering');
+          if (iframeDoc && (iframeDoc.body.textContent.includes('<!DOCTYPE html>') || !iframeDoc.querySelector('#messages'))) {
+            console.error('EccoChat iframe showing raw HTML or missing UI elements');
             showErrorFallback();
+          } else {
+            console.log('EccoChat iframe rendered successfully');
           }
         } catch (e) {
           // Cross-origin restrictions prevent access, assume it's working
@@ -140,9 +142,10 @@ serve(async (req) => {
   function showErrorFallback() {
     if (overlay) {
       overlay.innerHTML = \`
-        <div style="padding: 20px; text-align: center; color: #64748b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <h3 style="margin: 0 0 10px 0; color: #1e293b;">Chat Unavailable</h3>
-          <p style="margin: 0; font-size: 14px;">Sorry, the chat interface failed to load. Please try refreshing the page.</p>
+        <div style="padding: 20px; text-align: center; color: #ef4444; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <h3 style="margin: 0 0 10px 0; color: #dc2626;">Chat Failed to Load</h3>
+          <p style="margin: 0; font-size: 14px;">Please refresh the page or contact support.</p>
+          <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">Retry</button>
         </div>
       \`;
     }

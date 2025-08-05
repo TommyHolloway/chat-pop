@@ -38,15 +38,18 @@ serve(async (req) => {
       return new Response('Agent not found', { status: 404, headers: corsHeaders });
     }
 
-    const html = `
-<!DOCTYPE html>
+    // Escape agent data to prevent XSS
+    const safeName = agent.name?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'Agent';
+    const safeDescription = agent.description?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'AI Assistant';
+
+    const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>${agent.name} - Chat</title>
+    <title>${safeName} - Chat</title>
     <style>
         * {
             margin: 0;
@@ -248,10 +251,10 @@ serve(async (req) => {
 </head>
 <body>
     <div class="header">
-        <div class="avatar">${agent.name.charAt(0).toUpperCase()}</div>
+        <div class="avatar">${safeName.charAt(0).toUpperCase()}</div>
         <div class="agent-info">
-            <h1>${agent.name}</h1>
-            <p>${agent.description}</p>
+            <h1>${safeName}</h1>
+            <p>${safeDescription}</p>
         </div>
     </div>
     
@@ -261,7 +264,7 @@ serve(async (req) => {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
                 </svg>
-                <p>Start a conversation with ${agent.name}</p>
+                <p>Start a conversation with ${safeName}</p>
             </div>
         </div>
         
@@ -355,7 +358,7 @@ serve(async (req) => {
             
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.textContent = role === 'user' ? 'U' : '${agent.name.charAt(0).toUpperCase()}';
+            avatar.textContent = role === 'user' ? 'U' : '${safeName.charAt(0).toUpperCase()}';
             
             const messageContent = document.createElement('div');
             messageContent.className = 'message-content';
@@ -381,7 +384,7 @@ serve(async (req) => {
                 
                 const avatar = document.createElement('div');
                 avatar.className = 'message-avatar';
-                avatar.textContent = '${agent.name.charAt(0).toUpperCase()}';
+                avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
                 
                 const loadingContent = document.createElement('div');
                 loadingContent.className = 'loading';
@@ -425,6 +428,9 @@ serve(async (req) => {
       status: 200,
       headers: { 
         'Content-Type': 'text/html; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src *; frame-ancestors *",
+        'X-Frame-Options': 'ALLOWALL',
         'Cache-Control': 'no-cache',
         ...corsHeaders
       } 
