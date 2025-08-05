@@ -20,7 +20,7 @@ export const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
             </Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -68,7 +68,7 @@ export const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <div className="flex flex-col space-y-4">
-              <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
               </Link>
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
