@@ -23,12 +23,15 @@ import {
   Clock,
   FileType,
   Image,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Globe,
+  Lock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
 import { useAgentLinks } from '@/hooks/useAgentLinks';
 import { TrainingSummary } from '@/components/agent/TrainingSummary';
+import { Switch } from '@/components/ui/switch';
 
 interface FileItem {
   id: string;
@@ -50,6 +53,7 @@ export const AgentForm = () => {
     name: '',
     description: '',
     instructions: '',
+    status: 'draft' as 'active' | 'inactive' | 'draft',
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -72,6 +76,7 @@ export const AgentForm = () => {
         name: agent.name,
         description: agent.description || '',
         instructions: agent.instructions,
+        status: (agent.status as 'active' | 'inactive' | 'draft') || 'draft',
       });
     } catch (error) {
       toast({
@@ -352,19 +357,58 @@ export const AgentForm = () => {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Briefly describe what this agent does..."
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    A short description of your agent's purpose
-                  </p>
-                </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="description">Description</Label>
+                   <Textarea
+                     id="description"
+                     placeholder="Briefly describe what this agent does..."
+                     value={formData.description}
+                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                     rows={3}
+                   />
+                   <p className="text-sm text-muted-foreground">
+                     A short description of your agent's purpose
+                   </p>
+                 </div>
+
+                 {/* Agent Status */}
+                 {isEditing && (
+                   <div className="space-y-2">
+                     <Label>Agent Status</Label>
+                     <div className="flex items-center justify-between p-4 border rounded-lg">
+                       <div className="flex items-center gap-3">
+                         {formData.status === 'active' ? (
+                           <Globe className="h-5 w-5 text-green-500" />
+                         ) : (
+                           <Lock className="h-5 w-5 text-muted-foreground" />
+                         )}
+                         <div>
+                           <p className="font-medium">
+                             {formData.status === 'active' ? 'Public & Active' : 'Private'}
+                           </p>
+                           <p className="text-sm text-muted-foreground">
+                             {formData.status === 'active' 
+                               ? 'Your agent is live and accessible via public chat URLs'
+                               : 'Your agent is private and not accessible publicly'
+                             }
+                           </p>
+                         </div>
+                       </div>
+                       <Switch
+                         checked={formData.status === 'active'}
+                         onCheckedChange={(checked) => 
+                           setFormData(prev => ({ 
+                             ...prev, 
+                             status: checked ? 'active' : 'inactive' 
+                           }))
+                         }
+                       />
+                     </div>
+                     <p className="text-sm text-muted-foreground">
+                       Toggle to control whether your agent is publicly accessible
+                     </p>
+                   </div>
+                 )}
               </CardContent>
             </Card>
 

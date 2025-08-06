@@ -104,13 +104,18 @@ export const Deploy = () => {
           {/* Agent Status */}
           <Card>
             <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-                <span>{agent?.name || 'Loading...'}</span>
-                <Badge variant="default">Live</Badge>
-              </CardTitle>
-              <CardDescription>
-                Your agent is ready to be deployed. Choose from the options below to integrate it into your website or share it with users.
-              </CardDescription>
+             <CardTitle className="flex items-center justify-between">
+                 <span>{agent?.name || 'Loading...'}</span>
+                 <Badge variant={agent?.status === 'active' ? 'default' : 'secondary'}>
+                   {agent?.status === 'active' ? 'Live' : 'Private'}
+                 </Badge>
+               </CardTitle>
+               <CardDescription>
+                 {agent?.status === 'active' 
+                   ? 'Your agent is live and ready to be deployed. Choose from the options below to integrate it into your website or share it with users.'
+                   : 'Your agent is currently private. To deploy it, please activate it in the agent settings first.'
+                 }
+               </CardDescription>
             </CardHeader>
           </Card>
 
