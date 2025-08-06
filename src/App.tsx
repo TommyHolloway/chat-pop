@@ -18,6 +18,7 @@ import { Demo } from "./pages/Demo";
 import { Contact } from "./pages/Contact";
 import { TermsOfService } from "./pages/TermsOfService";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy";
+import Security from "./pages/Security";
 import { Pricing } from "./pages/Pricing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
@@ -91,6 +92,11 @@ const App = () => (
               <Route path="/privacy" element={
                 <PublicLayout>
                   <PrivacyPolicy />
+                </PublicLayout>
+              } />
+              <Route path="/security" element={
+                <PublicLayout>
+                  <Security />
                 </PublicLayout>
               } />
               <Route path="/pricing" element={
