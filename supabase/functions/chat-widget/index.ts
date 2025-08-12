@@ -40,6 +40,15 @@ serve(async (req) => {
   let widget = null;
   let overlay = null;
   let iframe = null;
+  let iframeReady = false;
+
+  // Listen for readiness from iframe
+  window.addEventListener('message', (event) => {
+    if (event && event.data === 'ECCOCHAT_READY') {
+      iframeReady = true;
+      console.log('EccoChat iframe ready');
+    }
+  });
 
   // Create widget button
   function createWidget() {
@@ -91,7 +100,7 @@ serve(async (req) => {
 
     iframe = document.createElement('iframe');
     iframe.src = chatUrl;
-    iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads';
+    iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin';
     iframe.allow = 'fullscreen';
     iframe.style.cssText = \`
       width: 100%;

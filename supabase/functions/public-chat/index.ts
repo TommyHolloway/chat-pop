@@ -412,6 +412,11 @@ serve(async (req) => {
 
         // Initialize
         initConversation();
+        try {
+          if (window.parent) {
+            window.parent.postMessage('ECCOCHAT_READY', '*');
+          }
+        } catch (_) {}
     </script>
 </body>
 </html>
@@ -428,7 +433,6 @@ serve(async (req) => {
       status: 200,
       headers: { 
         'Content-Type': 'text/html; charset=utf-8',
-        'X-Content-Type-Options': 'nosniff',
         'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src *; frame-ancestors *",
         'X-Frame-Options': 'ALLOWALL',
         'Cache-Control': 'no-cache',
