@@ -99,7 +99,6 @@ serve(async (req) => {
     \`;
 
     iframe = document.createElement('iframe');
-    iframe.src = chatUrl;
     iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin';
     iframe.allow = 'fullscreen';
     iframe.style.cssText = \`
@@ -110,38 +109,32 @@ serve(async (req) => {
       background: white;
     \`;
 
-    // Enhanced iframe load event handling
+    // Fetch HTML content and use srcdoc to force proper rendering
+    console.log('Fetching chat HTML content...');
+    fetch(chatUrl)
+      .then(response => {
+        console.log('Chat fetch response status:', response.status);
+        console.log('Chat fetch content-type:', response.headers.get('content-type'));
+        return response.text();
+      })
+      .then(html => {
+        console.log('Chat HTML fetched successfully, length:', html.length);
+        iframe.srcdoc = html;
+        console.log('Chat HTML injected via srcdoc');
+      })
+      .catch(error => {
+        console.error('Failed to fetch chat HTML, falling back to src:', error);
+        iframe.src = chatUrl;
+      });
+
     iframe.addEventListener('load', function() {
       console.log('EccoChat iframe loaded successfully');
-      // Check if content is actually rendering as HTML
-      setTimeout(() => {
-        try {
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-          if (iframeDoc && (iframeDoc.body.textContent.includes('<!DOCTYPE html>') || !iframeDoc.querySelector('#messages'))) {
-            console.error('EccoChat iframe showing raw HTML or missing UI elements');
-            showErrorFallback();
-          } else {
-            console.log('EccoChat iframe rendered successfully');
-          }
-        } catch (e) {
-          // Cross-origin restrictions prevent access, assume it's working
-          console.log('EccoChat iframe cross-origin access blocked (normal)');
-        }
-      }, 1000);
     });
 
     iframe.addEventListener('error', function() {
       console.error('EccoChat iframe failed to load');
       showErrorFallback();
     });
-
-    // Timeout fallback
-    setTimeout(() => {
-      if (!iframe.contentDocument && !iframe.contentWindow) {
-        console.error('EccoChat iframe timeout - failed to load');
-        showErrorFallback();
-      }
-    }, 5000);
 
     overlay.appendChild(iframe);
     document.body.appendChild(overlay);
