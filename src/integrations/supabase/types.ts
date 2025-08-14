@@ -118,37 +118,46 @@ export type Database = {
       }
       agents: {
         Row: {
+          chat_interface_theme: string | null
           created_at: string
           creativity_level: number | null
           description: string | null
           id: string
           initial_message: string | null
           instructions: string
+          message_bubble_color: string | null
           name: string
+          profile_image_url: string | null
           status: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          chat_interface_theme?: string | null
           created_at?: string
           creativity_level?: number | null
           description?: string | null
           id?: string
           initial_message?: string | null
           instructions: string
+          message_bubble_color?: string | null
           name: string
+          profile_image_url?: string | null
           status?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          chat_interface_theme?: string | null
           created_at?: string
           creativity_level?: number | null
           description?: string | null
           id?: string
           initial_message?: string | null
           instructions?: string
+          message_bubble_color?: string | null
           name?: string
+          profile_image_url?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string

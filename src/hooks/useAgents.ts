@@ -14,6 +14,9 @@ export interface Agent {
   user_id: string;
   initial_message?: string | null;
   creativity_level?: number | null;
+  profile_image_url?: string | null;
+  message_bubble_color?: string | null;
+  chat_interface_theme?: string | null;
 }
 
 export interface KnowledgeFile {
@@ -71,6 +74,9 @@ export const useAgents = () => {
     instructions: string;
     initial_message?: string;
     creativity_level?: number;
+    profile_image_url?: string;
+    message_bubble_color?: string;
+    chat_interface_theme?: string;
   }) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -101,6 +107,9 @@ export const useAgents = () => {
     status?: 'active' | 'inactive' | 'draft';
     initial_message?: string;
     creativity_level?: number;
+    profile_image_url?: string;
+    message_bubble_color?: string;
+    chat_interface_theme?: string;
   }) => {
     const { data, error } = await supabase
       .from('agents')
