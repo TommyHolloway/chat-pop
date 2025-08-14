@@ -37,6 +37,51 @@ function getCacheKey(agentId: string, message: string): string {
   return `${agentId}:${message.toLowerCase().slice(0, 100)}`;
 }
 
+// Map creativity level (1-10) to OpenAI temperature (0.1-0.9)
+function mapCreativityToTemperature(creativityLevel: number | null): number {
+  if (!creativityLevel || creativityLevel < 1) return 0.1;
+  if (creativityLevel > 10) return 0.9;
+  return Math.max(0.1, Math.min(0.9, creativityLevel * 0.08 + 0.02));
+}
+
+// Generate system prompt based on creativity level
+function generateSystemPrompt(agent: any, knowledgeContext: string): string {
+  const creativityLevel = agent.creativity_level || 5;
+  
+  let knowledgeInstruction = '';
+  if (knowledgeContext) {
+    if (creativityLevel <= 3) {
+      // Strict knowledge base mode
+      knowledgeInstruction = `Knowledge Base Context:
+${knowledgeContext}
+
+IMPORTANT: You must ONLY use the information provided in the knowledge base above to answer questions. If the answer is not found in the knowledge base, respond with "I don't have information about that in my knowledge base. Please ask questions related to the topics I've been trained on."`;
+    } else if (creativityLevel <= 7) {
+      // Balanced mode - prefer knowledge base
+      knowledgeInstruction = `Knowledge Base Context:
+${knowledgeContext}
+
+Please prioritize using this knowledge base to answer questions when relevant. If the knowledge base doesn't contain the answer, you may provide general helpful responses, but clearly indicate when you're going beyond your specific knowledge base.`;
+    } else {
+      // Creative mode - use knowledge as foundation
+      knowledgeInstruction = `Knowledge Base Context:
+${knowledgeContext}
+
+Use this knowledge base as a foundation, but feel free to provide creative and comprehensive responses that go beyond the provided information when helpful.`;
+    }
+  }
+
+  return `You are ${agent.name}, an AI assistant. 
+
+${agent.description}
+
+Instructions: ${agent.instructions}
+
+${knowledgeInstruction}
+
+Be helpful, accurate, and follow the instructions provided. Keep responses conversational and engaging.`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -62,7 +107,7 @@ serve(async (req) => {
     // Get agent details and user_id
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('name, description, instructions, user_id')
+      .select('name, description, instructions, user_id, creativity_level')
       .eq('id', agentId)
       .single();
 
@@ -191,19 +236,11 @@ serve(async (req) => {
       }
     }
 
-    // Build system prompt
-    const systemPrompt = `You are ${agent.name}, an AI assistant. 
-
-${agent.description}
-
-Instructions: ${agent.instructions}
-
-${knowledgeContext ? `Knowledge Base Context:
-${knowledgeContext}
-
-Please use this knowledge base to answer questions when relevant. If the answer is not in the knowledge base, you can still provide helpful general responses.` : ''}
-
-Be helpful, accurate, and follow the instructions provided. Keep responses conversational and engaging.`;
+    // Build system prompt based on creativity level
+    const systemPrompt = generateSystemPrompt(agent, knowledgeContext);
+    
+    // Map creativity level to temperature
+    const temperature = mapCreativityToTemperature(agent.creativity_level);
 
     // Build messages array
     const messages: ChatMessage[] = [
@@ -222,7 +259,7 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: messages,
-        temperature: 0.7,
+        temperature: temperature,
         max_tokens: 1000,
         stream: stream,
       }),
