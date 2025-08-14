@@ -299,10 +299,10 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
 
             // Cache the complete response
             if (fullResponse) {
-              queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
+              const cachingQueryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
               await supabase.from('query_cache').insert({
                 agent_id: agentId,
-                query_hash: queryHash,
+                query_hash: cachingQueryHash,
                 response_text: fullResponse,
                 metadata: { stream: true, tokens: fullResponse.length / 4 }
               });
@@ -354,10 +354,10 @@ Be helpful, accurate, and follow the instructions provided. Keep responses conve
     }
 
     // Cache the response in database
-    queryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
+    const nonStreamingQueryHash = btoa(cacheKey).replace(/[+\/=]/g, '_');
     await supabase.from('query_cache').insert({
       agent_id: agentId,
-      query_hash: queryHash,
+      query_hash: nonStreamingQueryHash,
       response_text: assistantMessage,
       metadata: { stream: false, usage: data.usage }
     });
