@@ -29,7 +29,7 @@ serve(async (req) => {
     // Fetch agent details
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('name, description')
+      .select('name')
       .eq('id', agentId)
       .eq('status', 'active')
       .single();
@@ -40,7 +40,6 @@ serve(async (req) => {
 
     // Escape agent data to prevent XSS
     const safeName = agent.name?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'Agent';
-    const safeDescription = agent.description?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'AI Assistant';
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -90,11 +89,6 @@ serve(async (req) => {
             font-size: 1.125rem;
             font-weight: 600;
             color: #1e293b;
-        }
-        
-        .agent-info p {
-            font-size: 0.875rem;
-            color: #64748b;
         }
         
         .chat-container {
@@ -254,7 +248,6 @@ serve(async (req) => {
         <div class="avatar">${safeName.charAt(0).toUpperCase()}</div>
         <div class="agent-info">
             <h1>${safeName}</h1>
-            <p>${safeDescription}</p>
         </div>
     </div>
     
