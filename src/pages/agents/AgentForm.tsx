@@ -87,7 +87,7 @@ export const AgentForm = () => {
           name: data.name || '',
           description: data.description || '',
           instructions: data.instructions || '',
-          status: data.status || 'active',
+          status: (data.status as 'active' | 'inactive' | 'draft') || 'active',
           initial_message: data.initial_message || '',
           creativity_level: data.creativity_level || 5,
           profile_image_url: data.profile_image_url || '',
