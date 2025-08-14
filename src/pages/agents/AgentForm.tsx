@@ -25,13 +25,19 @@ import {
   Image,
   FileSpreadsheet,
   Globe,
-  Lock
+  Lock,
+  MessageSquare,
+  Sliders,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
 import { useAgentLinks } from '@/hooks/useAgentLinks';
 import { TrainingSummary } from '@/components/agent/TrainingSummary';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface FileItem {
   id: string;
@@ -54,6 +60,8 @@ export const AgentForm = () => {
     description: '',
     instructions: '',
     status: 'draft' as 'active' | 'inactive' | 'draft',
+    initial_message: '',
+    creativity_level: 5,
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +70,8 @@ export const AgentForm = () => {
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const [reprocessingFiles, setReprocessingFiles] = useState<string[]>([]);
   const [viewingContent, setViewingContent] = useState<string | null>(null);
+  const [isLinksExpanded, setIsLinksExpanded] = useState(false);
+  const [isFilesExpanded, setIsFilesExpanded] = useState(false);
 
   useEffect(() => {
     if (isEditing && id) {
@@ -77,6 +87,8 @@ export const AgentForm = () => {
         description: agent.description || '',
         instructions: agent.instructions,
         status: (agent.status as 'active' | 'inactive' | 'draft') || 'draft',
+        initial_message: agent.initial_message || '',
+        creativity_level: agent.creativity_level || 5,
       });
     } catch (error) {
       toast({
@@ -329,357 +341,439 @@ export const AgentForm = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5" />
-                  Basic Information
-                </CardTitle>
-                <CardDescription>
-                  Set up the basic details for your AI agent
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Agent Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., Customer Support Bot"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Choose a descriptive name for your agent
-                  </p>
-                </div>
-
-                 <div className="space-y-2">
-                   <Label htmlFor="description">Description</Label>
-                   <Textarea
-                     id="description"
-                     placeholder="Briefly describe what this agent does..."
-                     value={formData.description}
-                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                     rows={3}
-                   />
-                   <p className="text-sm text-muted-foreground">
-                     A short description of your agent's purpose
-                   </p>
-                 </div>
-
-                 {/* Agent Status */}
-                 {isEditing && (
-                   <div className="space-y-2">
-                     <Label>Agent Status</Label>
-                     <div className="flex items-center justify-between p-4 border rounded-lg">
-                       <div className="flex items-center gap-3">
-                         {formData.status === 'active' ? (
-                           <Globe className="h-5 w-5 text-green-500" />
-                         ) : (
-                           <Lock className="h-5 w-5 text-muted-foreground" />
-                         )}
-                         <div>
-                           <p className="font-medium">
-                             {formData.status === 'active' ? 'Public & Active' : 'Private'}
-                           </p>
-                           <p className="text-sm text-muted-foreground">
-                             {formData.status === 'active' 
-                               ? 'Your agent is live and accessible via public chat URLs'
-                               : 'Your agent is private and not accessible publicly'
-                             }
-                           </p>
-                         </div>
-                       </div>
-                       <Switch
-                         checked={formData.status === 'active'}
-                         onCheckedChange={(checked) => 
-                           setFormData(prev => ({ 
-                             ...prev, 
-                             status: checked ? 'active' : 'inactive' 
-                           }))
-                         }
-                       />
-                     </div>
-                     <p className="text-sm text-muted-foreground">
-                       Toggle to control whether your agent is publicly accessible
-                     </p>
-                   </div>
-                 )}
-              </CardContent>
-            </Card>
-
-            {/* Instructions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Agent Instructions
-                </CardTitle>
-                <CardDescription>
-                  Define how your agent should behave and respond
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="instructions">System Instructions</Label>
-                  <Textarea
-                    id="instructions"
-                    placeholder="You are a helpful assistant that..."
-                    value={formData.instructions}
-                    onChange={(e) => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
-                    rows={8}
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Provide clear instructions on how the agent should behave, respond to users, and handle different scenarios.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Training Summary - Only show if editing and has training data */}
-            {isEditing && (files.length > 0 || links.length > 0) && (
-              <TrainingSummary 
-                files={files} 
-                links={links} 
-                agentUpdatedAt={undefined} // Will get this from agent data if needed
-                agentId={id!}
-                onTrainingComplete={() => {
-                  refetchFiles();
-                }}
-              />
-            )}
-
-            {/* Training Links */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <LinkIcon className="h-5 w-5" />
-                  Training Links
-                </CardTitle>
-                <CardDescription>
-                  Add website URLs to train your agent on web content
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="https://example.com"
-                    value={newUrl}
-                    onChange={(e) => setNewUrl(e.target.value)}
-                    disabled={!id}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={handleAddLink} 
-                    disabled={!id || !newUrl.trim() || linksLoading}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Link
-                  </Button>
-                </div>
+        <div className="max-w-7xl mx-auto">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Responsive Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left Column */}
+              <div className="space-y-6">
                 
-                {!id && (
-                  <p className="text-sm text-muted-foreground">
-                    Save the agent first to add training links
-                  </p>
-                )}
-
-                {links.length > 0 && (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-3">Training Links ({links.length})</h4>
-                      <div className="space-y-2">
-                        {links.map((link) => (
-                          <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div className="flex items-center gap-3">
-                              {getStatusIcon(link.status)}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{link.title || link.url}</p>
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {link.url}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Status: {link.status}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeLink(link.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                {/* Basic Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bot className="h-5 w-5" />
+                      Basic Information
+                    </CardTitle>
+                    <CardDescription>
+                      Set up the basic details for your AI agent
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Agent Name</Label>
+                      <Input
+                        id="name"
+                        placeholder="e.g., Customer Support Bot"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        required
+                      />
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Knowledge Base */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Knowledge Base Files
-                </CardTitle>
-                <CardDescription>
-                  Upload files to train your agent with specific knowledge
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
-                  <div className="text-center space-y-4">
-                    <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
-                    <div>
-                      <h3 className="font-semibold">Upload knowledge files</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Support for .txt, .md, .pdf, and .docx files
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        placeholder="Briefly describe what this agent does..."
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={2}
+                      />
+                    </div>
+
+                    {/* Agent Status */}
+                    {isEditing && (
+                      <div className="space-y-2">
+                        <Label>Agent Status</Label>
+                        <div className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {formData.status === 'active' ? (
+                              <Globe className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Lock className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <div>
+                              <p className="font-medium text-sm">
+                                {formData.status === 'active' ? 'Public & Active' : 'Private'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formData.status === 'active' 
+                                  ? 'Accessible via public chat URLs'
+                                  : 'Not accessible publicly'
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          <Switch
+                            checked={formData.status === 'active'}
+                            onCheckedChange={(checked) => 
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                status: checked ? 'active' : 'inactive' 
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Chat Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5" />
+                      Chat Settings
+                    </CardTitle>
+                    <CardDescription>
+                      Configure how your agent interacts with users
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="initial_message">Initial Message</Label>
+                      <Textarea
+                        id="initial_message"
+                        placeholder="Hello! How can I help you today?"
+                        value={formData.initial_message}
+                        onChange={(e) => setFormData(prev => ({ ...prev, initial_message: e.target.value }))}
+                        rows={2}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        The first message users see when starting a conversation
                       </p>
                     </div>
-                    <div>
-                      <input
-                        type="file"
-                        multiple
-                        accept=".txt,.md,.pdf,.docx"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        id="file-upload"
-                        disabled={!id}
-                      />
-                      <Label htmlFor="file-upload">
-                        <Button variant="outline" asChild disabled={!id}>
-                          <span>{!id ? 'Save agent first' : 'Choose Files'}</span>
-                        </Button>
-                      </Label>
-                    </div>
-                  </div>
-                </div>
 
-                {(files.length > 0 || uploadingFiles.length > 0) && (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-3">
-                        {uploadingFiles.length > 0 ? 'Uploading Files...' : `Uploaded Files (${files.length})`}
-                      </h4>
-                      <div className="space-y-2">
-                        {/* Show uploading files */}
-                        {uploadingFiles.map((fileName) => (
-                          <div key={fileName} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                            <div className="flex items-center gap-3">
-                              {getFileIcon(fileName)}
-                              <div>
-                                <p className="font-medium">{fileName}</p>
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  Uploading...
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        {/* Show uploaded files */}
-                        {files.map((file) => {
-                          const contentStatus = getContentStatus(file.processed_content);
-                          const isReprocessing = reprocessingFiles.includes(file.id);
-                          
-                          return (
-                            <div key={file.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+                    <div className="space-y-2">
+                      <Label htmlFor="creativity_level">
+                        Creativity Level: {formData.creativity_level}
+                      </Label>
+                      <div className="px-3">
+                        <Slider
+                          id="creativity_level"
+                          min={1}
+                          max={10}
+                          step={1}
+                          value={[formData.creativity_level]}
+                          onValueChange={(value) => 
+                            setFormData(prev => ({ ...prev, creativity_level: value[0] }))
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Reserved (1)</span>
+                        <span>Balanced (5)</span>
+                        <span>Creative (10)</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Higher values make responses more creative and varied
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Training Summary - Only show if editing and has training data */}
+                {isEditing && (files.length > 0 || links.length > 0) && (
+                  <TrainingSummary 
+                    files={files} 
+                    links={links} 
+                    agentUpdatedAt={undefined}
+                    agentId={id!}
+                    onTrainingComplete={() => {
+                      refetchFiles();
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                
+                {/* Instructions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Agent Instructions
+                    </CardTitle>
+                    <CardDescription>
+                      Define how your agent should behave and respond
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="instructions">System Instructions</Label>
+                      <Textarea
+                        id="instructions"
+                        placeholder="You are a helpful assistant that..."
+                        value={formData.instructions}
+                        onChange={(e) => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
+                        rows={12}
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Clear instructions on how the agent should behave and respond
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Full Width Sections */}
+            <div className="space-y-6">
+              
+              {/* Training Links - Collapsible */}
+              <Card>
+                <Collapsible 
+                  open={isLinksExpanded || links.length === 0} 
+                  onOpenChange={setIsLinksExpanded}
+                >
+                  <CardHeader>
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between cursor-pointer">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <LinkIcon className="h-5 w-5" />
+                            Training Links {links.length > 0 && `(${links.length})`}
+                          </CardTitle>
+                          <CardDescription>
+                            Add website URLs to train your agent on web content
+                          </CardDescription>
+                        </div>
+                        {links.length > 0 && (
+                          <Button variant="ghost" size="sm" type="button">
+                            {isLinksExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </Button>
+                        )}
+                      </div>
+                    </CollapsibleTrigger>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="https://example.com"
+                          value={newUrl}
+                          onChange={(e) => setNewUrl(e.target.value)}
+                          disabled={!id}
+                        />
+                        <Button 
+                          type="button" 
+                          onClick={handleAddLink} 
+                          disabled={!id || !newUrl.trim() || linksLoading}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Link
+                        </Button>
+                      </div>
+                      
+                      {!id && (
+                        <p className="text-sm text-muted-foreground">
+                          Save the agent first to add training links
+                        </p>
+                      )}
+
+                      {links.length > 0 && (
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {links.map((link) => (
+                            <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg">
                               <div className="flex items-center gap-3 flex-1 min-w-0">
-                                {getFileIcon(file.filename)}
+                                {getStatusIcon(link.status)}
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium truncate">{file.filename}</p>
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <span>{formatFileSize(file.file_size)}</span>
-                                    <span className="flex items-center gap-1">
-                                      {isReprocessing ? (
-                                        <>
-                                          <Loader2 className="h-3 w-3 animate-spin" />
-                                          Reprocessing...
-                                        </>
-                                      ) : (
-                                        <>
-                                          {getStatusBadge(contentStatus.status)}
-                                          {contentStatus.message}
-                                        </>
-                                      )}
-                                    </span>
-                                  </div>
-                                  
-                                  {/* Content preview for successful extractions */}
-                                  {contentStatus.status === 'success' && file.processed_content && (
-                                    <div className="mt-2">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-auto p-0 text-xs text-blue-600 hover:text-blue-800"
-                                        onClick={() => setViewingContent(viewingContent === file.id ? null : file.id)}
-                                      >
-                                        {viewingContent === file.id ? 'Hide Content' : 'View Content Preview'}
-                                      </Button>
-                                      {viewingContent === file.id && (
-                                         <div className="mt-2 p-3 bg-muted/50 rounded text-xs max-h-40 overflow-y-auto">
-                                           <div className="mb-2 text-xs text-muted-foreground border-b pb-1">
-                                             Content Preview ({file.processed_content.length.toLocaleString()} characters, {file.processed_content.split(' ').length.toLocaleString()} words)
-                                           </div>
-                                           <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                                             {file.processed_content.slice(0, 500).replace(/\s+/g, ' ').trim()}
-                                             {file.processed_content.length > 500 && '...'}
-                                           </p>
-                                         </div>
-                                      )}
-                                    </div>
-                                  )}
+                                  <p className="font-medium truncate text-sm">{link.title || link.url}</p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {link.url}
+                                  </p>
                                 </div>
                               </div>
-                              
-                              <div className="flex items-center gap-1 ml-4">
-                                {/* Reprocess button for failed or limited content */}
-                                {(contentStatus.status === 'failed' || contentStatus.status === 'warning') && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeLink(link.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Knowledge Base Files - Collapsible */}
+              <Card>
+                <Collapsible 
+                  open={isFilesExpanded || files.length === 0} 
+                  onOpenChange={setIsFilesExpanded}
+                >
+                  <CardHeader>
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between cursor-pointer">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <Upload className="h-5 w-5" />
+                            Knowledge Base Files {files.length > 0 && `(${files.length})`}
+                          </CardTitle>
+                          <CardDescription>
+                            Upload files to train your agent with specific knowledge
+                          </CardDescription>
+                        </div>
+                        {files.length > 0 && (
+                          <Button variant="ghost" size="sm" type="button">
+                            {isFilesExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </Button>
+                        )}
+                      </div>
+                    </CollapsibleTrigger>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-4">
+                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                        <div className="text-center space-y-3">
+                          <Upload className="h-8 w-8 text-muted-foreground mx-auto" />
+                          <div>
+                            <h3 className="font-medium">Upload knowledge files</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Support for .txt, .md, .pdf, and .docx files
+                            </p>
+                          </div>
+                          <div>
+                            <input
+                              type="file"
+                              multiple
+                              accept=".txt,.md,.pdf,.docx"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                              id="file-upload"
+                              disabled={!id}
+                            />
+                            <Label htmlFor="file-upload">
+                              <Button variant="outline" asChild disabled={!id}>
+                                <span>{!id ? 'Save agent first' : 'Choose Files'}</span>
+                              </Button>
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {(files.length > 0 || uploadingFiles.length > 0) && (
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {/* Show uploading files */}
+                          {uploadingFiles.map((fileName) => (
+                            <div key={fileName} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                              <div className="flex items-center gap-3">
+                                {getFileIcon(fileName)}
+                                <div>
+                                  <p className="font-medium text-sm">{fileName}</p>
+                                  <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Uploading...
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Show uploaded files */}
+                          {files.map((file) => {
+                            const contentStatus = getContentStatus(file.processed_content);
+                            const isReprocessing = reprocessingFiles.includes(file.id);
+                            
+                            return (
+                              <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {getFileIcon(file.filename)}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium truncate text-sm">{file.filename}</p>
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                      <span>{formatFileSize(file.file_size)}</span>
+                                      <span className="flex items-center gap-1">
+                                        {isReprocessing ? (
+                                          <>
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            Reprocessing...
+                                          </>
+                                        ) : (
+                                          <>
+                                            {getStatusBadge(contentStatus.status)}
+                                            {contentStatus.message}
+                                          </>
+                                        )}
+                                      </span>
+                                    </div>
+                                    
+                                    {/* Content preview for successful extractions */}
+                                    {contentStatus.status === 'success' && file.processed_content && (
+                                      <div className="mt-2">
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-auto p-0 text-xs text-blue-600 hover:text-blue-800"
+                                          onClick={() => setViewingContent(viewingContent === file.id ? null : file.id)}
+                                        >
+                                          {viewingContent === file.id ? 'Hide Content' : 'View Content Preview'}
+                                        </Button>
+                                        {viewingContent === file.id && (
+                                           <div className="mt-2 p-3 bg-muted/50 rounded text-xs max-h-32 overflow-y-auto">
+                                             <div className="mb-2 text-xs text-muted-foreground border-b pb-1">
+                                               Content Preview ({file.processed_content.length.toLocaleString()} characters)
+                                             </div>
+                                             <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                               {file.processed_content.slice(0, 300).replace(/\s+/g, ' ').trim()}
+                                               {file.processed_content.length > 300 && '...'}
+                                             </p>
+                                           </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-1 ml-4">
+                                  {/* Reprocess button for failed or limited content */}
+                                  {(contentStatus.status === 'failed' || contentStatus.status === 'warning') && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleReprocessFile(file)}
+                                      disabled={isReprocessing}
+                                      className="text-xs"
+                                    >
+                                      {isReprocessing ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Reprocess'}
+                                    </Button>
+                                  )}
+                                  
                                   <Button
                                     type="button"
                                     variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleReprocessFile(file)}
-                                    disabled={isReprocessing}
-                                    className="text-xs"
+                                    size="icon"
+                                    onClick={() => removeFile(file)}
+                                    disabled={isLoading || isReprocessing}
                                   >
-                                    {isReprocessing ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Reprocess'}
+                                    <X className="h-4 w-4" />
                                   </Button>
-                                )}
-                                
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeFile(file)}
-                                  disabled={isLoading || isReprocessing}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            </div>
 
 
             {/* Actions */}

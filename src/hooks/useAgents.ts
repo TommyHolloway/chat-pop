@@ -12,6 +12,8 @@ export interface Agent {
   created_at: string;
   updated_at: string;
   user_id: string;
+  initial_message?: string | null;
+  creativity_level?: number | null;
 }
 
 export interface KnowledgeFile {
@@ -67,6 +69,8 @@ export const useAgents = () => {
     name: string;
     description?: string;
     instructions: string;
+    initial_message?: string;
+    creativity_level?: number;
   }) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -95,6 +99,8 @@ export const useAgents = () => {
     description?: string;
     instructions: string;
     status?: 'active' | 'inactive' | 'draft';
+    initial_message?: string;
+    creativity_level?: number;
   }) => {
     const { data, error } = await supabase
       .from('agents')

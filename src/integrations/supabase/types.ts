@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -119,8 +119,10 @@ export type Database = {
       agents: {
         Row: {
           created_at: string
+          creativity_level: number | null
           description: string | null
           id: string
+          initial_message: string | null
           instructions: string
           name: string
           status: string | null
@@ -129,8 +131,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          creativity_level?: number | null
           description?: string | null
           id?: string
+          initial_message?: string | null
           instructions: string
           name: string
           status?: string | null
@@ -139,8 +143,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          creativity_level?: number | null
           description?: string | null
           id?: string
+          initial_message?: string | null
           instructions?: string
           name?: string
           status?: string | null
@@ -472,10 +478,10 @@ export type Database = {
     Functions: {
       check_user_plan_limits: {
         Args: {
-          p_user_id: string
-          p_feature_type: string
           p_agent_id?: string
+          p_feature_type: string
           p_file_size?: number
+          p_user_id: string
         }
         Returns: Json
       }
@@ -489,20 +495,20 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       update_storage_usage: {
-        Args: { p_user_id: string; p_size_change: number }
+        Args: { p_size_change: number; p_user_id: string }
         Returns: undefined
       }
       update_usage_tracking: {
         Args: {
-          p_user_id: string
           p_conversation_id?: string
           p_message_count?: number
+          p_user_id: string
         }
         Returns: undefined
       }
