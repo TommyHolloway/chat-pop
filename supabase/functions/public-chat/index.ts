@@ -26,10 +26,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch agent details
+    // Fetch agent details including customization fields
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('name')
+      .select('name, initial_message, profile_image_url, message_bubble_color, chat_interface_theme')
       .eq('id', agentId)
       .eq('status', 'active')
       .single();
@@ -57,32 +57,43 @@ serve(async (req) => {
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+          margin: 0;
+          padding: 0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: ${agent?.chat_interface_theme === 'dark' ? '#0f172a' : '#f8fafc'};
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          color: ${agent?.chat_interface_theme === 'dark' ? '#f1f5f9' : '#1e293b'};
         }
         
         .header {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+          background: ${agent?.chat_interface_theme === 'dark' ? '#1e293b' : 'white'};
+          border-bottom: 1px solid ${agent?.chat_interface_theme === 'dark' ? '#475569' : '#e2e8f0'};
+          padding: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: ${agent?.chat_interface_theme === 'dark' ? '#f1f5f9' : '#1e293b'};
         }
         
         .avatar {
-            width: 40px;
-            height: 40px;
-            background: #3b82f6;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
+          width: 40px;
+          height: 40px;
+          background: ${agent?.message_bubble_color || '#3b82f6'};
+          border-radius: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 600;
+          overflow: hidden;
+        }
+        
+        .avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
         
         .agent-info h1 {
@@ -100,12 +111,13 @@ serve(async (req) => {
         }
         
         .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+          flex: 1;
+          overflow-y: auto;
+          padding: 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          background: ${agent?.chat_interface_theme === 'dark' ? '#0f172a' : '#f8fafc'};
         }
         
         .message {
@@ -137,8 +149,8 @@ serve(async (req) => {
         }
         
         .message.assistant .message-avatar {
-            background: #3b82f6;
-            color: white;
+          background: ${agent?.message_bubble_color || '#3b82f6'};
+          color: white;
         }
         
         .message-content {
@@ -149,47 +161,49 @@ serve(async (req) => {
         }
         
         .message.user .message-content {
-            background: #3b82f6;
-            color: white;
+          background: ${agent?.message_bubble_color || '#3b82f6'};
+          color: white;
         }
         
         .message.assistant .message-content {
-            background: white;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
+          background: ${agent?.chat_interface_theme === 'dark' ? '#334155' : 'white'};
+          color: ${agent?.chat_interface_theme === 'dark' ? '#f1f5f9' : '#1e293b'};
+          border: 1px solid ${agent?.chat_interface_theme === 'dark' ? '#475569' : '#e2e8f0'};
         }
         
         .input-area {
-            padding: 1rem;
-            background: white;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            gap: 0.5rem;
+          padding: 1rem;
+          background: ${agent?.chat_interface_theme === 'dark' ? '#1e293b' : 'white'};
+          border-top: 1px solid ${agent?.chat_interface_theme === 'dark' ? '#475569' : '#e2e8f0'};
+          display: flex;
+          gap: 0.5rem;
         }
         
         .input-area input {
-            flex: 1;
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            outline: none;
-            font-size: 0.875rem;
+          flex: 1;
+          padding: 0.75rem;
+          border: 1px solid ${agent?.chat_interface_theme === 'dark' ? '#475569' : '#e2e8f0'};
+          border-radius: 0.5rem;
+          outline: none;
+          font-size: 0.875rem;
+          background: ${agent?.chat_interface_theme === 'dark' ? '#334155' : 'white'};
+          color: ${agent?.chat_interface_theme === 'dark' ? '#f1f5f9' : '#1e293b'};
         }
         
         .input-area input:focus {
-            border-color: #3b82f6;
+          border-color: ${agent?.message_bubble_color || '#3b82f6'};
         }
         
         .input-area button {
-            padding: 0.75rem 1rem;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: background 0.2s;
+          padding: 0.75rem 1rem;
+          background: ${agent?.message_bubble_color || '#3b82f6'};
+          color: white;
+          border: none;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: background 0.2s;
         }
         
         .input-area button:hover:not(:disabled) {
@@ -245,7 +259,12 @@ serve(async (req) => {
 </head>
 <body>
     <div class="header">
-        <div class="avatar">${safeName.charAt(0).toUpperCase()}</div>
+        <div class="avatar">
+          ${agent?.profile_image_url 
+            ? `<img src="${agent.profile_image_url}" alt="Agent Avatar" />`
+            : safeName.charAt(0).toUpperCase()
+          }
+        </div>
         <div class="agent-info">
             <h1>${safeName}</h1>
         </div>
@@ -351,7 +370,14 @@ serve(async (req) => {
             
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.textContent = role === 'user' ? 'U' : '${safeName.charAt(0).toUpperCase()}';
+            if (role === 'user') {
+              avatar.textContent = 'U';
+            } else {
+              ${agent?.profile_image_url 
+                ? `avatar.innerHTML = '<img src="${agent.profile_image_url}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';`
+                : `avatar.textContent = '${safeName.charAt(0).toUpperCase()}';`
+              }
+            }
             
             const messageContent = document.createElement('div');
             messageContent.className = 'message-content';
@@ -377,7 +403,10 @@ serve(async (req) => {
                 
                 const avatar = document.createElement('div');
                 avatar.className = 'message-avatar';
-                avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
+                ${agent?.profile_image_url 
+                  ? `avatar.innerHTML = '<img src="${agent.profile_image_url}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';`
+                  : `avatar.textContent = '${safeName.charAt(0).toUpperCase()}';`
+                }
                 
                 const loadingContent = document.createElement('div');
                 loadingContent.className = 'loading';
@@ -405,6 +434,19 @@ serve(async (req) => {
 
         // Initialize
         initConversation();
+        
+        // Show initial message if available
+        ${agent?.initial_message ? `
+        setTimeout(() => {
+          // Remove empty state first
+          const emptyState = document.querySelector('.empty-state');
+          if (emptyState) emptyState.remove();
+          
+          // Add initial message
+          addMessage('assistant', \`${agent.initial_message.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`);
+        }, 100);
+        ` : ''}
+        
         try {
           if (window.parent) {
             window.parent.postMessage('ECCOCHAT_READY', '*');
