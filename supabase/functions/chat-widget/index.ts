@@ -59,7 +59,8 @@ serve(async (req) => {
       \${position.includes('bottom') ? 'bottom: 20px;' : 'top: 20px;'}
       width: 60px;
       height: 60px;
-      background: \${primaryColor};
+      background: #000000;
+      border: 2px solid white;
       border-radius: 30px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       cursor: pointer;
