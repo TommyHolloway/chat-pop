@@ -82,55 +82,33 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
       newValues: values
     });
 
+    // Optimistic UI update - update immediately for better UX
+    onUpdate();
+
     setLoading(true);
     try {
-      // Update profile
-      console.log('Updating profile with:', { display_name: values.display_name || null, plan: values.plan });
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          display_name: values.display_name || null,
-          plan: values.plan,
-        })
-        .eq('user_id', user.id)
-        .select();
+      // Use atomic update function for transaction safety
+      const { data: result, error } = await supabase
+        .rpc('update_user_profile_atomic', {
+          p_user_id: user.id,
+          p_display_name: values.display_name || null,
+          p_plan: values.plan,
+          p_role: values.role
+        });
 
-      if (profileError) {
-        console.error('Profile update error:', profileError);
-        throw profileError;
+      if (error) {
+        console.error('Atomic update error:', error);
+        throw error;
       }
-      console.log('Profile updated successfully:', profileData);
 
-      // Update role if changed
-      if (values.role !== user.role) {
-        console.log('Role changed from', user.role, 'to', values.role);
-        
-        // First delete existing role
-        const { error: deleteError } = await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', user.id);
-
-        if (deleteError) {
-          console.error('Role deletion error:', deleteError);
-          throw deleteError;
-        }
-
-        // Insert new role
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: user.id,
-            role: values.role,
-          })
-          .select();
-
-        if (roleError) {
-          console.error('Role insertion error:', roleError);
-          throw roleError;
-        }
-        console.log('Role updated successfully:', roleData);
+      // Type guard and result validation
+      const updateResult = result as { success: boolean; error?: string; user_id?: string };
+      if (!updateResult || !updateResult.success) {
+        console.error('Update failed:', updateResult);
+        throw new Error(updateResult?.error || 'Update operation failed');
       }
+
+      console.log('Profile updated successfully:', updateResult);
 
       // Log the action
       try {
@@ -155,10 +133,13 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
         description: 'User profile updated successfully',
       });
 
-      onUpdate();
       onClose();
     } catch (error: any) {
       console.error('Error updating user:', error);
+      
+      // Revert optimistic update on error
+      setTimeout(() => onUpdate(), 100);
+      
       toast({
         title: 'Error',
         description: error.message || 'Failed to update user profile',

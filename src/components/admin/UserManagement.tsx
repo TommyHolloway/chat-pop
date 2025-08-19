@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, MoreHorizontal, UserCheck, UserX, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,44 @@ export function UserManagement() {
     setFilteredUsers(filtered);
   }, [users, searchTerm]);
 
-  const fetchUsers = async () => {
+  // Real-time subscriptions for immediate updates
+  useEffect(() => {
+    const profilesChannel = supabase
+      .channel('profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profile change detected:', payload);
+          // Refresh users data when profiles change
+          fetchUsers();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_roles'
+        },
+        (payload) => {
+          console.log('User role change detected:', payload);
+          // Refresh users data when roles change
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+    };
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -124,7 +161,7 @@ export function UserManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleUserAction = (user: User, action: string) => {
     if (action === 'edit') {
@@ -238,12 +275,7 @@ export function UserManagement() {
           setIsModalOpen(false);
           setSelectedUser(null);
         }}
-        onUpdate={() => {
-          // Add a small delay to ensure database changes are committed
-          setTimeout(() => {
-            fetchUsers();
-          }, 500);
-        }}
+        onUpdate={fetchUsers}
       />
     </>
   );

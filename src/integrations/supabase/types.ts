@@ -529,6 +529,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_user_profile_atomic: {
+        Args: {
+          p_display_name: string
+          p_plan: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
