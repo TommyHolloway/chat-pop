@@ -70,39 +70,56 @@ export function PlanLimitTracking() {
       // Get current month
       const currentMonth = new Date().toISOString().slice(0, 7) + '-01';
 
-      // Fetch usage data with user profiles
-      const { data: usageData, error: usageError } = await supabase
-        .from('usage_tracking')
-        .select(`
-          user_id,
-          message_credits_used,
-          storage_used_bytes,
-          profiles!inner(email, display_name, plan)
-        `)
-        .eq('month', currentMonth);
+      // Fetch usage data and profiles separately, then join manually
+      const [usageResult, profilesResult, agentResult] = await Promise.all([
+        supabase
+          .from('usage_tracking')
+          .select('user_id, message_credits_used, storage_used_bytes')
+          .eq('month', currentMonth),
+        supabase
+          .from('profiles')
+          .select('user_id, email, display_name, plan'),
+        supabase
+          .from('agents')
+          .select('user_id')
+          .eq('status', 'active')
+      ]);
 
-      if (usageError) {
-        console.error('Error fetching usage data:', usageError);
-        throw usageError;
+      if (usageResult.error) {
+        console.error('Error fetching usage data:', usageResult.error);
+        throw usageResult.error;
       }
 
-      // Get agent counts for each user
-      const { data: agentCounts, error: agentError } = await supabase
-        .from('agents')
-        .select('user_id')
-        .eq('status', 'active');
+      if (profilesResult.error) {
+        console.error('Error fetching profiles:', profilesResult.error);
+        throw profilesResult.error;
+      }
 
-      if (agentError) throw agentError;
+      if (agentResult.error) {
+        console.error('Error fetching agents:', agentResult.error);
+        throw agentResult.error;
+      }
+
+      // Create profiles lookup map
+      const profilesMap = profilesResult.data?.reduce((acc, profile) => {
+        acc[profile.user_id] = profile;
+        return acc;
+      }, {} as Record<string, any>) || {};
 
       // Count agents per user
-      const agentCountMap = agentCounts?.reduce((acc, agent) => {
+      const agentCountMap = agentResult.data?.reduce((acc, agent) => {
         acc[agent.user_id] = (acc[agent.user_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
-      // Process usage data
-      const processedUsages: UserUsage[] = usageData?.map(usage => {
-        const profile = usage.profiles as any;
+      // Process usage data by joining with profiles
+      const processedUsages: UserUsage[] = usageResult.data?.map(usage => {
+        const profile = profilesMap[usage.user_id];
+        if (!profile) {
+          console.warn(`No profile found for user_id: ${usage.user_id}`);
+          return null;
+        }
+
         const plan = profile.plan || 'free';
         
         // Define plan limits
@@ -128,7 +145,7 @@ export function PlanLimitTracking() {
           agent_count: agentCountMap[usage.user_id] || 0,
           limits,
         };
-      }) || [];
+      }).filter(Boolean) || [];
 
       setUserUsages(processedUsages);
 
