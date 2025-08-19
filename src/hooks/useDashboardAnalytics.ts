@@ -6,8 +6,9 @@ interface DashboardAnalytics {
   totalAgents: number;
   totalConversations: number;
   responseRate: number;
-  activeUsers: number;
+  totalSessions: number;
   isLoading: boolean;
+  error: string | null;
 }
 
 export const useDashboardAnalytics = () => {
@@ -16,8 +17,9 @@ export const useDashboardAnalytics = () => {
     totalAgents: 0,
     totalConversations: 0,
     responseRate: 0,
-    activeUsers: 0,
-    isLoading: true
+    totalSessions: 0,
+    isLoading: true,
+    error: null
   });
 
   const fetchAnalytics = async () => {
@@ -42,7 +44,7 @@ export const useDashboardAnalytics = () => {
         .eq('user_id', user.id);
 
       let totalConversations = 0;
-      let activeUsers = 0;
+      let totalSessions = 0;
 
       if (agentIds && agentIds.length > 0) {
         const agentIdList = agentIds.map(agent => agent.id);
@@ -55,31 +57,29 @@ export const useDashboardAnalytics = () => {
 
         totalConversations = conversationsCount || 0;
 
-        // Get unique users count (based on unique session_ids)
+        // Get unique sessions count (based on unique session_ids)
         const { data: uniqueSessions } = await supabase
           .from('conversations')
           .select('session_id')
           .in('agent_id', agentIdList);
 
         const uniqueSessionIds = new Set(uniqueSessions?.map(c => c.session_id) || []);
-        activeUsers = uniqueSessionIds.size;
+        totalSessions = uniqueSessionIds.size;
       }
 
-      // Calculate response rate based on conversations with messages
+      // Calculate response rate based on conversations with actual agent responses
       let responseRate = 0;
       if (totalConversations > 0) {
-        const { data: conversationsWithMessages } = await supabase
+        const { data: conversationsWithAgentResponses } = await supabase
           .from('conversations')
           .select(`
             id,
-            messages(count)
+            messages!inner(role)
           `)
-          .in('agent_id', agentIds?.map(a => a.id) || []);
+          .in('agent_id', agentIds?.map(a => a.id) || [])
+          .eq('messages.role', 'assistant');
 
-        const conversationsWithResponses = conversationsWithMessages?.filter(
-          conv => conv.messages && conv.messages.length > 1
-        ).length || 0;
-
+        const conversationsWithResponses = conversationsWithAgentResponses?.length || 0;
         responseRate = Math.round((conversationsWithResponses / totalConversations) * 100);
       }
 
@@ -87,12 +87,17 @@ export const useDashboardAnalytics = () => {
         totalAgents: agentsCount || 0,
         totalConversations,
         responseRate,
-        activeUsers,
-        isLoading: false
+        totalSessions,
+        isLoading: false,
+        error: null
       });
     } catch (error) {
       console.error('Error fetching dashboard analytics:', error);
-      setAnalytics(prev => ({ ...prev, isLoading: false }));
+      setAnalytics(prev => ({ 
+        ...prev, 
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch analytics'
+      }));
     }
   };
 
