@@ -82,9 +82,6 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
       newValues: values
     });
 
-    // Optimistic UI update - update immediately for better UX
-    onUpdate();
-
     setLoading(true);
     try {
       // Use atomic update function for transaction safety
@@ -98,7 +95,7 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
 
       if (error) {
         console.error('Atomic update error:', error);
-        throw error;
+        throw new Error(error.message || 'Database update failed');
       }
 
       // Type guard and result validation
@@ -109,6 +106,18 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
       }
 
       console.log('Profile updated successfully:', updateResult);
+
+      // Verify the update was persisted by checking the database
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('user_id', user.id)
+        .single();
+
+      if (verifyError || !verifyData || verifyData.plan !== values.plan) {
+        console.error('Update verification failed:', { verifyError, verifyData, expectedPlan: values.plan });
+        throw new Error('Update failed to persist - please try again');
+      }
 
       // Log the action
       try {
@@ -133,12 +142,11 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
         description: 'User profile updated successfully',
       });
 
+      // Only update UI after successful DB confirmation and verification
+      onUpdate();
       onClose();
     } catch (error: any) {
       console.error('Error updating user:', error);
-      
-      // Revert optimistic update on error
-      setTimeout(() => onUpdate(), 100);
       
       toast({
         title: 'Error',
