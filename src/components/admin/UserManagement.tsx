@@ -55,43 +55,6 @@ export function UserManagement() {
     setFilteredUsers(filtered);
   }, [users, searchTerm]);
 
-  // Real-time subscriptions for immediate updates
-  useEffect(() => {
-    const profilesChannel = supabase
-      .channel('profiles-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        (payload) => {
-          console.log('Profile change detected:', payload);
-          // Refresh users data when profiles change
-          fetchUsers();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_roles'
-        },
-        (payload) => {
-          console.log('User role change detected:', payload);
-          // Refresh users data when roles change
-          fetchUsers();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(profilesChannel);
-    };
-  }, []);
-
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -162,6 +125,54 @@ export function UserManagement() {
       setLoading(false);
     }
   }, [toast]);
+
+  // Debounce function to prevent rapid fetchUsers calls
+  const debounce = useCallback((func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  }, []);
+
+  const debouncedFetchUsers = useCallback(debounce(fetchUsers, 500), [debounce, fetchUsers]);
+
+  // Real-time subscriptions with debounced updates
+  useEffect(() => {
+    const profilesChannel = supabase
+      .channel('profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profile change detected:', payload);
+          // Use debounced refresh to prevent rapid updates
+          debouncedFetchUsers();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_roles'
+        },
+        (payload) => {
+          console.log('User role change detected:', payload);
+          // Use debounced refresh to prevent rapid updates
+          debouncedFetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+    };
+  }, [debouncedFetchUsers]);
 
   const handleUserAction = (user: User, action: string) => {
     if (action === 'edit') {
