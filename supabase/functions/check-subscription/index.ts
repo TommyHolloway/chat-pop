@@ -48,6 +48,14 @@ serve(async (req) => {
     
     if (customers.data.length === 0) {
       logStep("No customer found, updating unsubscribed state");
+      
+      // Check if user has admin-set plan before overriding
+      const { data: currentProfile } = await supabaseClient
+        .from("profiles")
+        .select("plan")
+        .eq('user_id', user.id)
+        .single();
+      
       await supabaseClient.from("subscribers").upsert({
         email: user.email,
         user_id: user.id,
@@ -58,10 +66,19 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'email' });
       
-      // Update profiles plan to free
-      await supabaseClient.from("profiles").update({ plan: 'free' }).eq('user_id', user.id);
+      // Only update plan to free if it's not an admin override (non-free plan without subscription)
+      const shouldUpdatePlan = !currentProfile?.plan || currentProfile.plan === 'free';
+      if (shouldUpdatePlan) {
+        await supabaseClient.from("profiles").update({ plan: 'free' }).eq('user_id', user.id);
+        logStep("Updated plan to free - no admin override detected");
+      } else {
+        logStep("Preserving admin override plan", { currentPlan: currentProfile.plan });
+      }
       
-      return new Response(JSON.stringify({ subscribed: false, subscription_tier: 'free' }), {
+      return new Response(JSON.stringify({ 
+        subscribed: false, 
+        subscription_tier: currentProfile?.plan || 'free' 
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -100,6 +117,13 @@ serve(async (req) => {
       logStep("No active subscription found");
     }
 
+    // Check current profile plan before updating
+    const { data: currentProfile } = await supabaseClient
+      .from("profiles")
+      .select("plan")
+      .eq('user_id', user.id)
+      .single();
+
     await supabaseClient.from("subscribers").upsert({
       email: user.email,
       user_id: user.id,
@@ -110,13 +134,23 @@ serve(async (req) => {
       updated_at: new Date().toISOString(),
     }, { onConflict: 'email' });
 
-    // Update profiles plan
-    await supabaseClient.from("profiles").update({ plan: subscriptionTier }).eq('user_id', user.id);
+    // Only update profiles plan if it matches subscription tier or is free (no admin override)
+    const currentPlan = currentProfile?.plan || 'free';
+    const isAdminOverride = hasActiveSub && currentPlan !== subscriptionTier && currentPlan !== 'free';
+    
+    if (!isAdminOverride) {
+      await supabaseClient.from("profiles").update({ plan: subscriptionTier }).eq('user_id', user.id);
+      logStep("Updated plan to match subscription", { from: currentPlan, to: subscriptionTier });
+    } else {
+      logStep("Preserving admin override plan", { adminPlan: currentPlan, stripePlan: subscriptionTier });
+    }
 
-    logStep("Updated database with subscription info", { subscribed: hasActiveSub, subscriptionTier });
+    const finalPlan = isAdminOverride ? currentPlan : subscriptionTier;
+
+    logStep("Updated database with subscription info", { subscribed: hasActiveSub, subscriptionTier, finalPlan });
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
-      subscription_tier: subscriptionTier,
+      subscription_tier: finalPlan,
       subscription_end: subscriptionEnd
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
