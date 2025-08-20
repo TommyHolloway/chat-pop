@@ -561,156 +561,162 @@ export const AgentForm = () => {
             {/* Training Links */}
             <Card>
               <CardHeader>
-                <Collapsible open={isLinksExpanded} onOpenChange={setIsLinksExpanded}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full [&[data-state=open]>svg]:rotate-90">
-                    <CardTitle className="flex items-center gap-2">
-                      <LinkIcon className="w-5 h-5" />
-                      Training Links
-                      <Badge variant="secondary">{links.length}</Badge>
-                    </CardTitle>
-                    <ChevronRight className="w-4 h-4 transition-transform" />
-                  </CollapsibleTrigger>
-                </Collapsible>
+                <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5" />
+                  Training Links
+                  <Badge variant="secondary">{links.length}</Badge>
+                </CardTitle>
                 <CardDescription>
                   Add URLs to train your agent with web content
                 </CardDescription>
               </CardHeader>
-              <CollapsibleContent>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="https://example.com"
-                      value={newUrl}
-                      onChange={(e) => setNewUrl(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddLink()}
-                    />
-                    <Button onClick={handleAddLink} disabled={!newUrl.trim()}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add
-                    </Button>
-                  </div>
-
-                  {links.length > 0 && (
-                    <div className="space-y-2">
-                      {links.map((link) => (
-                        <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className="flex items-center gap-2">
-                              <LinkIcon className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm font-medium">{link.title || 'Untitled'}</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground truncate">{link.url}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={link.status === 'crawled' ? 'default' : 'secondary'}>
-                              {link.status}
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {/* Remove link logic */}}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {isEditing && links.length > 0 && (
-                    <Button onClick={handleTrainAgent} disabled={loading} className="w-full">
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      {loading ? 'Training...' : 'Train Agent'}
-                    </Button>
-                  )}
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-
-            {/* Knowledge Base Files */}
-            <Card>
-              <CardHeader>
-                <Collapsible open={isFilesExpanded} onOpenChange={setIsFilesExpanded}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full [&[data-state=open]>svg]:rotate-90">
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
-                      Knowledge Base Files
-                      <Badge variant="secondary">{files.length}</Badge>
-                    </CardTitle>
-                    <ChevronRight className="w-4 h-4 transition-transform" />
-                  </CollapsibleTrigger>
-                </Collapsible>
-                <CardDescription>
-                  Upload documents to expand your agent's knowledge
-                </CardDescription>
-              </CardHeader>
-              <CollapsibleContent>
-                <CardContent className="space-y-4">
-                  <div>
-                    <input
-                      type="file"
-                      multiple
-                      accept=".txt,.md,.pdf,.docx"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label htmlFor="file-upload">
-                      <Button variant="outline" className="w-full cursor-pointer" disabled={!isEditing}>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Files
+              <Collapsible open={isLinksExpanded} onOpenChange={setIsLinksExpanded}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full [&[data-state=open]>svg]:rotate-90 px-6 py-2">
+                  <span className="text-sm font-medium">
+                    {isLinksExpanded ? 'Hide' : 'Show'} Training Links
+                  </span>
+                  <ChevronRight className="w-4 h-4 transition-transform" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="https://example.com"
+                        value={newUrl}
+                        onChange={(e) => setNewUrl(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddLink()}
+                      />
+                      <Button onClick={handleAddLink} disabled={!newUrl.trim()}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add
                       </Button>
-                    </label>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Supported formats: TXT, MD, PDF, DOCX (max 10MB each)
-                    </p>
-                  </div>
+                    </div>
 
-                  {files.length > 0 && (
-                    <div className="space-y-2">
-                      {files.map((file) => {
-                        const status = getContentStatus(file.processed_content);
-                        return (
-                          <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    {links.length > 0 && (
+                      <div className="space-y-2">
+                        {links.map((link) => (
+                          <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg">
                             <div className="flex items-center gap-3 flex-1">
-                              {getFileIcon(file.filename)}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium truncate">{file.filename}</span>
-                                  {getStatusBadge(status.status)}
-                                </div>
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                  <span>{formatFileSize(file.file_size)}</span>
-                                  <span>{status.message}</span>
-                                </div>
+                              <div className="flex items-center gap-2">
+                                <LinkIcon className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm font-medium">{link.title || 'Untitled'}</span>
                               </div>
+                              <span className="text-xs text-muted-foreground truncate">{link.url}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              {status.status === 'failed' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleReprocessFile(file)}
-                                >
-                                  <RefreshCw className="w-4 h-4" />
-                                </Button>
-                              )}
+                            <div className="flex items-center gap-2">
+                              <Badge variant={link.status === 'crawled' ? 'default' : 'secondary'}>
+                                {link.status}
+                              </Badge>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => removeFile(file)}
+                                onClick={() => {/* Remove link logic */}}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
+                    )}
+
+                    {isEditing && links.length > 0 && (
+                      <Button onClick={handleTrainAgent} disabled={loading} className="w-full">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        {loading ? 'Training...' : 'Train Agent'}
+                      </Button>
+                    )}
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+
+            {/* Knowledge Base Files */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Knowledge Base Files
+                  <Badge variant="secondary">{files.length}</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Upload documents to expand your agent's knowledge
+                </CardDescription>
+              </CardHeader>
+              <Collapsible open={isFilesExpanded} onOpenChange={setIsFilesExpanded}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full [&[data-state=open]>svg]:rotate-90 px-6 py-2">
+                  <span className="text-sm font-medium">
+                    {isFilesExpanded ? 'Hide' : 'Show'} Files
+                  </span>
+                  <ChevronRight className="w-4 h-4 transition-transform" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".txt,.md,.pdf,.docx"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <label htmlFor="file-upload">
+                        <Button variant="outline" className="w-full cursor-pointer" disabled={!isEditing}>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Files
+                        </Button>
+                      </label>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Supported formats: TXT, MD, PDF, DOCX (max 10MB each)
+                      </p>
                     </div>
-                  )}
-                </CardContent>
-              </CollapsibleContent>
+
+                    {files.length > 0 && (
+                      <div className="space-y-2">
+                        {files.map((file) => {
+                          const status = getContentStatus(file.processed_content);
+                          return (
+                            <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3 flex-1">
+                                {getFileIcon(file.filename)}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium truncate">{file.filename}</span>
+                                    {getStatusBadge(status.status)}
+                                  </div>
+                                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                    <span>{formatFileSize(file.file_size)}</span>
+                                    <span>{status.message}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {status.status === 'failed' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleReprocessFile(file)}
+                                  >
+                                    <RefreshCw className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeFile(file)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
           </TabsContent>
         </Tabs>
