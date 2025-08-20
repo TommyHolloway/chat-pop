@@ -6,12 +6,14 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUserPlan } from '@/hooks/useUserPlan';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Bell, Shield, CreditCard } from 'lucide-react';
 
 export const Settings = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { plan: currentPlan, isAdminOverride } = useUserPlan();
 
   const getInitials = (email: string) => {
     return email ? email.slice(0, 2).toUpperCase() : 'U';
@@ -48,7 +50,18 @@ export const Settings = () => {
               </Avatar>
               <div className="space-y-2">
                 <h3 className="font-medium">{user?.email}</h3>
-                <p className="text-sm text-muted-foreground">Free Plan</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    {currentPlan === 'free' ? 'Free Plan' : 
+                     currentPlan === 'hobby' ? 'Hobby Plan' : 
+                     currentPlan === 'standard' ? 'Pro Plan' : 'Free Plan'}
+                  </p>
+                  {isAdminOverride && (
+                    <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                      Admin Override
+                    </span>
+                  )}
+                </div>
                 <Button variant="outline" size="sm">
                   Change Avatar
                 </Button>
@@ -171,9 +184,20 @@ export const Settings = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">Free Plan</div>
+                <div className="font-medium flex items-center gap-2">
+                  {currentPlan === 'free' ? 'Free Plan' : 
+                   currentPlan === 'hobby' ? 'Hobby Plan' : 
+                   currentPlan === 'standard' ? 'Pro Plan' : 'Free Plan'}
+                  {isAdminOverride && (
+                    <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                      Admin Override
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm text-muted-foreground">
-                  3 agents • 1,000 messages/month
+                  {currentPlan === 'free' ? '1 agent • 100 messages/month' :
+                   currentPlan === 'hobby' ? '2 agents • 2,000 messages/month' :
+                   currentPlan === 'standard' ? '5 agents • 12,000 messages/month' : '1 agent • 100 messages/month'}
                 </div>
               </div>
               <Button>Upgrade Plan</Button>

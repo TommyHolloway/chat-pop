@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useUserPlan } from '@/hooks/useUserPlan';
 import { useUsageData } from '@/hooks/useUsageData';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,7 +39,7 @@ interface PlanEnforcement {
 
 export const usePlanEnforcement = () => {
   const { user } = useAuth();
-  const { subscription } = useSubscription();
+  const { plan: userPlan, isLoading: planLoading } = useUserPlan();
   const { usage } = useUsageData();
   const [enforcement, setEnforcement] = useState<PlanEnforcement>({
     limits: { messageCredits: 100, agents: 1, links: 5, storageGB: 1 },
@@ -89,7 +89,7 @@ export const usePlanEnforcement = () => {
     try {
       setEnforcement(prev => ({ ...prev, isLoading: true }));
 
-      const currentPlan = subscription.subscription_tier || 'free';
+      const currentPlan = userPlan;
       const limits = getPlanLimits(currentPlan);
 
       // Use database functions to check current usage and limits
@@ -165,10 +165,10 @@ export const usePlanEnforcement = () => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && !planLoading) {
       checkPlanEnforcement();
     }
-  }, [user, subscription.subscription_tier, usage]);
+  }, [user, userPlan, usage, planLoading]);
 
   return { ...enforcement, refetch: checkPlanEnforcement };
 };

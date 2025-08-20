@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Download, Loader2, RefreshCw, CreditCard } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useUsageData } from "@/hooks/useUsageData";
+import { useUserPlan } from "@/hooks/useUserPlan";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,6 +12,7 @@ export const Billing = () => {
   const { user } = useAuth();
   const { subscription, checkSubscription, createCheckout, openCustomerPortal } = useSubscription();
   const { usage } = useUsageData();
+  const { plan: currentPlan, isAdminOverride, stripePlan } = useUserPlan();
   const { toast } = useToast();
 
   const handleUpgrade = async (plan: string) => {
@@ -41,7 +43,7 @@ export const Billing = () => {
     }
   };
 
-  const currentPlan = subscription.subscription_tier;
+  // currentPlan now comes from useUserPlan hook above
   
   // Plan limits for message credits
   const getPlanLimits = (plan: string) => {
@@ -67,31 +69,44 @@ export const Billing = () => {
       {/* Current Plan Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            Current Plan
-            <div className="flex items-center gap-2">
-              <Badge variant={currentPlan === 'free' ? 'secondary' : 'default'}>
-                {currentPlan === 'free' ? 'Free Plan' : 
-                 currentPlan === 'hobby' ? 'Hobby Plan' : 
-                 currentPlan === 'standard' ? 'Pro Plan' : 'Free Plan'}
-              </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={checkSubscription}
-                disabled={subscription.isLoading}
-              >
-                {subscription.isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
+            <CardTitle className="flex items-center justify-between">
+              Current Plan
+              <div className="flex items-center gap-2">
+                <Badge variant={currentPlan === 'free' ? 'secondary' : 'default'}>
+                  {currentPlan === 'free' ? 'Free Plan' : 
+                   currentPlan === 'hobby' ? 'Hobby Plan' : 
+                   currentPlan === 'standard' ? 'Pro Plan' : 'Free Plan'}
+                </Badge>
+                {isAdminOverride && (
+                  <Badge variant="outline" className="text-xs">
+                    Admin Override
+                  </Badge>
                 )}
-              </Button>
-            </div>
-          </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={checkSubscription}
+                  disabled={subscription.isLoading}
+                >
+                  {subscription.isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </CardTitle>
           <CardDescription>
             Your current usage and plan details
-            {subscription.subscription_end && (
+            {isAdminOverride && (
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
+                <strong>Admin Override:</strong> Your plan has been set to {currentPlan} by an administrator. 
+                {stripePlan && stripePlan !== 'free' && (
+                  <span> (Stripe subscription: {stripePlan})</span>
+                )}
+              </div>
+            )}
+            {subscription.subscription_end && !isAdminOverride && (
               <div className="mt-2 text-sm">
                 Next billing date: {new Date(subscription.subscription_end).toLocaleDateString()}
               </div>
