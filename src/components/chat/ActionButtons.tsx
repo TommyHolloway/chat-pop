@@ -79,8 +79,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         {actions.map((action, index) => {
           if (action.type === 'calendar_booking') {
             // Check if it's embedded or redirect mode
-            const config = action.data.config || action.data;
-            const integrationMode = config.integration_mode || 'redirect';
+            const integration = action.data.integration;
+            const integrationMode = integration?.integration_mode || 'redirect';
             
             return (
               <Button
@@ -88,16 +88,14 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (integrationMode === 'embedded') {
-                    setSelectedCalendarIntegration({
-                      provider: config.provider || 'calendly',
-                      integration_mode: 'embedded',
-                      configuration_json: config
-                    });
+                  if (integrationMode === 'embedded' && integration) {
+                    setSelectedCalendarIntegration(integration);
                     setCalendarOpen(true);
                   } else {
                     // Redirect mode - use external link
-                    const link = config.redirect_url || config.calendly_link || action.data.link;
+                    const link = integration?.configuration_json?.redirect_url || 
+                                integration?.configuration_json?.calendly_link || 
+                                action.data.link;
                     if (link) {
                       window.open(link, '_blank');
                     }

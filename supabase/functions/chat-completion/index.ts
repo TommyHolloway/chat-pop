@@ -448,13 +448,37 @@ serve(async (req) => {
       const functionArgs = JSON.parse(functionCall.arguments);
       
       if (functionCall.name === 'schedule_appointment' && calendarAction) {
-        enhancedResponse.actions.push({
-          type: 'calendar_booking',
-          data: {
-            link: calendarAction.config_json.calendar_link,
-            text: calendarAction.config_json.button_text || 'Schedule Appointment'
-          }
-        });
+        // Get calendar integrations for this agent
+        const { data: calendarIntegrations } = await supabase
+          .from('calendar_integrations')
+          .select('*')
+          .eq('agent_id', agentId)
+          .eq('is_active', true);
+
+        if (calendarIntegrations && calendarIntegrations.length > 0) {
+          // Use the first active integration
+          const integration = calendarIntegrations[0];
+          enhancedResponse.actions.push({
+            type: 'calendar_booking',
+            data: {
+              integration: {
+                provider: integration.provider,
+                integration_mode: integration.integration_mode,
+                configuration_json: integration.configuration_json
+              },
+              text: calendarAction.config_json.button_text || 'Schedule Appointment'
+            }
+          });
+        } else {
+          // Fallback to old system if no integrations configured
+          enhancedResponse.actions.push({
+            type: 'calendar_booking',
+            data: {
+              link: calendarAction.config_json.calendar_link,
+              text: calendarAction.config_json.button_text || 'Schedule Appointment'
+            }
+          });
+        }
       }
       
       if (functionCall.name === 'display_custom_button' && customButtonAction && functionArgs.trigger_detected) {
