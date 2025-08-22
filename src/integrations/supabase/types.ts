@@ -205,6 +205,42 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_integrations: {
+        Row: {
+          agent_id: string
+          api_key_encrypted: string | null
+          configuration_json: Json
+          created_at: string
+          id: string
+          integration_mode: string
+          is_active: boolean
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          api_key_encrypted?: string | null
+          configuration_json?: Json
+          created_at?: string
+          id?: string
+          integration_mode?: string
+          is_active?: boolean
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          api_key_encrypted?: string | null
+          configuration_json?: Json
+          created_at?: string
+          id?: string
+          integration_mode?: string
+          is_active?: boolean
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           agent_id: string

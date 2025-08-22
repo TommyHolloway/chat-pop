@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useAgents, Agent } from '@/hooks/useAgents';
 import { useKnowledgeFiles } from '@/hooks/useAgents';
 import { useAgentActions } from '@/hooks/useAgentActions';
+import { useCalendarIntegrations } from '@/hooks/useCalendarIntegrations';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/agent/ImageUpload';
 import { ColorPicker } from '@/components/agent/ColorPicker';
@@ -59,6 +60,7 @@ export const AgentForm = () => {
   const { createAgent, updateAgent, getAgent } = useAgents();
   const { files, uploadFile, deleteFile, reprocessFile, refetchFiles } = useKnowledgeFiles(agentId || '');
   const { actions, createAction, updateAction, deleteAction } = useAgentActions(agentId);
+  const { integrations, createIntegration, updateIntegration, deleteIntegration, testConnection } = useCalendarIntegrations(agentId);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -84,8 +86,16 @@ export const AgentForm = () => {
   const [calendarBookingEnabled, setCalendarBookingEnabled] = useState(false);
   const [customButtonEnabled, setCustomButtonEnabled] = useState(false);
   const [calendarConfig, setCalendarConfig] = useState({
+    integration_mode: 'redirect' as 'redirect' | 'embedded',
+    provider: 'calendly' as 'calendly' | 'calcom' | 'google',
+    redirect_url: '',
+    api_key: '',
+    trigger_instructions: 'If user asks to book or schedule an appointment',
+    // Legacy support
     calendly_link: '',
-    trigger_instructions: 'If user asks to book or schedule an appointment'
+    // Provider specific fields
+    calendly_username: '',
+    calendar_id: ''
   });
   const [buttonConfig, setButtonConfig] = useState({
     button_text: '',
@@ -350,7 +360,7 @@ export const AgentForm = () => {
       if (agentIdToUse) {
         // Handle Calendar Booking Action
         const existingCalendarAction = actions.find(a => a.action_type === 'calendar_booking');
-        if (calendarBookingEnabled && calendarConfig.calendly_link) {
+        if (calendarBookingEnabled && (calendarConfig.redirect_url || calendarConfig.calendly_link)) {
           const calendarData = {
             agent_id: agentIdToUse,
             action_type: 'calendar_booking' as const,
@@ -362,6 +372,17 @@ export const AgentForm = () => {
             await updateAction(existingCalendarAction.id, calendarData);
           } else {
             await createAction(calendarData);
+          }
+          
+          // Create calendar integration if embedded mode
+          if (calendarConfig.integration_mode === 'embedded' && calendarConfig.api_key) {
+            await createIntegration({
+              agent_id: agentIdToUse,
+              provider: calendarConfig.provider,
+              integration_mode: 'embedded',
+              configuration_json: calendarConfig,
+              api_key: calendarConfig.api_key
+            });
           }
         } else if (existingCalendarAction && !calendarBookingEnabled) {
           await deleteAction(existingCalendarAction.id);
@@ -628,7 +649,7 @@ export const AgentForm = () => {
                       <div>
                         <h4 className="font-medium">Calendar Booking</h4>
                         <p className="text-sm text-muted-foreground">
-                          Enable appointment scheduling via Calendly integration
+                          Enable appointment scheduling with multiple integration options
                         </p>
                       </div>
                     </div>
@@ -639,16 +660,138 @@ export const AgentForm = () => {
                   </div>
                   
                   {calendarBookingEnabled && (
-                    <div className="space-y-3 pl-8">
+                    <div className="space-y-4 pl-8">
+                      {/* Integration Mode Selector */}
                       <div className="space-y-2">
-                        <Label htmlFor="calendly_link">Calendly Link</Label>
-                        <Input
-                          id="calendly_link"
-                          value={calendarConfig.calendly_link}
-                          onChange={(e) => setCalendarConfig({ ...calendarConfig, calendly_link: e.target.value })}
-                          placeholder="https://calendly.com/your-username/meeting"
-                        />
+                        <Label>Integration Mode</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant={calendarConfig.integration_mode === 'redirect' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setCalendarConfig({ ...calendarConfig, integration_mode: 'redirect' })}
+                            className="justify-start"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Redirect
+                          </Button>
+                          <Button
+                            variant={calendarConfig.integration_mode === 'embedded' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setCalendarConfig({ ...calendarConfig, integration_mode: 'embedded' })}
+                            className="justify-start"
+                          >
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Embedded
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {calendarConfig.integration_mode === 'redirect' 
+                            ? 'Users will be redirected to external calendar (simple setup)'
+                            : 'Users can book directly in chat (requires API key)'
+                          }
+                        </p>
                       </div>
+
+                      {/* Provider Selector */}
+                      <div className="space-y-2">
+                        <Label>Calendar Provider</Label>
+                        <Select 
+                          value={calendarConfig.provider} 
+                          onValueChange={(value: 'calendly' | 'calcom' | 'google') => 
+                            setCalendarConfig({ ...calendarConfig, provider: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="calendly">Calendly</SelectItem>
+                            <SelectItem value="calcom">Cal.com</SelectItem>
+                            <SelectItem value="google">Google Calendar</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Configuration Fields */}
+                      {calendarConfig.integration_mode === 'redirect' ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="redirect_url">
+                            {calendarConfig.provider === 'calendly' ? 'Calendly Link' : 
+                             calendarConfig.provider === 'calcom' ? 'Cal.com Booking Link' :
+                             'Google Calendar Link'}
+                          </Label>
+                          <Input
+                            id="redirect_url"
+                            value={calendarConfig.redirect_url || calendarConfig.calendly_link}
+                            onChange={(e) => setCalendarConfig({ 
+                              ...calendarConfig, 
+                              redirect_url: e.target.value,
+                              calendly_link: e.target.value // Legacy support
+                            })}
+                            placeholder={
+                              calendarConfig.provider === 'calendly' ? 'https://calendly.com/your-username/meeting' :
+                              calendarConfig.provider === 'calcom' ? 'https://cal.com/your-username/meeting' :
+                              'https://calendar.google.com/calendar/...'
+                            }
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="api_key">API Key</Label>
+                            <Input
+                              id="api_key"
+                              type="password"
+                              value={calendarConfig.api_key}
+                              onChange={(e) => setCalendarConfig({ ...calendarConfig, api_key: e.target.value })}
+                              placeholder={
+                                calendarConfig.provider === 'calendly' ? 'Your Calendly Personal Access Token' :
+                                calendarConfig.provider === 'calcom' ? 'Your Cal.com API Key' :
+                                'Your Google Calendar API Key'
+                              }
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              {calendarConfig.provider === 'calendly' && 
+                                'Get your Personal Access Token from Calendly Settings > Integrations'}
+                              {calendarConfig.provider === 'calcom' && 
+                                'Generate an API key from Cal.com Settings > Developer'}
+                              {calendarConfig.provider === 'google' && 
+                                'Create credentials in Google Cloud Console'}
+                            </p>
+                          </div>
+                          
+                          {calendarConfig.provider === 'calendly' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="calendly_username">Calendly Username</Label>
+                              <Input
+                                id="calendly_username"
+                                value={calendarConfig.calendly_username || ''}
+                                onChange={(e) => setCalendarConfig({ 
+                                  ...calendarConfig, 
+                                  calendly_username: e.target.value 
+                                })}
+                                placeholder="your-calendly-username"
+                              />
+                            </div>
+                          )}
+                          
+                          {calendarConfig.provider === 'google' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="calendar_id">Calendar ID</Label>
+                              <Input
+                                id="calendar_id"
+                                value={calendarConfig.calendar_id || ''}
+                                onChange={(e) => setCalendarConfig({ 
+                                  ...calendarConfig, 
+                                  calendar_id: e.target.value 
+                                })}
+                                placeholder="primary or your-calendar@gmail.com"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <Label htmlFor="trigger_instructions">Trigger Instructions</Label>
                         <Textarea
