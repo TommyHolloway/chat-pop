@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useChat } from '@/hooks/useChat';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
+import { ActionButtons } from '@/components/chat/ActionButtons';
 
 export const Playground = () => {
   const { id } = useParams();
@@ -317,14 +318,21 @@ export const Playground = () => {
                 </Avatar>
                 <div className={`max-w-[70%] ${message.sender === 'user' ? 'text-right' : ''}`}>
                   <div
-                    className={`rounded-lg px-4 py-3 ${
+                     className={`rounded-lg px-4 py-3 ${
                       message.sender === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
-                    }`}
-                  >
-                    {message.content}
-                  </div>
+                     }`}
+                   >
+                     {message.content}
+                   </div>
+                   {message.sender === 'bot' && message.actions && (
+                     <ActionButtons 
+                       actions={message.actions}
+                       agentId={id || ''}
+                       conversationId={messages.find(m => m.sender === 'bot')?.id || ''}
+                     />
+                   )}
                   <div className="text-xs text-muted-foreground mt-1">
                     {message.timestamp.toLocaleTimeString()}
                   </div>

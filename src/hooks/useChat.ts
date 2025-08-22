@@ -7,6 +7,7 @@ export interface ChatMessage {
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  actions?: any[];
 }
 
 export const useChat = (agentId: string) => {
@@ -153,10 +154,10 @@ export const useChat = (agentId: string) => {
 
       if (error) throw error;
 
-      // Update the bot message with the complete response
+      // Update the bot message with the complete response and actions
       setMessages(prev => prev.map(msg => 
         msg.id === botMessageId 
-          ? { ...msg, content: data.message }
+          ? { ...msg, content: data.message, actions: data.actions || [] }
           : msg
       ));
 

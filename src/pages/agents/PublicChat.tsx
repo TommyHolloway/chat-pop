@@ -6,12 +6,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Send, Loader2, Bot } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ActionButtons } from '@/components/chat/ActionButtons';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
+  actions?: any[];
 }
 
 interface Agent {
@@ -96,7 +98,8 @@ export const PublicChat = () => {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: data.message,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        actions: data.actions || []
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -180,9 +183,16 @@ export const PublicChat = () => {
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
                       }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    </div>
+                     >
+                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                       {message.role === 'assistant' && message.actions && (
+                         <ActionButtons 
+                           actions={message.actions}
+                           agentId={id || ''}
+                           conversationId={conversationId || ''}
+                         />
+                       )}
+                     </div>
                   </div>
                 ))}
                 

@@ -104,12 +104,19 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get agent details and user_id
+    // Get agent details, actions, and lead capture settings
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('name, description, instructions, user_id, creativity_level')
+      .select('name, description, instructions, user_id, creativity_level, enable_lead_capture')
       .eq('id', agentId)
       .single();
+
+    // Get agent actions
+    const { data: agentActions } = await supabase
+      .from('agent_actions')
+      .select('*')
+      .eq('agent_id', agentId)
+      .eq('is_enabled', true);
 
     if (agentError || !agent) {
       throw new Error('Agent not found');
@@ -236,6 +243,59 @@ serve(async (req) => {
       }
     }
 
+    // Define OpenAI functions for action detection
+    const functions = [];
+    
+    // Add calendar booking function if enabled
+    const calendarAction = agentActions?.find(action => action.action_type === 'calendar_booking');
+    if (calendarAction) {
+      functions.push({
+        name: 'schedule_appointment',
+        description: 'Detect when user wants to schedule an appointment or meeting',
+        parameters: {
+          type: 'object',
+          properties: {
+            intent: { type: 'string', description: 'The user\'s scheduling intent' },
+            timeframe: { type: 'string', description: 'Mentioned timeframe or preference' }
+          },
+          required: ['intent']
+        }
+      });
+    }
+
+    // Add custom button function if enabled
+    const customButtonAction = agentActions?.find(action => action.action_type === 'custom_button');
+    if (customButtonAction) {
+      functions.push({
+        name: 'display_custom_button',
+        description: `Display custom button when keywords match: ${customButtonAction.config_json.keywords?.join(', ') || 'any relevant context'}`,
+        parameters: {
+          type: 'object',
+          properties: {
+            trigger_detected: { type: 'boolean', description: 'Whether the trigger condition was met' },
+            context: { type: 'string', description: 'Context that triggered the button' }
+          },
+          required: ['trigger_detected']
+        }
+      });
+    }
+
+    // Add lead capture function if enabled
+    if (agent.enable_lead_capture) {
+      functions.push({
+        name: 'capture_lead',
+        description: 'Capture user contact information when they show interest or request more info',
+        parameters: {
+          type: 'object',
+          properties: {
+            intent: { type: 'string', description: 'Type of lead capture intent detected' },
+            urgency: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Urgency of the request' }
+          },
+          required: ['intent']
+        }
+      });
+    }
+
     // Build system prompt based on creativity level
     const systemPrompt = generateSystemPrompt(agent, knowledgeContext);
     
@@ -249,20 +309,28 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
-    // Call OpenAI API with streaming support
+    // Call OpenAI API with function calling support
+    const requestBody: any = {
+      model: 'gpt-4o-mini',
+      messages: messages,
+      temperature: temperature,
+      max_tokens: 1000,
+      stream: stream,
+    };
+
+    // Add function calling if we have functions
+    if (functions.length > 0) {
+      requestBody.functions = functions;
+      requestBody.function_call = 'auto';
+    }
+
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: messages,
-        temperature: temperature,
-        max_tokens: 1000,
-        stream: stream,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!openAIResponse.ok) {
@@ -364,8 +432,54 @@ serve(async (req) => {
     // Non-streaming response (fallback)
     const data = await openAIResponse.json();
     const assistantMessage = data.choices[0].message.content;
+    const functionCall = data.choices[0].message.function_call;
 
     console.log('Received response from OpenAI');
+    
+    // Process function calls and prepare enhanced response
+    let enhancedResponse: any = {
+      message: assistantMessage,
+      usage: data.usage,
+      actions: []
+    };
+
+    if (functionCall) {
+      console.log('Function call detected:', functionCall.name);
+      const functionArgs = JSON.parse(functionCall.arguments);
+      
+      if (functionCall.name === 'schedule_appointment' && calendarAction) {
+        enhancedResponse.actions.push({
+          type: 'calendar_booking',
+          data: {
+            link: calendarAction.config_json.calendar_link,
+            text: calendarAction.config_json.button_text || 'Schedule Appointment'
+          }
+        });
+      }
+      
+      if (functionCall.name === 'display_custom_button' && customButtonAction && functionArgs.trigger_detected) {
+        enhancedResponse.actions.push({
+          type: 'custom_button',
+          data: {
+            text: customButtonAction.config_json.button_text,
+            url: customButtonAction.config_json.button_url,
+            style: customButtonAction.config_json.button_style || 'primary'
+          }
+        });
+      }
+      
+      if (functionCall.name === 'capture_lead' && agent.enable_lead_capture) {
+        enhancedResponse.actions.push({
+          type: 'lead_capture',
+          data: {
+            prompt: 'I\'d be happy to help you further! Could you please share your contact information?',
+            fields: ['name', 'email', 'phone'],
+            intent: functionArgs.intent,
+            urgency: functionArgs.urgency
+          }
+        });
+      }
+    }
 
     // Store conversation and messages if conversationId provided
     if (conversationId) {
@@ -399,10 +513,7 @@ serve(async (req) => {
       metadata: { stream: false, usage: data.usage }
     });
 
-    return new Response(JSON.stringify({ 
-      message: assistantMessage,
-      usage: data.usage 
-    }), {
+    return new Response(JSON.stringify(enhancedResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
