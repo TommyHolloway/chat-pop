@@ -30,6 +30,7 @@ import {
 import { useChat } from '@/hooks/useChat';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
 import { ActionButtons } from '@/components/chat/ActionButtons';
+import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 
 export const Playground = () => {
   const { id } = useParams();
@@ -324,7 +325,7 @@ export const Playground = () => {
                         : 'bg-muted'
                      }`}
                    >
-                     {message.content}
+                     <MarkdownMessage content={message.content} />
                    </div>
                    {message.sender === 'bot' && message.actions && (
                      <ActionButtons 

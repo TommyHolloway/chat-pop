@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Send, Loader2, Bot } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ActionButtons } from '@/components/chat/ActionButtons';
+import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 
 interface Message {
   id: string;
@@ -184,7 +185,7 @@ export const PublicChat = () => {
                           : 'bg-muted'
                       }`}
                      >
-                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                       <MarkdownMessage content={message.content} />
                        {message.role === 'assistant' && message.actions && (
                          <ActionButtons 
                            actions={message.actions}
