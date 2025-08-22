@@ -243,55 +243,64 @@ serve(async (req) => {
       }
     }
 
-    // Define OpenAI functions for action detection
-    const functions = [];
+    // Define OpenAI tools for action detection
+    const tools = [];
     
-    // Add calendar booking function if enabled
+    // Add calendar booking tool if enabled
     const calendarAction = agentActions?.find(action => action.action_type === 'calendar_booking');
     if (calendarAction) {
-      functions.push({
-        name: 'schedule_appointment',
-        description: 'Detect when user wants to schedule an appointment or meeting',
-        parameters: {
-          type: 'object',
-          properties: {
-            intent: { type: 'string', description: 'The user\'s scheduling intent' },
-            timeframe: { type: 'string', description: 'Mentioned timeframe or preference' }
-          },
-          required: ['intent']
+      tools.push({
+        type: 'function',
+        function: {
+          name: 'schedule_appointment',
+          description: 'Detect when user wants to schedule an appointment or meeting',
+          parameters: {
+            type: 'object',
+            properties: {
+              intent: { type: 'string', description: 'The user\'s scheduling intent' },
+              timeframe: { type: 'string', description: 'Mentioned timeframe or preference' }
+            },
+            required: ['intent']
+          }
         }
       });
     }
 
-    // Add custom button function if enabled
+    // Add custom button tool if enabled
     const customButtonAction = agentActions?.find(action => action.action_type === 'custom_button');
     if (customButtonAction) {
-      functions.push({
-        name: 'display_custom_button',
-        description: `Display custom button when keywords match: ${customButtonAction.config_json.keywords?.join(', ') || 'any relevant context'}`,
-        parameters: {
-          type: 'object',
-          properties: {
-            trigger_detected: { type: 'boolean', description: 'Whether the trigger condition was met' },
-            context: { type: 'string', description: 'Context that triggered the button' }
-          },
-          required: ['trigger_detected']
+      tools.push({
+        type: 'function',
+        function: {
+          name: 'display_custom_button',
+          description: `Display custom button when keywords match: ${customButtonAction.config_json.keywords?.join(', ') || 'any relevant context'}`,
+          parameters: {
+            type: 'object',
+            properties: {
+              trigger_detected: { type: 'boolean', description: 'Whether the trigger condition was met' },
+              context: { type: 'string', description: 'Context that triggered the button' }
+            },
+            required: ['trigger_detected']
+          }
         }
       });
     }
 
-    // Add lead capture function if enabled
+    // Add lead capture tool if enabled
     if (agent.enable_lead_capture) {
-      functions.push({
-        name: 'capture_lead',
-        description: 'Capture user contact information when they show interest or request more info',
-        parameters: {
-          type: 'object',
-          properties: {
-            intent: { type: 'string', description: 'Type of lead capture intent detected' },
-            urgency: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Urgency of the request' }
-          },
-          required: ['intent']
+      tools.push({
+        type: 'function',
+        function: {
+          name: 'capture_lead',
+          description: 'Capture user contact information when they show interest or request more info',
+          parameters: {
+            type: 'object',
+            properties: {
+              intent: { type: 'string', description: 'Type of lead capture intent detected' },
+              urgency: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Urgency of the request' }
+            },
+            required: ['intent']
+          }
         }
       });
     }
@@ -309,7 +318,7 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
-    // Call OpenAI API with function calling support
+    // Call OpenAI API with tools support
     const requestBody: any = {
       model: 'gpt-4o-mini',
       messages: messages,
@@ -318,10 +327,10 @@ serve(async (req) => {
       stream: stream,
     };
 
-    // Add function calling if we have functions
-    if (functions.length > 0) {
-      requestBody.functions = functions;
-      requestBody.function_call = 'auto';
+    // Add tools if we have them
+    if (tools.length > 0) {
+      requestBody.tools = tools;
+      requestBody.tool_choice = 'auto';
     }
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -432,7 +441,7 @@ serve(async (req) => {
     // Non-streaming response (fallback)
     const data = await openAIResponse.json();
     const assistantMessage = data.choices[0].message.content;
-    const functionCall = data.choices[0].message.function_call;
+    const toolCalls = data.choices[0].message.tool_calls;
 
     console.log('Received response from OpenAI');
     
@@ -443,65 +452,67 @@ serve(async (req) => {
       actions: []
     };
 
-    if (functionCall) {
-      console.log('Function call detected:', functionCall.name);
-      const functionArgs = JSON.parse(functionCall.arguments);
-      
-      if (functionCall.name === 'schedule_appointment' && calendarAction) {
-        // Get calendar integrations for this agent
-        const { data: calendarIntegrations } = await supabase
-          .from('calendar_integrations')
-          .select('*')
-          .eq('agent_id', agentId)
-          .eq('is_active', true);
+    if (toolCalls && toolCalls.length > 0) {
+      for (const toolCall of toolCalls) {
+        console.log('Tool call detected:', toolCall.function.name);
+        const functionArgs = JSON.parse(toolCall.function.arguments);
+        
+        if (toolCall.function.name === 'schedule_appointment' && calendarAction) {
+          // Get calendar integrations for this agent
+          const { data: calendarIntegrations } = await supabase
+            .from('calendar_integrations')
+            .select('*')
+            .eq('agent_id', agentId)
+            .eq('is_active', true);
 
-        if (calendarIntegrations && calendarIntegrations.length > 0) {
-          // Use the first active integration
-          const integration = calendarIntegrations[0];
+          if (calendarIntegrations && calendarIntegrations.length > 0) {
+            // Use the first active integration
+            const integration = calendarIntegrations[0];
+            enhancedResponse.actions.push({
+              type: 'calendar_booking',
+              data: {
+                integration: {
+                  provider: integration.provider,
+                  integration_mode: integration.integration_mode,
+                  configuration_json: integration.configuration_json
+                },
+                text: calendarAction.config_json.button_text || 'Schedule Appointment'
+              }
+            });
+          } else {
+            // Fallback to old system if no integrations configured
+            enhancedResponse.actions.push({
+              type: 'calendar_booking',
+              data: {
+                link: calendarAction.config_json.calendar_link,
+                text: calendarAction.config_json.button_text || 'Schedule Appointment'
+              }
+            });
+          }
+        }
+        
+        if (toolCall.function.name === 'display_custom_button' && customButtonAction && functionArgs.trigger_detected) {
           enhancedResponse.actions.push({
-            type: 'calendar_booking',
+            type: 'custom_button',
             data: {
-              integration: {
-                provider: integration.provider,
-                integration_mode: integration.integration_mode,
-                configuration_json: integration.configuration_json
-              },
-              text: calendarAction.config_json.button_text || 'Schedule Appointment'
-            }
-          });
-        } else {
-          // Fallback to old system if no integrations configured
-          enhancedResponse.actions.push({
-            type: 'calendar_booking',
-            data: {
-              link: calendarAction.config_json.calendar_link,
-              text: calendarAction.config_json.button_text || 'Schedule Appointment'
+              text: customButtonAction.config_json.button_text,
+              url: customButtonAction.config_json.button_url,
+              style: customButtonAction.config_json.button_style || 'primary'
             }
           });
         }
-      }
-      
-      if (functionCall.name === 'display_custom_button' && customButtonAction && functionArgs.trigger_detected) {
-        enhancedResponse.actions.push({
-          type: 'custom_button',
-          data: {
-            text: customButtonAction.config_json.button_text,
-            url: customButtonAction.config_json.button_url,
-            style: customButtonAction.config_json.button_style || 'primary'
-          }
-        });
-      }
-      
-      if (functionCall.name === 'capture_lead' && agent.enable_lead_capture) {
-        enhancedResponse.actions.push({
-          type: 'lead_capture',
-          data: {
-            prompt: 'I\'d be happy to help you further! Could you please share your contact information?',
-            fields: ['name', 'email', 'phone'],
-            intent: functionArgs.intent,
-            urgency: functionArgs.urgency
-          }
-        });
+        
+        if (toolCall.function.name === 'capture_lead' && agent.enable_lead_capture) {
+          enhancedResponse.actions.push({
+            type: 'lead_capture',
+            data: {
+              prompt: 'I\'d be happy to help you further! Could you please share your contact information?',
+              fields: ['name', 'email', 'phone'],
+              intent: functionArgs.intent,
+              urgency: functionArgs.urgency
+            }
+          });
+        }
       }
     }
 
