@@ -7,7 +7,8 @@ import {
   Settings, 
   User,
   ChevronRight,
-  Shield
+  Shield,
+  Users
 } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
 import {
@@ -120,6 +121,15 @@ export const AppSidebar = () => {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/leads')}>
+                  <Link to="/leads">
+                    <Users className="h-4 w-4" />
+                    <span>Leads</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive('/billing')}>

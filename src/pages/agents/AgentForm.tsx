@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAgents, Agent } from '@/hooks/useAgents';
 import { useKnowledgeFiles } from '@/hooks/useAgents';
+import { useAgentActions } from '@/hooks/useAgentActions';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/agent/ImageUpload';
 import { ColorPicker } from '@/components/agent/ColorPicker';
@@ -41,7 +42,11 @@ import {
   Globe,
   Lock,
   FileType,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Calendar,
+  ExternalLink,
+  Zap,
+  UserCheck
 } from 'lucide-react';
 import { FirecrawlService } from '@/utils/FirecrawlService';
 
@@ -53,6 +58,7 @@ export const AgentForm = () => {
   
   const { createAgent, updateAgent, getAgent } = useAgents();
   const { files, uploadFile, deleteFile, reprocessFile, refetchFiles } = useKnowledgeFiles(agentId || '');
+  const { actions, createAction, updateAction, deleteAction } = useAgentActions(agentId);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -64,6 +70,7 @@ export const AgentForm = () => {
     profile_image_url: '',
     message_bubble_color: '#3B82F6',
     chat_interface_theme: 'dark',
+    enable_lead_capture: false,
   });
   
   const [loading, setLoading] = useState(false);
@@ -72,6 +79,19 @@ export const AgentForm = () => {
   const [links, setLinks] = useState<any[]>([]);
   const [isLinksExpanded, setIsLinksExpanded] = useState(false);
   const [isFilesExpanded, setIsFilesExpanded] = useState(false);
+  
+  // AI Actions state
+  const [calendarBookingEnabled, setCalendarBookingEnabled] = useState(false);
+  const [customButtonEnabled, setCustomButtonEnabled] = useState(false);
+  const [calendarConfig, setCalendarConfig] = useState({
+    calendly_link: '',
+    trigger_instructions: 'If user asks to book or schedule an appointment'
+  });
+  const [buttonConfig, setButtonConfig] = useState({
+    button_text: '',
+    button_url: '',
+    display_condition: ''
+  });
 
   useEffect(() => {
     if (isEditing && agentId) {
@@ -93,7 +113,21 @@ export const AgentForm = () => {
           profile_image_url: data.profile_image_url || '',
           message_bubble_color: data.message_bubble_color || '#3B82F6',
           chat_interface_theme: data.chat_interface_theme || 'dark',
+          enable_lead_capture: data.enable_lead_capture || false,
         });
+
+        // Load existing actions
+        const calendarAction = actions.find(a => a.action_type === 'calendar_booking');
+        if (calendarAction) {
+          setCalendarBookingEnabled(calendarAction.is_enabled);
+          setCalendarConfig(calendarAction.config_json);
+        }
+        
+        const buttonAction = actions.find(a => a.action_type === 'custom_button');
+        if (buttonAction) {
+          setCustomButtonEnabled(buttonAction.is_enabled);
+          setButtonConfig(buttonAction.config_json);
+        }
       }
     } catch (error) {
       console.error('Error loading agent:', error);
@@ -294,6 +328,8 @@ export const AgentForm = () => {
     setLoading(true);
 
     try {
+      let agentIdToUse = agentId;
+      
       if (isEditing && agentId) {
         await updateAgent(agentId, formData);
         toast({
@@ -302,11 +338,53 @@ export const AgentForm = () => {
         });
       } else {
         const newAgent = await createAgent(formData);
+        agentIdToUse = newAgent.id;
         toast({
           title: "Agent created", 
           description: `${formData.name} has been created successfully.`,
         });
         navigate(`/agents/${newAgent.id}/edit`);
+      }
+
+      // Save AI Actions
+      if (agentIdToUse) {
+        // Handle Calendar Booking Action
+        const existingCalendarAction = actions.find(a => a.action_type === 'calendar_booking');
+        if (calendarBookingEnabled && calendarConfig.calendly_link) {
+          const calendarData = {
+            agent_id: agentIdToUse,
+            action_type: 'calendar_booking' as const,
+            config_json: calendarConfig,
+            is_enabled: calendarBookingEnabled
+          };
+          
+          if (existingCalendarAction) {
+            await updateAction(existingCalendarAction.id, calendarData);
+          } else {
+            await createAction(calendarData);
+          }
+        } else if (existingCalendarAction && !calendarBookingEnabled) {
+          await deleteAction(existingCalendarAction.id);
+        }
+
+        // Handle Custom Button Action
+        const existingButtonAction = actions.find(a => a.action_type === 'custom_button');
+        if (customButtonEnabled && buttonConfig.button_text && buttonConfig.button_url) {
+          const buttonData = {
+            agent_id: agentIdToUse,
+            action_type: 'custom_button' as const,
+            config_json: buttonConfig,
+            is_enabled: customButtonEnabled
+          };
+          
+          if (existingButtonAction) {
+            await updateAction(existingButtonAction.id, buttonData);
+          } else {
+            await createAction(buttonData);
+          }
+        } else if (existingButtonAction && !customButtonEnabled) {
+          await deleteAction(existingButtonAction.id);
+        }
       }
     } catch (error) {
       toast({
@@ -527,6 +605,155 @@ export const AgentForm = () => {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Actions Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  AI Actions
+                </CardTitle>
+                <CardDescription>
+                  Configure intelligent actions your agent can perform during conversations
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Calendar Booking Action */}
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-primary" />
+                      <div>
+                        <h4 className="font-medium">Calendar Booking</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Enable appointment scheduling via Calendly integration
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={calendarBookingEnabled}
+                      onCheckedChange={setCalendarBookingEnabled}
+                    />
+                  </div>
+                  
+                  {calendarBookingEnabled && (
+                    <div className="space-y-3 pl-8">
+                      <div className="space-y-2">
+                        <Label htmlFor="calendly_link">Calendly Link</Label>
+                        <Input
+                          id="calendly_link"
+                          value={calendarConfig.calendly_link}
+                          onChange={(e) => setCalendarConfig({ ...calendarConfig, calendly_link: e.target.value })}
+                          placeholder="https://calendly.com/your-username/meeting"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="trigger_instructions">Trigger Instructions</Label>
+                        <Textarea
+                          id="trigger_instructions"
+                          value={calendarConfig.trigger_instructions}
+                          onChange={(e) => setCalendarConfig({ ...calendarConfig, trigger_instructions: e.target.value })}
+                          placeholder="When should the agent offer booking? (e.g., 'If user asks to book or schedule')"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Button Action */}
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <ExternalLink className="w-5 h-5 text-primary" />
+                      <div>
+                        <h4 className="font-medium">Custom Button</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Display conditional buttons with custom text and URLs
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={customButtonEnabled}
+                      onCheckedChange={setCustomButtonEnabled}
+                    />
+                  </div>
+                  
+                  {customButtonEnabled && (
+                    <div className="space-y-3 pl-8">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="button_text">Button Text</Label>
+                          <Input
+                            id="button_text"
+                            value={buttonConfig.button_text}
+                            onChange={(e) => setButtonConfig({ ...buttonConfig, button_text: e.target.value })}
+                            placeholder="Download Brochure"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="button_url">Button URL</Label>
+                          <Input
+                            id="button_url"
+                            value={buttonConfig.button_url}
+                            onChange={(e) => setButtonConfig({ ...buttonConfig, button_url: e.target.value })}
+                            placeholder="https://example.com/download"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="display_condition">Display Condition (Keywords)</Label>
+                        <Input
+                          id="display_condition"
+                          value={buttonConfig.display_condition}
+                          onChange={(e) => setButtonConfig({ ...buttonConfig, display_condition: e.target.value })}
+                          placeholder="pricing, cost, quote (comma-separated keywords)"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lead Capture Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5" />
+                  Lead Capture
+                </CardTitle>
+                <CardDescription>
+                  Automatically collect visitor information during conversations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <UserCheck className="w-5 h-5 text-primary" />
+                    <div>
+                      <h4 className="font-medium">Enable Lead Capture</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Agent will intelligently prompt for contact information (name, email, phone)
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formData.enable_lead_capture}
+                    onCheckedChange={(checked) => setFormData({ ...formData, enable_lead_capture: checked })}
+                  />
+                </div>
+                
+                {formData.enable_lead_capture && (
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>How it works:</strong> Your agent will naturally ask for contact details during conversations 
+                      when appropriate opportunities arise. All captured leads will be available in the Leads section.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

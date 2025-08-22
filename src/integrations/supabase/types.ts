@@ -44,6 +44,44 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_actions: {
+        Row: {
+          action_type: string
+          agent_id: string
+          config_json: Json
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          agent_id: string
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          agent_id?: string
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_agent_actions_agent_id"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_knowledge_chunks: {
         Row: {
           agent_id: string
@@ -122,6 +160,7 @@ export type Database = {
           created_at: string
           creativity_level: number | null
           description: string | null
+          enable_lead_capture: boolean | null
           id: string
           initial_message: string | null
           instructions: string
@@ -137,6 +176,7 @@ export type Database = {
           created_at?: string
           creativity_level?: number | null
           description?: string | null
+          enable_lead_capture?: boolean | null
           id?: string
           initial_message?: string | null
           instructions: string
@@ -152,6 +192,7 @@ export type Database = {
           created_at?: string
           creativity_level?: number | null
           description?: string | null
+          enable_lead_capture?: boolean | null
           id?: string
           initial_message?: string | null
           instructions?: string
@@ -230,6 +271,45 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          agent_id: string
+          conversation_id: string
+          created_at: string
+          id: string
+          lead_data_json: Json
+        }
+        Insert: {
+          agent_id: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          lead_data_json?: Json
+        }
+        Update: {
+          agent_id?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          lead_data_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_leads_agent_id"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_leads_conversation_id"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]

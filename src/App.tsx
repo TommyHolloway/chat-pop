@@ -34,6 +34,7 @@ import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import AdminPortal from "./pages/AdminPortal";
 import { AdminRoute } from "./components/AdminRoute";
+import Leads from "./pages/Leads";
 
 const queryClient = new QueryClient();
 
@@ -145,6 +146,13 @@ const App = () => (
                 <ProtectedRoute>
                   <AuthenticatedLayout>
                     <AgentDetail />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/leads" element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <Leads />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
