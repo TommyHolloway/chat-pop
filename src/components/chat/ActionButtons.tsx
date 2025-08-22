@@ -6,35 +6,52 @@ import { Label } from '@/components/ui/label';
 import { Calendar, ExternalLink, User, Mail, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+
 import { CalendarWidget } from '@/components/calendar/CalendarWidget';
 
 interface ActionButtonsProps {
   actions: any[];
   agentId: string;
   conversationId: string;
+  leadCaptureConfig?: {
+    enabled: boolean;
+    fields: Array<{
+      key: string;
+      label: string;
+      type: 'text' | 'email' | 'tel' | 'textarea' | 'select';
+      required: boolean;
+      placeholder: string;
+      options?: string[];
+    }>;
+    success_message: string;
+    button_text: string;
+  };
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ 
   actions, 
   agentId, 
-  conversationId 
+  conversationId,
+  leadCaptureConfig
 }) => {
   const [leadCaptureOpen, setLeadCaptureOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedCalendarIntegration, setSelectedCalendarIntegration] = useState<any>(null);
-  const [leadData, setLeadData] = useState({
-    name: '',
-    email: '',
-    phone: ''
-  });
+  const [leadData, setLeadData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleLeadCapture = async () => {
-    if (!leadData.name || !leadData.email) {
+    if (!leadCaptureConfig?.enabled) return;
+    
+    // Validate required fields based on configuration
+    const requiredFields = leadCaptureConfig.fields.filter(field => field.required);
+    const missingFields = requiredFields.filter(field => !leadData[field.key]?.trim());
+    
+    if (missingFields.length > 0) {
       toast({
-        title: "Required fields",
-        description: "Please fill in your name and email",
+        title: "Required fields missing",
+        description: `Please fill in: ${missingFields.map(f => f.label).join(', ')}`,
         variant: "destructive"
       });
       return;
@@ -54,11 +71,16 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       toast({
         title: "Success!",
-        description: data.message || "Thank you for your information!",
+        description: data.message || leadCaptureConfig.success_message,
       });
       
       setLeadCaptureOpen(false);
-      setLeadData({ name: '', email: '', phone: '' });
+      // Reset form data
+      const resetData: Record<string, string> = {};
+      leadCaptureConfig.fields.forEach(field => {
+        resetData[field.key] = '';
+      });
+      setLeadData(resetData);
     } catch (error) {
       console.error('Error capturing lead:', error);
       toast({
@@ -125,6 +147,17 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           }
 
           if (action.type === 'lead_capture') {
+            const config = leadCaptureConfig || {
+              enabled: true,
+              fields: [
+                { key: 'name', label: 'Full Name', type: 'text' as const, required: true, placeholder: 'Enter your name' },
+                { key: 'email', label: 'Email Address', type: 'email' as const, required: true, placeholder: 'your@email.com' },
+                { key: 'phone', label: 'Phone Number', type: 'tel' as const, required: false, placeholder: '+1 (555) 123-4567' }
+              ],
+              success_message: 'Thank you! We will be in touch soon.',
+              button_text: 'Get in Touch'
+            };
+            
             return (
               <Button
                 key={index}
@@ -134,7 +167,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
                 className="flex items-center gap-2"
               >
                 <User className="h-4 w-4" />
-                Get in Touch
+                {config.button_text}
               </Button>
             );
           }
@@ -161,38 +194,80 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
       <Dialog open={leadCaptureOpen} onOpenChange={setLeadCaptureOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Contact Information</DialogTitle>
+            <DialogTitle>
+              {leadCaptureConfig?.fields?.[0]?.label ? 'Contact Information' : 'Contact Information'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                placeholder="Your name"
-                value={leadData.name}
-                onChange={(e) => setLeadData(prev => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={leadData.email}
-                onChange={(e) => setLeadData(prev => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone (optional)</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Your phone number"
-                value={leadData.phone}
-                onChange={(e) => setLeadData(prev => ({ ...prev, phone: e.target.value }))}
-              />
-            </div>
+            {leadCaptureConfig?.fields?.map((field) => (
+              <div key={field.key} className="space-y-2">
+                <Label htmlFor={field.key}>
+                  {field.label} {field.required ? '*' : ''}
+                </Label>
+                {field.type === 'textarea' ? (
+                  <textarea
+                    id={field.key}
+                    className="w-full min-h-[80px] px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder={field.placeholder}
+                    value={leadData[field.key] || ''}
+                    onChange={(e) => setLeadData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                  />
+                ) : field.type === 'select' && field.options ? (
+                  <select
+                    id={field.key}
+                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={leadData[field.key] || ''}
+                    onChange={(e) => setLeadData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                  >
+                    <option value="">{field.placeholder}</option>
+                    {field.options.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id={field.key}
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={leadData[field.key] || ''}
+                    onChange={(e) => setLeadData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                  />
+                )}
+              </div>
+            )) || (
+              // Fallback to default fields
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    placeholder="Your name"
+                    value={leadData.name || ''}
+                    onChange={(e) => setLeadData(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={leadData.email || ''}
+                    onChange={(e) => setLeadData(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone (optional)</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="Your phone number"
+                    value={leadData.phone || ''}
+                    onChange={(e) => setLeadData(prev => ({ ...prev, phone: e.target.value }))}
+                  />
+                </div>
+              </>
+            )}
           </div>
           <div className="flex justify-end gap-2">
             <Button 

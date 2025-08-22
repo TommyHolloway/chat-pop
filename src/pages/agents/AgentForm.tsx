@@ -18,6 +18,8 @@ import { useCalendarIntegrations } from '@/hooks/useCalendarIntegrations';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/agent/ImageUpload';
 import { ColorPicker } from '@/components/agent/ColorPicker';
+import { LeadCaptureConfig } from '@/components/agent/LeadCaptureConfig';
+import type { LeadCaptureConfig as ILeadCaptureConfig } from '@/types/leadCapture';
 import { 
   ArrowLeft, 
   Save, 
@@ -62,17 +64,37 @@ export const AgentForm = () => {
   const { actions, createAction, updateAction, deleteAction } = useAgentActions(agentId);
   const { integrations, createIntegration, updateIntegration, deleteIntegration, testConnection } = useCalendarIntegrations(agentId);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    instructions: string;
+    status: 'active' | 'inactive' | 'draft';
+    initial_message: string;
+    creativity_level: number;
+    profile_image_url: string;
+    message_bubble_color: string;
+    chat_interface_theme: string;
+    lead_capture_config: ILeadCaptureConfig;
+  }>({
     name: '',
     description: '',
     instructions: '',
-    status: 'active' as 'active' | 'inactive' | 'draft',
+    status: 'active',
     initial_message: '',
     creativity_level: 5,
     profile_image_url: '',
     message_bubble_color: '#3B82F6',
     chat_interface_theme: 'dark',
-    enable_lead_capture: false,
+    lead_capture_config: {
+      enabled: false,
+      fields: [
+        { key: 'name', label: 'Full Name', type: 'text', required: true, placeholder: 'Enter your name' },
+        { key: 'email', label: 'Email Address', type: 'email', required: true, placeholder: 'your@email.com' },
+        { key: 'phone', label: 'Phone Number', type: 'tel', required: false, placeholder: '+1 (555) 123-4567' }
+      ],
+      success_message: 'Thank you! We will be in touch soon.',
+      button_text: 'Get in Touch'
+    },
   });
   
   const [loading, setLoading] = useState(false);
@@ -123,7 +145,33 @@ export const AgentForm = () => {
           profile_image_url: data.profile_image_url || '',
           message_bubble_color: data.message_bubble_color || '#3B82F6',
           chat_interface_theme: data.chat_interface_theme || 'dark',
-          enable_lead_capture: data.enable_lead_capture || false,
+          lead_capture_config: (() => {
+            // Handle both new and legacy formats
+            if (data.lead_capture_config && typeof data.lead_capture_config === 'object') {
+              const config = data.lead_capture_config as any;
+              return {
+                enabled: config.enabled || (data as any).enable_lead_capture || false,
+                fields: config.fields || [
+                  { key: 'name', label: 'Full Name', type: 'text', required: true, placeholder: 'Enter your name' },
+                  { key: 'email', label: 'Email Address', type: 'email', required: true, placeholder: 'your@email.com' },
+                  { key: 'phone', label: 'Phone Number', type: 'tel', required: false, placeholder: '+1 (555) 123-4567' }
+                ],
+                success_message: config.success_message || 'Thank you! We will be in touch soon.',
+                button_text: config.button_text || 'Get in Touch'
+              };
+            }
+            // Legacy fallback
+            return {
+              enabled: (data as any).enable_lead_capture || false,
+              fields: [
+                { key: 'name', label: 'Full Name', type: 'text', required: true, placeholder: 'Enter your name' },
+                { key: 'email', label: 'Email Address', type: 'email', required: true, placeholder: 'your@email.com' },
+                { key: 'phone', label: 'Phone Number', type: 'tel', required: false, placeholder: '+1 (555) 123-4567' }
+              ],
+              success_message: 'Thank you! We will be in touch soon.',
+              button_text: 'Get in Touch'
+            };
+          })(),
         });
 
         // Load existing actions
@@ -862,43 +910,10 @@ export const AgentForm = () => {
             </Card>
 
             {/* Lead Capture Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="w-5 h-5" />
-                  Lead Capture
-                </CardTitle>
-                <CardDescription>
-                  Automatically collect visitor information during conversations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <UserCheck className="w-5 h-5 text-primary" />
-                    <div>
-                      <h4 className="font-medium">Enable Lead Capture</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Agent will intelligently prompt for contact information (name, email, phone)
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.enable_lead_capture}
-                    onCheckedChange={(checked) => setFormData({ ...formData, enable_lead_capture: checked })}
-                  />
-                </div>
-                
-                {formData.enable_lead_capture && (
-                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      <strong>How it works:</strong> Your agent will naturally ask for contact details during conversations 
-                      when appropriate opportunities arise. All captured leads will be available in the Leads section.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <LeadCaptureConfig
+              config={formData.lead_capture_config}
+              onChange={(config) => setFormData({ ...formData, lead_capture_config: config })}
+            />
           </TabsContent>
 
           <TabsContent value="knowledge-training" className="space-y-6">

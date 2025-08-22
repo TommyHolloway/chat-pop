@@ -24,15 +24,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Validate that the agent exists and has lead capture enabled
+    // Validate that the agent exists and get lead capture configuration
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('enable_lead_capture')
+      .select('lead_capture_config')
       .eq('id', agentId)
       .single();
 
-    if (agentError || !agent?.enable_lead_capture) {
+    if (agentError || !agent?.lead_capture_config?.enabled) {
       throw new Error('Lead capture not enabled for this agent');
+    }
+
+    // Validate required fields based on agent configuration
+    const config = agent.lead_capture_config;
+    const requiredFields = config.fields?.filter(field => field.required) || [];
+    const missingFields = requiredFields.filter(field => !leadData[field.key]?.trim?.());
+    
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.map(f => f.label).join(', ')}`);
     }
 
     // Store the lead
@@ -55,7 +64,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true,
       leadId: lead.id,
-      message: 'Thank you for your information! We\'ll be in touch soon.'
+      message: agent.lead_capture_config.success_message || 'Thank you for your information! We\'ll be in touch soon.'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

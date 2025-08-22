@@ -164,6 +164,7 @@ export type Database = {
           id: string
           initial_message: string | null
           instructions: string
+          lead_capture_config: Json | null
           message_bubble_color: string | null
           name: string
           profile_image_url: string | null
@@ -180,6 +181,7 @@ export type Database = {
           id?: string
           initial_message?: string | null
           instructions: string
+          lead_capture_config?: Json | null
           message_bubble_color?: string | null
           name: string
           profile_image_url?: string | null
@@ -196,6 +198,7 @@ export type Database = {
           id?: string
           initial_message?: string | null
           instructions?: string
+          lead_capture_config?: Json | null
           message_bubble_color?: string | null
           name?: string
           profile_image_url?: string | null
