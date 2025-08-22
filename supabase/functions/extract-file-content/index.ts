@@ -1,139 +1,93 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import pdfParse from 'https://esm.sh/pdf-parse@1.1.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Enhanced PDF text extraction using multiple strategies
-async function extractPDFTextWithPatterns(buffer: ArrayBuffer): Promise<string> {
+// Extract PDF text using pdf-parse library
+async function extractPDFTextWithLibrary(buffer: ArrayBuffer): Promise<string> {
   try {
-    console.log('Starting pattern-based PDF text extraction');
+    console.log('Starting pdf-parse library extraction');
     
-    const data = new Uint8Array(buffer);
-    const textContent = new TextDecoder('latin1').decode(data);
+    const data = await pdfParse(buffer);
+    const text = data.text;
     
-    console.log(`Processing PDF buffer of ${data.length} bytes`);
+    console.log(`PDF extraction successful: ${text.length} characters extracted`);
+    console.log(`PDF has ${data.numpages} pages`);
     
-    let extractedText = '';
-    const foundTexts = new Set<string>(); // Prevent duplicates
-    
-    // Strategy 1: Extract text from text objects (Tj and TJ operators)
-    const textObjectPatterns = [
-      // Single text strings
-      /\(([^)\\]+(?:\\.[^)\\]*)*)\)\s*Tj/g,
-      // Text arrays
-      /\[([^\]]+)\]\s*TJ/g,
-      // BT...ET blocks (text objects)
-      /BT\s+.*?\((.*?)\).*?ET/gs,
-      // Alternative text patterns
-      /\/F\d+\s+\d+\s+Tf\s*\((.*?)\)/g
-    ];
-    
-    for (const pattern of textObjectPatterns) {
-      let match;
-      while ((match = pattern.exec(textContent)) !== null) {
-        if (match[1]) {
-          let text = match[1];
-          
-          // Clean up text arrays (TJ operator format)
-          if (text.includes('[') || text.includes(']')) {
-            text = text.replace(/[\[\]]/g, '').replace(/\)\s*\d*\s*\(/g, ' ');
-          }
-          
-          // Clean escape sequences
-          text = text
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, '\r')
-            .replace(/\\t/g, '\t')
-            .replace(/\\'/g, "'")
-            .replace(/\\"/g, '"')
-            .replace(/\\\\/g, '\\')
-            .replace(/\\(\d{3})/g, (_, octal) => String.fromCharCode(parseInt(octal, 8)));
-          
-          // Filter out very short or non-meaningful text
-          if (text.length > 1 && /[a-zA-Z0-9]/.test(text)) {
-            foundTexts.add(text.trim());
-          }
-        }
-      }
+    if (!text || text.trim().length === 0) {
+      throw new Error('PDF appears to be empty or contains only images/non-text content');
     }
     
-    // Strategy 2: Look for stream objects that might contain text
-    const streamPattern = /stream\s*(.*?)\s*endstream/gs;
-    let streamMatch;
-    while ((streamMatch = streamPattern.exec(textContent)) !== null) {
-      const streamData = streamMatch[1];
-      
-      // Try to extract readable text from streams
-      const readableText = streamData.replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      if (readableText.length > 10 && /[a-zA-Z]{3,}/.test(readableText)) {
-        foundTexts.add(readableText);
-      }
-    }
+    // Clean and normalize the extracted text
+    const cleanedText = text
+      .replace(/\r\n/g, '\n')           // Normalize line endings
+      .replace(/\r/g, '\n')             // Normalize line endings
+      .replace(/\n{3,}/g, '\n\n')       // Reduce excessive line breaks
+      .replace(/[ \t]+/g, ' ')          // Normalize spaces
+      .replace(/^\s+|\s+$/gm, '')       // Trim lines
+      .trim();
     
-    // Strategy 3: Look for direct readable text in the PDF
-    const readableTextPattern = /[a-zA-Z][a-zA-Z0-9\s\.,!?;:()\-'"{}\[\]]{10,}/g;
-    let readableMatch;
-    while ((readableMatch = readableTextPattern.exec(textContent)) !== null) {
-      const text = readableMatch[0].trim();
-      if (text.length > 15) {
-        foundTexts.add(text);
-      }
-    }
-    
-    // Combine and clean all found texts
-    extractedText = Array.from(foundTexts).join('\n').trim();
-    
-    console.log(`Pattern extraction found ${foundTexts.size} text segments, total length: ${extractedText.length}`);
-    
-    return extractedText;
+    return cleanedText;
     
   } catch (error) {
-    console.error('Pattern-based PDF extraction failed:', error);
+    console.error('pdf-parse library extraction failed:', error);
     throw error;
   }
 }
 
-// Fallback PDF text extraction for when pdf.js fails
+// Enhanced regex-based fallback for PDFs that can't be parsed by pdf-parse
 async function extractPDFTextFallback(buffer: ArrayBuffer): Promise<string> {
   try {
-    console.log('Using fallback PDF extraction method');
+    console.log('Using enhanced regex fallback PDF extraction');
     
     const data = new Uint8Array(buffer);
-    const text = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data);
-    
-    // Look for text patterns in the PDF
-    const textPatterns = [
-      /\(([^)]+)\)\s*Tj/g,
-      /\[([^\]]+)\]\s*TJ/g,
-      /BT\s+([^E]+?)\s+ET/g
-    ];
+    const textContent = new TextDecoder('latin1').decode(data);
     
     let extractedText = '';
+    const foundTexts = new Set<string>();
     
-    for (const pattern of textPatterns) {
-      let match;
-      while ((match = pattern.exec(text)) !== null) {
-        if (match[1]) {
-          extractedText += match[1].replace(/\\[nrt]/g, ' ') + ' ';
+    // Look for text in parentheses (PDF text objects)
+    const textObjectPattern = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g;
+    let match;
+    while ((match = textObjectPattern.exec(textContent)) !== null) {
+      if (match[1] && match[1].length > 1) {
+        let text = match[1]
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '\r')
+          .replace(/\\t/g, '\t')
+          .replace(/\\'/g, "'")
+          .replace(/\\"/g, '"')
+          .replace(/\\\\/g, '\\');
+        
+        if (/[a-zA-Z]/.test(text)) {
+          foundTexts.add(text.trim());
         }
       }
     }
     
-    // Clean and return
-    return extractedText
-      .replace(/[^\x20-\x7E\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // Look for simple text strings
+    const simpleTextPattern = /[A-Za-z][A-Za-z0-9\s\.,!?;:()\-']{15,}/g;
+    let textMatch;
+    while ((textMatch = simpleTextPattern.exec(textContent)) !== null) {
+      const text = textMatch[0].trim();
+      if (text.length > 10 && !/^[^a-zA-Z]*$/.test(text)) {
+        foundTexts.add(text);
+      }
+    }
+    
+    extractedText = Array.from(foundTexts).join(' ').trim();
+    
+    console.log(`Fallback extraction found ${foundTexts.size} text segments, total: ${extractedText.length} characters`);
+    
+    return extractedText;
       
   } catch (error) {
-    console.error('Fallback PDF extraction failed:', error);
+    console.error('Enhanced fallback PDF extraction failed:', error);
     return '';
   }
 }
@@ -202,15 +156,15 @@ serve(async (req) => {
     const contentType = fileType || '';
 
     if (contentType === 'application/pdf' || filePath.toLowerCase().endsWith('.pdf')) {
-      console.log('Processing PDF file with pattern-based extraction');
+      console.log('Processing PDF file with pdf-parse library');
       
       try {
-        // Use pattern-based extraction (no external dependencies)
-        content = await extractPDFTextWithPatterns(fileBuffer);
+        // Try pdf-parse library first (most reliable)
+        content = await extractPDFTextWithLibrary(fileBuffer);
         
-        // If pattern extraction fails or yields minimal content, try fallback
+        // If library extraction fails or yields minimal content, try fallback
         if (!content || content.length < 20) {
-          console.log('Pattern extraction yielded minimal content, trying enhanced fallback');
+          console.log('Library extraction yielded minimal content, trying regex fallback');
           content = await extractPDFTextFallback(fileBuffer);
         }
         
@@ -222,10 +176,17 @@ serve(async (req) => {
           const validation = validateExtractedContent(content);
           if (!validation.isValid) {
             console.log(`Content quality warning: ${validation.reason}`);
-            // Still use the content but warn about quality
+            // If validation fails completely, try fallback
+            if (validation.reason.includes('readable character ratio') && content.length > 100) {
+              console.log('Trying fallback due to poor content quality');
+              const fallbackContent = await extractPDFTextFallback(fileBuffer);
+              if (fallbackContent && fallbackContent.length > 20) {
+                content = fallbackContent;
+              }
+            }
           }
           
-          // Clean up the final content
+          // Final cleanup
           content = content
             .replace(/\s+/g, ' ')           // Normalize whitespace
             .replace(/[^\x20-\x7E\s]/g, ' ') // Remove non-printable chars
