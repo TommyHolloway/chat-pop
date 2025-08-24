@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useChat } from '@/hooks/useChat';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
+import { useAgentActions } from '@/hooks/useAgentActions';
 import { ActionButtons } from '@/components/chat/ActionButtons';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 
@@ -42,6 +43,7 @@ export const Playground = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { getAgent } = useAgents();
   const { files } = useKnowledgeFiles(id || '');
+  const { actions } = useAgentActions(id);
   const [agent, setAgent] = useState<any>(null);
   
   const { messages, isLoading, sendMessage, resetChat, initializeChat } = useChat(id || '');
@@ -88,6 +90,10 @@ export const Playground = () => {
   const storageUsedMB = (storageUsed / (1024 * 1024)).toFixed(1);
   const sourcesCount = files?.length || 0;
   const lastTraining = files?.length > 0 ? new Date().toLocaleDateString() : 'Never';
+  
+  // Get enabled AI actions
+  const enabledActions = actions?.filter(action => action.is_enabled) || [];
+  const actionsCount = enabledActions.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -190,23 +196,29 @@ export const Playground = () => {
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4" />
                   <span className="font-medium">AI Actions</span>
-                  <Badge variant="secondary" className="text-xs">3</Badge>
+                  <Badge variant="secondary" className="text-xs">{actionsCount}</Badge>
                 </div>
                 {actionsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2 space-y-2">
-                <div className="p-2 bg-muted/30 rounded text-sm">
-                  <div className="font-medium">Search Knowledge</div>
-                  <div className="text-xs text-muted-foreground">Search through uploaded files</div>
-                </div>
-                <div className="p-2 bg-muted/30 rounded text-sm">
-                  <div className="font-medium">Generate Response</div>
-                  <div className="text-xs text-muted-foreground">Create contextual replies</div>
-                </div>
-                <div className="p-2 bg-muted/30 rounded text-sm">
-                  <div className="font-medium">Follow Instructions</div>
-                  <div className="text-xs text-muted-foreground">Execute custom instructions</div>
-                </div>
+                {enabledActions.length > 0 ? (
+                  enabledActions.map((action) => (
+                    <div key={action.id} className="p-2 bg-muted/30 rounded text-sm">
+                      <div className="font-medium">
+                        {action.action_type === 'calendar_booking' ? 'Calendar Booking' : 
+                         action.action_type === 'custom_button' ? action.config_json.button_text : 
+                         action.action_type}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {action.action_type === 'calendar_booking' ? 'Book appointments with users' :
+                         action.action_type === 'custom_button' ? 'Custom action button' :
+                         'AI Action'}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground p-2">0 active actions</div>
+                )}
               </CollapsibleContent>
             </Collapsible>
 
@@ -267,7 +279,12 @@ export const Playground = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
+                  <AvatarFallback 
+                    style={{ 
+                      backgroundColor: agent?.message_bubble_color + '20' || '#3B82F620',
+                      color: agent?.message_bubble_color || '#3B82F6'
+                    }}
+                  >
                     <Bot className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
@@ -305,11 +322,13 @@ export const Playground = () => {
                 }`}
               >
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className={
-                    message.sender === 'bot' 
-                      ? "bg-primary/10 text-primary" 
-                      : "bg-muted"
-                  }>
+                  <AvatarFallback 
+                    className={message.sender === 'bot' ? "" : "bg-muted"}
+                    style={message.sender === 'bot' ? {
+                      backgroundColor: agent?.message_bubble_color + '20' || '#3B82F620',
+                      color: agent?.message_bubble_color || '#3B82F6'
+                    } : {}}
+                  >
                     {message.sender === 'bot' ? (
                       <Bot className="h-4 w-4" />
                     ) : (
@@ -321,9 +340,12 @@ export const Playground = () => {
                   <div
                      className={`rounded-lg px-4 py-3 ${
                       message.sender === 'user'
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'text-white'
                         : 'bg-muted'
                      }`}
+                     style={message.sender === 'user' ? {
+                       backgroundColor: agent?.message_bubble_color || '#3B82F6'
+                     } : {}}
                    >
                      <MarkdownMessage content={message.content} />
                    </div>
@@ -344,7 +366,12 @@ export const Playground = () => {
             {isLoading && (
               <div className="flex items-start gap-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary/10 text-primary">
+                  <AvatarFallback 
+                    style={{ 
+                      backgroundColor: agent?.message_bubble_color + '20' || '#3B82F620',
+                      color: agent?.message_bubble_color || '#3B82F6'
+                    }}
+                  >
                     <Bot className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>

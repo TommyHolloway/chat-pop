@@ -21,6 +21,7 @@ interface Agent {
   id: string;
   name: string;
   description: string;
+  message_bubble_color?: string;
 }
 
 export const PublicChat = () => {
@@ -42,7 +43,7 @@ export const PublicChat = () => {
     try {
       const { data, error } = await supabase
         .from('agents')
-        .select('id, name, description')
+        .select('id, name, description, message_bubble_color')
         .eq('id', id)
         .eq('status', 'active')
         .single();
@@ -181,9 +182,12 @@ export const PublicChat = () => {
                     <div
                       className={`max-w-[80%] rounded-lg px-3 py-2 ${
                         message.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'text-white'
                           : 'bg-muted'
                       }`}
+                      style={message.role === 'user' ? {
+                        backgroundColor: agent?.message_bubble_color || '#3B82F6'
+                      } : {}}
                      >
                        <MarkdownMessage content={message.content} />
                        {message.role === 'assistant' && message.actions && (

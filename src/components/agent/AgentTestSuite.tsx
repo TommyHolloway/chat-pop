@@ -6,9 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
+import { useAgentActions } from '@/hooks/useAgentActions';
 import { useStreamingChat } from '@/hooks/useStreamingChat';
-import { Loader2, TestTube2, MessageSquare, Database, Zap } from 'lucide-react';
+import { Loader2, TestTube2, MessageSquare, Database, Zap, Calendar, ExternalLink } from 'lucide-react';
 
 interface AgentTestSuiteProps {
   agentId: string;
@@ -26,6 +26,7 @@ export const AgentTestSuite: React.FC<AgentTestSuiteProps> = ({
   const [isFetchingStats, setIsFetchingStats] = useState(false);
   
   const { toast } = useToast();
+  const { actions } = useAgentActions(agentId);
   const { messages, isLoading, sendMessage, initializeChat } = useStreamingChat(agentId);
 
   const fetchKnowledgeStats = async () => {
@@ -112,6 +113,9 @@ export const AgentTestSuite: React.FC<AgentTestSuiteProps> = ({
     fetchKnowledgeStats();
   }, [agentId]);
 
+  // Get enabled AI actions
+  const enabledActions = actions?.filter(action => action.is_enabled) || [];
+
   return (
     <div className="space-y-6">
       <Card>
@@ -124,6 +128,53 @@ export const AgentTestSuite: React.FC<AgentTestSuiteProps> = ({
             Test and verify all agent enhancements are working correctly
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      {/* AI Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            AI Actions
+            <Badge variant="secondary">{enabledActions.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {enabledActions.length > 0 ? (
+            <div className="space-y-3">
+              {enabledActions.map((action) => (
+                <div key={action.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {action.action_type === 'calendar_booking' ? (
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4 text-green-500" />
+                    )}
+                    <div>
+                      <div className="font-medium">
+                        {action.action_type === 'calendar_booking' ? 'Calendar Booking' : 
+                         action.action_type === 'custom_button' ? action.config_json.button_text || 'Custom Button' : 
+                         action.action_type}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {action.action_type === 'calendar_booking' ? 'Book appointments with users' :
+                         action.action_type === 'custom_button' ? 'Custom action button' :
+                         'AI Action'}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="default" className="text-xs">Active</Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">0 active actions</p>
+              <p className="text-xs">Configure actions in the agent edit page</p>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Knowledge Base Stats */}

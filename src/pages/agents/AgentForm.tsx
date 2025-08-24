@@ -1005,12 +1005,17 @@ export const AgentForm = () => {
                       </div>
                     )}
 
-                    {isEditing && links.length > 0 && (
-                      <Button onClick={handleTrainAgent} disabled={loading} className="w-full">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        {loading ? 'Training...' : 'Train Agent'}
-                      </Button>
-                    )}
+                     {isEditing && links.length > 0 && (
+                       <Button 
+                         onClick={handleTrainAgent}
+                         disabled={loading}
+                         className="w-full"
+                         variant="default"
+                       >
+                         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                         {links.length > 0 ? 'Retrain Agent' : 'Train Agent'}
+                       </Button>
+                     )}
                   </CardContent>
                 </CollapsibleContent>
               </Collapsible>
@@ -1098,8 +1103,20 @@ export const AgentForm = () => {
                           );
                         })}
                       </div>
-                    )}
-                  </CardContent>
+                     )}
+
+                     {isEditing && files?.length > 0 && (
+                       <Button 
+                         onClick={handleTrainAgent}
+                         disabled={loading}
+                         className="w-full"
+                         variant="default"
+                       >
+                         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                         {files?.length > 0 ? 'Retrain Agent' : 'Train Agent'}
+                       </Button>
+                     )}
+                   </CardContent>
                 </CollapsibleContent>
               </Collapsible>
             </Card>
