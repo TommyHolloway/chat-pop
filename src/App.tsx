@@ -22,20 +22,14 @@ import Security from "./pages/Security";
 import { Pricing } from "./pages/Pricing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
-import { Dashboard } from "./pages/Dashboard";
+import { WorkspaceOverview } from "./pages/WorkspaceOverview";
 import { Agents } from "./pages/Agents";
-import { AgentDetail } from "./pages/agents/AgentDetail";
-import { AgentForm } from "./pages/agents/AgentForm";
-import { Playground } from "./pages/agents/Playground";
-import { Deploy } from "./pages/agents/Deploy";
-import { PublicChat } from "./pages/agents/PublicChat";
 import { Billing } from "./pages/Billing";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import AdminPortal from "./pages/AdminPortal";
 import { AdminRoute } from "./components/AdminRoute";
 import { AgentLayout } from "./pages/agents/AgentLayout";
-import Leads from "./pages/Leads";
 
 const queryClient = new QueryClient();
 
@@ -118,36 +112,14 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <AuthenticatedLayout>
-                    <Dashboard />
+                    <WorkspaceOverview />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/agents" element={
-                <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <Agents />
-                  </AuthenticatedLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/agents/new" element={
-                <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <AgentForm />
-                  </AuthenticatedLayout>
-                </ProtectedRoute>
-              } />
-              {/* Agent Routes - New Structure */}
-              <Route path="/agents/:id/*" element={
+              <Route path="/workspace/:workspaceId/agents/:id/*" element={
                 <ProtectedRoute>
                   <AuthenticatedLayout>
                     <AgentLayout />
-                  </AuthenticatedLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/leads" element={
-                <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <Leads />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />

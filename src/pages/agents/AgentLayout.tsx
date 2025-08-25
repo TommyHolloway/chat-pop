@@ -13,7 +13,7 @@ import { AgentSourcesFiles } from './sections/AgentSourcesFiles';
 import { AgentDeployEmbed } from './sections/AgentDeployEmbed';
 
 export const AgentLayout = () => {
-  const { id } = useParams();
+  const { id, workspaceId } = useParams();
   const { getAgent } = useAgents();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);

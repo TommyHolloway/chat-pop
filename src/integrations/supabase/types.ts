@@ -171,6 +171,7 @@ export type Database = {
           status: string | null
           updated_at: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           chat_interface_theme?: string | null
@@ -188,6 +189,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id: string
+          workspace_id?: string | null
         }
         Update: {
           chat_interface_theme?: string | null
@@ -205,6 +207,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: []
       }
@@ -606,6 +609,33 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
