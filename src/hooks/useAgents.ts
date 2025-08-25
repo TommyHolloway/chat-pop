@@ -5,13 +5,14 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface Agent {
   id: string;
+  user_id: string;
+  workspace_id: string;
   name: string;
   description: string | null;
   instructions: string;
   status: 'active' | 'inactive' | 'draft';
   created_at: string;
   updated_at: string;
-  user_id: string;
   initial_message?: string | null;
   creativity_level?: number | null;
   profile_image_url?: string | null;
@@ -72,6 +73,7 @@ export const useAgents = () => {
     name: string;
     description?: string;
     instructions: string;
+    workspace_id: string;
     initial_message?: string;
     creativity_level?: number;
     profile_image_url?: string;

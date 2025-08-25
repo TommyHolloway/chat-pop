@@ -14,7 +14,7 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
   const { id } = useParams();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const { links, loading: linksLoading, addLink, deleteLink, refetchLinks } = useAgentLinks(id);
+  const { links, loading: linksLoading, addLink, removeLink, fetchLinks } = useAgentLinks(id);
 
   const handleAddUrl = async () => {
     if (!url.trim()) return;
@@ -28,7 +28,7 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
   };
 
   const handleDeleteLink = async (linkId: string) => {
-    await deleteLink(linkId);
+    await removeLink(linkId);
   };
 
   const getStatusColor = (status: string) => {
@@ -71,8 +71,7 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
               />
               <PlanEnforcementWrapper 
                 feature="link" 
-                agentId={id}
-                fallbackComponent={
+                fallbackContent={
                   <Button disabled>
                     <Plus className="mr-2 h-4 w-4" />
                     Add (Upgrade Required)
@@ -145,7 +144,7 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => refetchLinks()}
+                        onClick={() => fetchLinks()}
                       >
                         <RefreshCw className="h-4 w-4" />
                       </Button>

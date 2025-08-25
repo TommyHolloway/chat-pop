@@ -102,7 +102,7 @@ const App = () => (
               } />
               
               {/* Public Agent Routes */}
-              <Route path="/agents/:id/chat" element={<PublicChat />} />
+              <Route path="/agents/:id/chat" element={<div>Public Chat Coming Soon</div>} />
               
               {/* Auth Routes */}
               <Route path="/auth/login" element={<Login />} />

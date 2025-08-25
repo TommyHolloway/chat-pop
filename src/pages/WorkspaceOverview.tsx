@@ -18,7 +18,7 @@ export const WorkspaceOverview = () => {
   const { currentWorkspace, workspaces } = useWorkspaces();
   const { agents, loading: agentsLoading } = useAgents();
   const { leads } = useLeads();
-  const { enforcement } = usePlanEnforcement();
+  const planEnforcement = usePlanEnforcement();
 
   const workspaceAgents = agents.filter(agent => agent.workspace_id === currentWorkspace?.id);
   const totalLeads = leads.filter(lead => 
@@ -26,7 +26,7 @@ export const WorkspaceOverview = () => {
   ).length;
 
   const canCreateWorkspace = true; // TODO: Implement workspace limits
-  const canCreateAgent = enforcement?.canCreateAgent;
+  const canCreateAgent = planEnforcement?.canCreateAgent;
 
   if (!currentWorkspace) {
     return (
@@ -34,20 +34,17 @@ export const WorkspaceOverview = () => {
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">Welcome to your AI workspace</h1>
           <p className="text-muted-foreground mb-8">Create your first workspace to get started</p>
-          <PlanEnforcementWrapper 
-            feature="workspace" 
-            fallbackComponent={
-              <Button disabled>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Workspace (Upgrade Required)
-              </Button>
-            }
-          >
+          {canCreateWorkspace ? (
             <Button onClick={() => setShowCreateWorkspace(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Create Your First Workspace
             </Button>
-          </PlanEnforcementWrapper>
+          ) : (
+            <Button disabled>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Workspace (Upgrade Required)
+            </Button>
+          )}
         </div>
         <CreateWorkspaceDialog 
           open={showCreateWorkspace} 
@@ -68,23 +65,20 @@ export const WorkspaceOverview = () => {
           )}
         </div>
         <div className="flex gap-2">
-          <PlanEnforcementWrapper 
-            feature="workspace" 
-            fallbackComponent={
-              <Button variant="outline" disabled>
-                <Plus className="mr-2 h-4 w-4" />
-                New Workspace (Upgrade Required)
-              </Button>
-            }
-          >
+          {canCreateWorkspace ? (
             <Button variant="outline" onClick={() => setShowCreateWorkspace(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Workspace
             </Button>
-          </PlanEnforcementWrapper>
+          ) : (
+            <Button variant="outline" disabled>
+              <Plus className="mr-2 h-4 w-4" />
+              New Workspace (Upgrade Required)
+            </Button>
+          )}
           <PlanEnforcementWrapper 
             feature="agent" 
-            fallbackComponent={
+            fallbackContent={
               <Button disabled>
                 <Plus className="mr-2 h-4 w-4" />
                 New Agent (Upgrade Required)
@@ -109,8 +103,8 @@ export const WorkspaceOverview = () => {
           <CardContent>
             <div className="text-2xl font-bold">{workspaceAgents.length}</div>
             <p className="text-xs text-muted-foreground">
-              {enforcement?.agentLimits?.remaining !== undefined 
-                ? `${enforcement.agentLimits.remaining} remaining`
+              {planEnforcement?.remainingAgents !== undefined 
+                ? `${planEnforcement.remainingAgents} remaining`
                 : 'Unlimited'
               }
             </p>
@@ -137,11 +131,11 @@ export const WorkspaceOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {enforcement?.usage?.message_credits_used || 0}
+              {planEnforcement?.usage?.currentMessageCredits || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              {enforcement?.limits?.message_credits !== -1 
-                ? `of ${enforcement?.limits?.message_credits} limit`
+              {planEnforcement?.limits?.messageCredits !== -1 
+                ? `of ${planEnforcement?.limits?.messageCredits} limit`
                 : 'Unlimited'
               }
             </p>
@@ -185,7 +179,7 @@ export const WorkspaceOverview = () => {
               </p>
               <PlanEnforcementWrapper 
                 feature="agent" 
-                fallbackComponent={
+                fallbackContent={
                   <Button disabled>
                     <Plus className="mr-2 h-4 w-4" />
                     Create Agent (Upgrade Required)

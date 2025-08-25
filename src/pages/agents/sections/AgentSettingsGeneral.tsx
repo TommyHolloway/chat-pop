@@ -50,6 +50,7 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
         description: formData.description.trim() || null,
         status: formData.status,
         profile_image_url: formData.profile_image_url || null,
+        instructions: agent.instructions, // Keep existing instructions
       });
 
       toast({

@@ -395,7 +395,17 @@ export const AgentForm = () => {
           description: `${formData.name} has been updated successfully.`,
         });
       } else {
-        const newAgent = await createAgent(formData);
+        const newAgent = await createAgent({
+          name: formData.name,
+          description: formData.description,
+          instructions: formData.instructions,
+          workspace_id: 'default-workspace', // TODO: Get from current workspace context
+          initial_message: formData.initial_message,
+          creativity_level: formData.creativity_level,
+          profile_image_url: formData.profile_image_url,
+          message_bubble_color: formData.message_bubble_color,
+          chat_interface_theme: formData.chat_interface_theme,
+        });
         agentIdToUse = newAgent.id;
         toast({
           title: "Agent created", 
