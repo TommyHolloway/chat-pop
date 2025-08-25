@@ -90,7 +90,7 @@ export const AppSidebar = () => {
                       {agents.slice(0, 5).map((agent) => (
                         <SidebarMenuSubItem key={agent.id}>
                           <SidebarMenuSubButton asChild isActive={location.pathname.includes(`/agents/${agent.id}`)}>
-                            <Link to={`/agents/${agent.id}/edit`}>
+                            <Link to={`/agents/${agent.id}/playground`}>
                               <Avatar className="h-4 w-4">
                                 <AvatarFallback className="bg-primary/10 text-primary text-xs">
                                   {agent.name.slice(0, 2).toUpperCase()}

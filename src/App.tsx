@@ -34,6 +34,7 @@ import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import AdminPortal from "./pages/AdminPortal";
 import { AdminRoute } from "./components/AdminRoute";
+import { AgentLayout } from "./pages/agents/AgentLayout";
 import Leads from "./pages/Leads";
 
 const queryClient = new QueryClient();
@@ -135,17 +136,11 @@ const App = () => (
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
-              <Route path="/agents/:id" element={
+              {/* Agent Routes - New Structure */}
+              <Route path="/agents/:id/*" element={
                 <ProtectedRoute>
                   <AuthenticatedLayout>
-                    <AgentDetail />
-                  </AuthenticatedLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/agents/:id/:tab" element={
-                <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <AgentDetail />
+                    <AgentLayout />
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
