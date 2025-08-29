@@ -69,30 +69,30 @@ export const Landing = () => {
         <div className="container mx-auto px-4 relative">
           <div className="max-w-5xl mx-auto text-center space-y-8">
             <Badge variant="secondary" className="mb-6 text-base px-4 py-2 bg-primary/10 text-primary border-primary/20">
-              <Brain className="h-4 w-4 mr-2" />
-              Next-Generation Visitor Intelligence
+              <MessageSquare className="h-4 w-4 mr-2" />
+              AI Chat Agents That Know Your Visitors
             </Badge>
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-              Turn Website Visitors Into{' '}
-              <span className="text-gradient-intelligence">Customers Before</span>{' '}
-              They Even Ask
+              <span className="text-gradient-intelligence">AI Chat Agents</span>{' '}
+              That Start Conversations{' '}
+              Before Visitors Leave
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Our AI agents don't just respond—they predict visitor intent through advanced behavioral analysis and engage proactively at the perfect moment to maximize conversions.
+              Smart AI chat agents analyze visitor behavior in real-time and proactively start personalized conversations at the perfect moment to convert browsers into buyers.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
               <Link to="/auth/signup">
                 <Button size="lg" className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow">
-                  Book a Demo
+                  See AI Chat Agents in Action
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/demo">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/30 text-primary hover:bg-primary/10">
-                  Install on Website
+                  Add Chat Agents to My Site
                 </Button>
               </Link>
             </div>
@@ -109,7 +109,7 @@ export const Landing = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-primary mb-2">24/7</div>
-                  <div className="text-sm text-muted-foreground">Proactive engagement</div>
+                  <div className="text-sm text-muted-foreground">AI chat agent availability</div>
                 </div>
               </div>
             </div>
@@ -144,7 +144,7 @@ export const Landing = () => {
               <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg flex items-center justify-center border-2 border-dashed border-primary/20 shadow-large">
                 <div className="text-center space-y-3">
                   <Play className="h-16 w-16 mx-auto text-primary" />
-                  <p className="text-muted-foreground">See proactive intelligence in action</p>
+                  <p className="text-muted-foreground">See AI chat agents in action</p>
                 </div>
               </div>
             )}
@@ -157,11 +157,11 @@ export const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
-              <span className="text-gradient-primary">Proactive Intelligence</span>{' '}
-              That Converts
+              <span className="text-gradient-primary">AI Chat Agents</span>{' '}
+              That Know What Visitors Want
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Move beyond reactive chat support to predictive visitor engagement that understands intent before users even ask.
+              Smart AI chat agents that analyze visitor behavior and start personalized conversations at exactly the right moment to maximize conversions.
             </p>
           </div>
 
@@ -189,7 +189,7 @@ export const Landing = () => {
               Integrates With Everything You Use
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Deploy anywhere in minutes with our API-first approach and pre-built integrations.
+              Deploy intelligent chat agents anywhere in minutes with our API-first approach and pre-built integrations.
             </p>
           </div>
 
@@ -216,10 +216,10 @@ export const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
-              How Proactive Intelligence Works
+              How AI Chat Agents Work
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Three steps to transform visitors into customers with behavioral intelligence.
+              Three steps to transform visitors into customers with intelligent chat agents.
             </p>
           </div>
 
@@ -249,7 +249,7 @@ export const Landing = () => {
           <div className="text-center space-y-8 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
               Proven Results from{' '}
-              <span className="text-gradient-primary">Proactive Engagement</span>
+              <span className="text-gradient-primary">AI Chat Agents</span>
             </h2>
           </div>
 
@@ -265,7 +265,7 @@ export const Landing = () => {
                     <div className="text-sm text-muted-foreground">Conversion Rate Increase</div>
                   </div>
                 </div>
-                <p className="text-lg italic">"Our visitor-to-lead conversion jumped from 2.1% to 8.7% in just two months. The proactive engagement is a game changer."</p>
+                <p className="text-lg italic">"Our visitor-to-lead conversion jumped from 2.1% to 8.7% in just two months. The AI chat agents start conversations we never would have had."</p>
                 <p className="text-sm text-muted-foreground">– Sarah Chen, E-commerce Director at TechFlow</p>
               </div>
             </Card>
@@ -281,7 +281,7 @@ export const Landing = () => {
                     <div className="text-sm text-muted-foreground">Additional Revenue Generated</div>
                   </div>
                 </div>
-                <p className="text-lg italic">"The behavioral insights help us understand our visitors before they even start a conversation. ROI was immediate."</p>
+                <p className="text-lg italic">"The AI chat agents know exactly when to engage visitors and what to say. It's like having a perfect salesperson on every page."</p>
                 <p className="text-sm text-muted-foreground">– Michael Rodriguez, VP Sales at Growth Labs</p>
               </div>
             </Card>
@@ -328,7 +328,7 @@ export const Landing = () => {
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to know about proactive visitor intelligence.
+              Everything you need to know about AI chat agents that convert visitors.
             </p>
           </div>
 
@@ -356,7 +356,7 @@ export const Landing = () => {
               Ready to Transform Visitors Into Customers?
             </h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Join the next generation of businesses using proactive visitor intelligence to maximize conversions.
+              Join the next generation of businesses using AI chat agents to turn every visitor into a conversation.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth/signup">
@@ -384,50 +384,50 @@ export const Landing = () => {
 const intelligenceFeatures = [
   {
     icon: Brain,
-    title: 'Behavioral Analysis',
-    description: 'Advanced AI tracks mouse movements, scroll patterns, and time spent to understand visitor intent in real-time.'
+    title: 'Smart Behavior Reading',
+    description: 'AI chat agents analyze visitor mouse movements, scroll patterns, and page engagement to understand intent before starting conversations.'
   },
   {
     icon: Target,
-    title: 'Intent Prediction',
-    description: 'Predictive algorithms identify high-value visitors and optimal engagement moments before they bounce.'
+    title: 'Perfect Timing',
+    description: 'Chat agents know exactly when visitors are ready to engage, starting conversations at the optimal moment for maximum impact.'
   },
   {
-    icon: Zap,
-    title: 'Proactive Engagement',
-    description: 'Smart triggers automatically start relevant conversations at the perfect moment to maximize conversion potential.'
+    icon: MessageSquare,
+    title: 'Intelligent Conversations',
+    description: 'AI chat agents start personalized conversations based on visitor behavior, pages viewed, and demonstrated interests.'
   },
   {
     icon: Eye,
-    title: 'Visitor Context',
-    description: 'Understand what pages visitors viewed, how they arrived, and their engagement level before they even start chatting.'
+    title: 'Visitor Understanding',
+    description: 'Chat agents know what visitors are looking for and their engagement level before they even realize they need help.'
   },
   {
     icon: BarChart3,
-    title: 'Conversion Analytics',
-    description: 'Deep insights into visitor behavior patterns, conversion funnels, and optimization opportunities.'
+    title: 'Conversation Analytics',
+    description: 'Track which conversations convert best and optimize your AI chat agents for maximum performance.'
   },
   {
     icon: Settings,
-    title: 'Smart Personalization',
-    description: 'Dynamic content and conversation starters based on visitor behavior, source, and demonstrated interests.'
+    title: 'Adaptive Learning',
+    description: 'Chat agents continuously learn from visitor interactions to improve conversation starters and response relevance.'
   }
 ];
 
 const proactiveSteps = [
   {
-    title: 'Install & Analyze',
-    description: 'Deploy our tracking script and start gathering behavioral intelligence on every visitor.',
-    icon: Eye
+    title: 'Deploy Chat Agents',
+    description: 'Install our AI chat agents on your website and start analyzing visitor behavior in real-time.',
+    icon: MessageSquare
   },
   {
-    title: 'Predict Intent',
-    description: 'AI algorithms analyze patterns to predict visitor intent and identify conversion opportunities.',
+    title: 'AI Learns Visitors',
+    description: 'Chat agents study visitor patterns to understand intent and identify the perfect moments to start conversations.',
     icon: Brain
   },
   {
-    title: 'Engage & Convert',
-    description: 'Proactively engage high-intent visitors with personalized conversations that drive conversions.',
+    title: 'Start Smart Conversations',
+    description: 'AI chat agents proactively engage visitors with personalized messages that turn browsers into buyers.',
     icon: Target
   }
 ];
@@ -442,19 +442,19 @@ const metrics = [
 const faqItems = [
   {
     question: 'How is this different from traditional chatbots?',
-    answer: 'Traditional chatbots wait for visitors to initiate contact. Our proactive intelligence analyzes visitor behavior in real-time and engages them at optimal moments based on their demonstrated intent and likelihood to convert.'
+    answer: 'Traditional chatbots wait for visitors to start conversations. Our AI chat agents actively monitor visitor behavior and proactively start relevant conversations at the perfect moment to maximize conversions.'
   },
   {
-    question: 'What behavioral data do you track?',
-    answer: 'We track mouse movements, scroll patterns, time on page, page navigation, traffic source, and engagement metrics - all processed in real-time to understand visitor intent without storing personal information.'
+    question: 'What do AI chat agents learn about visitors?',
+    answer: 'Chat agents analyze mouse movements, scroll patterns, time on page, navigation paths, and traffic sources in real-time to understand visitor intent and start the right conversations at the right time.'
   },
   {
-    question: 'How quickly can I see results?',
-    answer: 'Most customers see immediate improvements in engagement rates within 24-48 hours. Significant conversion increases typically occur within 2-4 weeks as the AI learns your visitor patterns.'
+    question: 'How quickly do AI chat agents start working?',
+    answer: 'AI chat agents start engaging visitors immediately after installation. Most customers see conversation increases within hours and significant conversion improvements within 2-4 weeks as agents learn optimal engagement patterns.'
   },
   {
-    question: 'Does this work with my existing website?',
-    answer: 'Yes! Our solution integrates with any website through a simple script embed. Works with Shopify, WordPress, Webflow, custom sites, and 50+ other platforms.'
+    question: 'Can I add AI chat agents to my existing website?',
+    answer: 'Yes! AI chat agents integrate with any website through a simple script embed. Works perfectly with Shopify, WordPress, Webflow, custom sites, and 50+ other platforms.'
   },
   {
     question: 'Is visitor data secure and compliant?',
