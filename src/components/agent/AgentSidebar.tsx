@@ -20,7 +20,10 @@ import {
   Link2,
   Palette,
   UserPlus,
-  Loader2
+  Loader2,
+  Building2,
+  ChevronDown,
+  Plus
 } from 'lucide-react';
 import {
   Sidebar,
@@ -43,6 +46,16 @@ import {
 } from '@/components/ui/collapsible';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { useAgents } from '@/hooks/useAgents';
 
 interface AgentSidebarProps {
   agent: any;
@@ -51,7 +64,12 @@ interface AgentSidebarProps {
 
 export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
   const location = useLocation();
-  const { id } = useParams();
+  const { id, workspaceId } = useParams();
+  const { workspaces, currentWorkspace, switchWorkspace } = useWorkspaces();
+  const { agents } = useAgents();
+  
+  // Filter agents for current workspace
+  const workspaceAgents = agents.filter(a => a.workspace_id === workspaceId);
   
   const isActive = (path: string) => location.pathname === path;
   const isInSection = (section: string) => location.pathname.includes(`/${section}`);
@@ -67,20 +85,89 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
   return (
     <Sidebar className="w-80 border-r">
       <SidebarHeader className="p-6 border-b">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-              {agent?.name?.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-lg truncate">{agent?.name}</h2>
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="text-xs">Active</Badge>
-              <span className="text-xs text-muted-foreground">Agent</span>
-            </div>
-          </div>
-        </div>
+        {/* Workspace Selection */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-between mb-3 h-auto p-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                <span className="text-sm font-medium truncate">
+                  {currentWorkspace?.name || 'Select Workspace'}
+                </span>
+              </div>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[300px]">
+            {workspaces.map((workspace) => (
+              <DropdownMenuItem
+                key={workspace.id}
+                onClick={() => {
+                  switchWorkspace(workspace);
+                  // Navigate to workspace overview if switching workspaces
+                  if (workspace.id !== currentWorkspace?.id) {
+                    window.location.href = '/dashboard';
+                  }
+                }}
+                className={workspace.id === currentWorkspace?.id ? 'bg-muted' : ''}
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                {workspace.name}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => window.location.href = '/dashboard'}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Workspace
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Agent Selection */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-between h-auto p-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {agent?.name?.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="font-medium text-sm truncate">{agent?.name}</div>
+                  <div className="text-xs text-muted-foreground">Agent</div>
+                </div>
+              </div>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[300px]">
+            {workspaceAgents.map((workspaceAgent) => (
+              <DropdownMenuItem
+                key={workspaceAgent.id}
+                onClick={() => window.location.href = `/workspace/${workspaceId}/agents/${workspaceAgent.id}/playground`}
+                className={workspaceAgent.id === agent?.id ? 'bg-muted' : ''}
+              >
+                <Avatar className="mr-2 h-6 w-6">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {workspaceAgent.name?.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{workspaceAgent.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {workspaceAgent.status === 'active' ? 'Active' : 'Inactive'}
+                  </div>
+                </div>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => window.location.href = '/dashboard'}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Agent
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarHeader>
       
       <SidebarContent className="p-4">
@@ -89,8 +176,8 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
             <SidebarMenu>
               {/* Playground */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive(`/agents/${id}/playground`)}>
-                  <Link to={`/agents/${id}/playground`}>
+                <SidebarMenuButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/playground`)}>
+                  <Link to={`/workspace/${workspaceId}/agents/${id}/playground`}>
                     <Play className="h-4 w-4" />
                     <span>Playground</span>
                   </Link>
@@ -110,16 +197,16 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/activity/conversations`)}>
-                          <Link to={`/agents/${id}/activity/conversations`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/activity/conversations`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/activity/conversations`}>
                             <Bot className="h-4 w-4" />
                             <span>Conversations</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/activity/leads`)}>
-                          <Link to={`/agents/${id}/activity/leads`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/activity/leads`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/activity/leads`}>
                             <UserPlus className="h-4 w-4" />
                             <span>Leads</span>
                           </Link>
@@ -132,8 +219,8 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
 
               {/* Analytics */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive(`/agents/${id}/analytics`)}>
-                  <Link to={`/agents/${id}/analytics`}>
+                <SidebarMenuButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics`)}>
+                  <Link to={`/workspace/${workspaceId}/agents/${id}/analytics`}>
                     <BarChart3 className="h-4 w-4" />
                     <span>Analytics</span>
                   </Link>
@@ -153,32 +240,32 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/sources/files`)}>
-                          <Link to={`/agents/${id}/sources/files`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/sources/files`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/sources/files`}>
                             <Files className="h-4 w-4" />
                             <span>Files</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/sources/text`)}>
-                          <Link to={`/agents/${id}/sources/text`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/sources/text`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/sources/text`}>
                             <Type className="h-4 w-4" />
                             <span>Text</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/sources/website`)}>
-                          <Link to={`/agents/${id}/sources/website`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/sources/website`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/sources/website`}>
                             <Globe2 className="h-4 w-4" />
                             <span>Website</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/sources/qa`)}>
-                          <Link to={`/agents/${id}/sources/qa`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/sources/qa`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/sources/qa`}>
                             <HelpCircle className="h-4 w-4" />
                             <span>Q&A</span>
                           </Link>
@@ -202,16 +289,16 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/actions/calendar`)}>
-                          <Link to={`/agents/${id}/actions/calendar`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/actions/calendar`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/actions/calendar`}>
                             <Calendar className="h-4 w-4" />
                             <span>Calendar Booking</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/actions/buttons`)}>
-                          <Link to={`/agents/${id}/actions/buttons`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/actions/buttons`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/actions/buttons`}>
                             <MousePointer className="h-4 w-4" />
                             <span>Custom Buttons</span>
                           </Link>
@@ -235,24 +322,24 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/deploy/embed`)}>
-                          <Link to={`/agents/${id}/deploy/embed`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/deploy/embed`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/deploy/embed`}>
                             <Code className="h-4 w-4" />
                             <span>Embed</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/deploy/share`)}>
-                          <Link to={`/agents/${id}/deploy/share`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/deploy/share`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/deploy/share`}>
                             <Share className="h-4 w-4" />
                             <span>Share</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/deploy/integrations`)}>
-                          <Link to={`/agents/${id}/deploy/integrations`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/deploy/integrations`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/deploy/integrations`}>
                             <Link2 className="h-4 w-4" />
                             <span>Integrations</span>
                           </Link>
@@ -276,32 +363,32 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/settings/general`)}>
-                          <Link to={`/agents/${id}/settings/general`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/general`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/general`}>
                             <Bot className="h-4 w-4" />
                             <span>General</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/settings/ai`)}>
-                          <Link to={`/agents/${id}/settings/ai`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/ai`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/ai`}>
                             <Settings className="h-4 w-4" />
                             <span>AI Configuration</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/settings/chat`)}>
-                          <Link to={`/agents/${id}/settings/chat`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/chat`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/chat`}>
                             <Palette className="h-4 w-4" />
                             <span>Chat Interface</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/agents/${id}/settings/leads`)}>
-                          <Link to={`/agents/${id}/settings/leads`}>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/leads`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/leads`}>
                             <UserPlus className="h-4 w-4" />
                             <span>Lead Capture</span>
                           </Link>
