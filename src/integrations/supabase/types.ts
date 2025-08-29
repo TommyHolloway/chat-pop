@@ -154,6 +154,60 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_qna_knowledge: {
+        Row: {
+          agent_id: string
+          answer: string
+          created_at: string
+          id: string
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          answer: string
+          created_at?: string
+          id?: string
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          answer?: string
+          created_at?: string
+          id?: string
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_text_knowledge: {
+        Row: {
+          agent_id: string
+          content: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          content: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agents: {
         Row: {
           chat_interface_theme: string | null

@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Plus, MessageCircleQuestion, Trash2, Edit2 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { useAgentQnAKnowledge } from '@/hooks/useAgentQnAKnowledge';
 
 interface QnAPair {
   id: string;
@@ -16,56 +17,33 @@ interface QnAPair {
 
 export const AgentSourcesQnA = ({ agent }: { agent: any }) => {
   const { id } = useParams();
+  const { qnaKnowledge, loading: dataLoading, createQnAKnowledge, deleteQnAKnowledge } = useAgentQnAKnowledge(id);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [qnaPairs, setQnaPairs] = useState<QnAPair[]>([]); // TODO: Fetch from backend
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!question.trim() || !answer.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide both question and answer",
-        variant: "destructive",
-      });
+      toast.error("Please provide both question and answer");
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     try {
-      // TODO: Implement Q&A saving
-      const newQnA: QnAPair = {
-        id: Date.now().toString(),
+      await createQnAKnowledge({
+        agent_id: id!,
         question: question.trim(),
         answer: answer.trim(),
-      };
-      
-      setQnaPairs(prev => [...prev, newQnA]);
+      });
       setQuestion('');
       setAnswer('');
-      
-      toast({
-        title: "Success",
-        description: "Q&A pair saved successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save Q&A pair",
-        variant: "destructive",
-      });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleDelete = (qnaId: string) => {
-    setQnaPairs(prev => prev.filter(qna => qna.id !== qnaId));
-    toast({
-      title: "Success",
-      description: "Q&A pair deleted successfully",
-    });
+  const handleDelete = async (qnaId: string) => {
+    await deleteQnAKnowledge(qnaId);
   };
 
   return (
@@ -102,9 +80,9 @@ export const AgentSourcesQnA = ({ agent }: { agent: any }) => {
               rows={6}
             />
           </div>
-          <Button onClick={handleSave} disabled={loading || !question.trim() || !answer.trim()}>
+          <Button onClick={handleSave} disabled={saving || !question.trim() || !answer.trim()}>
             <Plus className="mr-2 h-4 w-4" />
-            {loading ? 'Saving...' : 'Add Q&A Pair'}
+            {saving ? 'Saving...' : 'Add Q&A Pair'}
           </Button>
         </CardContent>
       </Card>
@@ -114,7 +92,9 @@ export const AgentSourcesQnA = ({ agent }: { agent: any }) => {
           <CardTitle>Existing Q&A Pairs</CardTitle>
         </CardHeader>
         <CardContent>
-          {qnaPairs.length === 0 ? (
+          {dataLoading ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : qnaKnowledge.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <MessageCircleQuestion className="mx-auto h-12 w-12 mb-4 opacity-50" />
               <p>No Q&A pairs added yet</p>
@@ -122,30 +102,24 @@ export const AgentSourcesQnA = ({ agent }: { agent: any }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {qnaPairs.map((qna) => (
+              {qnaKnowledge.map((qna) => (
                 <div key={qna.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start mb-3">
                     <h4 className="font-medium text-sm text-muted-foreground">QUESTION</h4>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingId(qna.id)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(qna.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(qna.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                   <p className="mb-4">{qna.question}</p>
                   <h4 className="font-medium text-sm text-muted-foreground mb-2">ANSWER</h4>
                   <p className="text-sm">{qna.answer}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Created: {new Date(qna.created_at).toLocaleDateString()}
+                  </p>
                 </div>
               ))}
             </div>
