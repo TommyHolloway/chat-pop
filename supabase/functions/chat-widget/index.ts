@@ -128,51 +128,124 @@ serve(async (req) => {
       position: fixed;
       \${position.includes('right') ? 'right: 100px;' : 'left: 100px;'}
       \${position.includes('bottom') ? 'bottom: 30px;' : 'top: 100px;'}
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 16px;
-      max-width: 280px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(132, 204, 22, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 320px;
+      box-shadow: 
+        0 16px 48px rgba(0, 0, 0, 0.1),
+        0 4px 16px rgba(132, 204, 22, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
       z-index: 9998;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-      animation: slideIn 0.3s ease-out;
+      font-size: 15px;
+      line-height: 1.5;
+      animation: slideInSuggestion 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
     \`;
 
     suggestionBubble.innerHTML = \`
-      <div style="margin-bottom: 12px; color: #374151;">
+      <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #84cc16 0%, #65a30d 100%);
+        border-radius: 16px 16px 0 0;
+      "></div>
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-top: 4px;
+      ">
+        <div style="
+          width: 32px;
+          height: 32px;
+          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
+        ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M9 12l2 2 4-4"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+        </div>
+        <div style="
+          font-weight: 600;
+          color: #111827;
+          font-size: 14px;
+        ">AI Assistant</div>
+      </div>
+      <div style="
+        margin-bottom: 20px; 
+        color: #374151;
+        font-weight: 500;
+      ">
         \${analysis.suggestedMessage}
       </div>
-      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
         <button onclick="this.parentElement.parentElement.remove()" style="
-          padding: 6px 12px; 
-          background: #f3f4f6; 
-          border: none; 
-          border-radius: 6px; 
-          font-size: 12px; 
+          padding: 10px 16px; 
+          background: rgba(107, 114, 128, 0.1); 
+          border: 1px solid rgba(107, 114, 128, 0.2); 
+          border-radius: 10px; 
+          font-size: 13px; 
           cursor: pointer;
           color: #6b7280;
-        ">Dismiss</button>
+          font-weight: 500;
+          transition: all 0.2s ease;
+        " onmouseover="this.style.background='rgba(107, 114, 128, 0.15)'" onmouseout="this.style.background='rgba(107, 114, 128, 0.1)'">
+          Maybe Later
+        </button>
         <button onclick="acceptSuggestion()" style="
-          padding: 6px 12px; 
-          background: #3b82f6; 
+          padding: 10px 20px; 
+          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); 
           color: white; 
           border: none; 
-          border-radius: 6px; 
-          font-size: 12px; 
+          border-radius: 10px; 
+          font-size: 13px; 
           cursor: pointer;
-        ">Chat Now</button>
+          font-weight: 600;
+          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
+          transition: all 0.2s ease;
+        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(132, 204, 22, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(132, 204, 22, 0.3)'">
+          Start Chat
+        </button>
       </div>
     \`;
 
     // Add animation styles
     const style = document.createElement('style');
     style.textContent = \`
-      @keyframes slideIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+      @keyframes slideInSuggestion {
+        0% { 
+          opacity: 0; 
+          transform: translateY(20px) scale(0.95); 
+        }
+        100% { 
+          opacity: 1; 
+          transform: translateY(0) scale(1); 
+        }
+      }
+      
+      @keyframes fadeOutSuggestion {
+        0% { 
+          opacity: 1; 
+          transform: translateY(0) scale(1); 
+        }
+        100% { 
+          opacity: 0; 
+          transform: translateY(-10px) scale(0.98); 
+        }
       }
     \`;
     document.head.appendChild(style);
@@ -246,30 +319,86 @@ serve(async (req) => {
     widget = document.createElement('div');
     widget.style.cssText = \`
       position: fixed;
-      \${position.includes('right') ? 'right: 20px;' : 'left: 20px;'}
-      \${position.includes('bottom') ? 'bottom: 20px;' : 'top: 20px;'}
-      width: 60px;
-      height: 60px;
-      background: #000000;
-      border: 2px solid white;
-      border-radius: 30px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      \${position.includes('right') ? 'right: 24px;' : 'left: 24px;'}
+      \${position.includes('bottom') ? 'bottom: 24px;' : 'top: 24px;'}
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+      border: none;
+      border-radius: 50%;
+      box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1);
       cursor: pointer;
       z-index: 10000;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: pulseGlow 3s ease-in-out infinite;
+      backdrop-filter: blur(8px);
+      position: relative;
+      overflow: hidden;
     \`;
 
-    // Chat icon SVG
+    // Add hover and animation styles
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = \`
+      @keyframes pulseGlow {
+        0%, 100% { 
+          box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1);
+          transform: scale(1);
+        }
+        50% { 
+          box-shadow: 0 12px 40px rgba(132, 204, 22, 0.6), 0 6px 20px rgba(0, 0, 0, 0.15);
+          transform: scale(1.02);
+        }
+      }
+      
+      @keyframes sparkle {
+        0%, 100% { opacity: 0; transform: rotate(0deg) scale(0); }
+        50% { opacity: 1; transform: rotate(180deg) scale(1); }
+      }
+      
+      .chat-widget-button:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 16px 48px rgba(132, 204, 22, 0.6), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+        animation: none !important;
+      }
+      
+      .chat-widget-sparkle {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 12px;
+        height: 12px;
+        background: radial-gradient(circle, #fbbf24 0%, #f59e0b 100%);
+        border-radius: 50%;
+        animation: sparkle 2s ease-in-out infinite;
+        animation-delay: 1s;
+      }
+    \`;
+    document.head.appendChild(styleSheet);
+
+    widget.className = 'chat-widget-button';
+
+    // Enhanced chat icon with AI elements
     widget.innerHTML = \`
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+      <div class="chat-widget-sparkle"></div>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
+        <circle cx="12" cy="11" r="1" fill="white" opacity="0.8"/>
+        <circle cx="8" cy="11" r="1" fill="white" opacity="0.6"/>
+        <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
       </svg>
     \`;
 
     widget.addEventListener('click', toggleChat);
+    widget.addEventListener('mouseenter', () => {
+      widget.style.animation = 'none';
+    });
+    widget.addEventListener('mouseleave', () => {
+      widget.style.animation = 'pulseGlow 3s ease-in-out infinite';
+    });
+    
     document.body.appendChild(widget);
   }
 
@@ -278,17 +407,51 @@ serve(async (req) => {
     overlay = document.createElement('div');
     overlay.style.cssText = \`
       position: fixed;
-      \${position.includes('right') ? 'right: 20px;' : 'left: 20px;'}
-      \${position.includes('bottom') ? 'bottom: 90px;' : 'top: 90px;'}
-      width: 350px;
-      height: 500px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      \${position.includes('right') ? 'right: 24px;' : 'left: 24px;'}
+      \${position.includes('bottom') ? 'bottom: 100px;' : 'top: 100px;'}
+      width: 380px;
+      height: 520px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.1),
+        0 8px 32px rgba(132, 204, 22, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
       z-index: 9999;
       display: none;
       overflow: hidden;
+      animation: slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: \${position.includes('right') ? 'bottom right' : 'bottom left'};
     \`;
+
+    // Add overlay animation styles
+    const overlayStyles = document.createElement('style');
+    overlayStyles.textContent = \`
+      @keyframes slideInChat {
+        0% {
+          opacity: 0;
+          transform: scale(0.8) translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      
+      @keyframes slideOutChat {
+        0% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(0.8) translateY(20px);
+        }
+      }
+    \`;
+    document.head.appendChild(overlayStyles);
 
     iframe = document.createElement('iframe');
     iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin';
@@ -297,8 +460,8 @@ serve(async (req) => {
       width: 100%;
       height: 100%;
       border: none;
-      border-radius: 12px;
-      background: white;
+      border-radius: 20px;
+      background: transparent;
     \`;
 
     // Fetch HTML content and use srcdoc to force proper rendering
@@ -337,10 +500,53 @@ serve(async (req) => {
   function showErrorFallback() {
     if (overlay) {
       overlay.innerHTML = \`
-        <div style="padding: 20px; text-align: center; color: #ef4444; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <h3 style="margin: 0 0 10px 0; color: #dc2626;">Chat Failed to Load</h3>
-          <p style="margin: 0; font-size: 14px;">Please refresh the page or contact support.</p>
-          <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">Retry</button>
+        <div style="
+          padding: 32px; 
+          text-align: center; 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 20px;
+        ">
+          <div style="
+            width: 60px; 
+            height: 60px; 
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+          ">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 20px; font-weight: 600;">Chat Unavailable</h3>
+          <p style="margin: 0 0 24px 0; font-size: 15px; color: #6b7280; line-height: 1.5;">
+            We're having trouble loading the chat. Please try again in a moment.
+          </p>
+          <button onclick="location.reload()" style="
+            padding: 12px 24px; 
+            background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(132, 204, 22, 0.3);
+            transition: all 0.2s ease;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(132, 204, 22, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(132, 204, 22, 0.3)'">
+            Retry Connection
+          </button>
         </div>
       \`;
     }
@@ -349,19 +555,42 @@ serve(async (req) => {
   // Toggle chat
   function toggleChat() {
     isOpen = !isOpen;
-    overlay.style.display = isOpen ? 'block' : 'none';
     
-    // Update button icon
+    if (isOpen) {
+      overlay.style.display = 'block';
+      overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    } else {
+      overlay.style.animation = 'slideOutChat 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 300);
+    }
+    
+    // Update button icon with enhanced styling
     widget.innerHTML = isOpen ? \`
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+      <div class="chat-widget-sparkle"></div>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); transform: rotate(90deg); transition: transform 0.3s ease;">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
     \` : \`
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+      <div class="chat-widget-sparkle"></div>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); transition: transform 0.3s ease;">
         <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
+        <circle cx="12" cy="11" r="1" fill="white" opacity="0.8"/>
+        <circle cx="8" cy="11" r="1" fill="white" opacity="0.6"/>
+        <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
       </svg>
     \`;
+    
+    // Update button gradient when open
+    if (isOpen) {
+      widget.style.background = 'linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%)';
+      widget.style.animation = 'none';
+    } else {
+      widget.style.background = 'linear-gradient(135deg, #84cc16 0%, #65a30d 100%)';
+      widget.style.animation = 'pulseGlow 3s ease-in-out infinite';
+    }
   }
 
   // Initialize widget
