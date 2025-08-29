@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { useState } from 'react';
 import {
   Bot,
   Play,
@@ -24,7 +25,8 @@ import {
   Building2,
   ChevronDown,
   Plus,
-  Eye
+  Eye,
+  Target
 } from 'lucide-react';
 import {
   Sidebar,
@@ -57,6 +59,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useAgents } from '@/hooks/useAgents';
+import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
+import { PlanUpgradeDialog } from '@/components/PlanUpgradeDialog';
 
 interface AgentSidebarProps {
   agent: any;
@@ -68,12 +72,21 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
   const { id, workspaceId } = useParams();
   const { workspaces, currentWorkspace, switchWorkspace } = useWorkspaces();
   const { agents } = useAgents();
+  const { canViewVisitorAnalytics } = usePlanEnforcement();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
   // Filter agents for current workspace
   const workspaceAgents = agents.filter(a => a.workspace_id === workspaceId);
   
   const isActive = (path: string) => location.pathname === path;
   const isInSection = (section: string) => location.pathname.includes(`/${section}`);
+
+  const handleProactiveEngagementClick = (e: React.MouseEvent) => {
+    if (!canViewVisitorAnalytics) {
+      e.preventDefault();
+      setShowUpgradeDialog(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -182,6 +195,29 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                     <Play className="h-4 w-4" />
                     <span>Playground</span>
                   </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Proactive Engagement */}
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild={canViewVisitorAnalytics} 
+                  isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/proactive`)}
+                  onClick={handleProactiveEngagementClick}
+                >
+                  {canViewVisitorAnalytics ? (
+                    <Link to={`/workspace/${workspaceId}/agents/${id}/settings/proactive`}>
+                      <Target className="h-4 w-4" />
+                      <span>Proactive Engagement</span>
+                      <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                    </Link>
+                  ) : (
+                    <button className="w-full">
+                      <Target className="h-4 w-4" />
+                      <span>Proactive Engagement</span>
+                      <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                    </button>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -419,14 +455,6 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/proactive`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/proactive`}>
-                            <Zap className="h-4 w-4" />
-                            <span>Proactive Engagement</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
@@ -435,6 +463,15 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {/* Plan Upgrade Dialog */}
+      <PlanUpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        feature="Proactive Engagement"
+        currentLimit="Feature requires Pro plan"
+        recommendedPlan="standard"
+      />
     </Sidebar>
   );
 };
