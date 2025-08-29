@@ -96,12 +96,12 @@ export const Playground = () => {
   const actionsCount = enabledActions.length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex h-screen">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <div className="w-80 border-r bg-card flex flex-col">
           {/* Sidebar Header */}
-          <div className="p-6 border-b">
+          <div className="p-6 border-b flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <PlayCircle className="h-5 w-5 text-primary" />
@@ -147,7 +147,7 @@ export const Playground = () => {
           </div>
 
           {/* Sidebar Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
             {/* Instructions */}
             <Collapsible open={instructionsOpen} onOpenChange={setInstructionsOpen}>
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors">
@@ -262,7 +262,7 @@ export const Playground = () => {
           </div>
 
           {/* Back to Dashboard */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t flex-shrink-0">
             <Link to="/dashboard">
               <Button variant="ghost" className="w-full justify-start">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -273,9 +273,9 @@ export const Playground = () => {
         </div>
 
         {/* Chat Interface */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Chat Header */}
-          <div className="bg-card border-b p-4">
+          <div className="bg-card border-b p-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
@@ -313,7 +313,7 @@ export const Playground = () => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -388,7 +388,7 @@ export const Playground = () => {
           </div>
 
           {/* Input */}
-          <div className="border-t p-4">
+          <div className="border-t p-4 flex-shrink-0">
             <div className="flex gap-2">
               <Input
                 value={inputValue}

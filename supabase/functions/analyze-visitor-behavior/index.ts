@@ -157,22 +157,40 @@ function analyzeBehaviorPatterns(events: any[], session: any, agent: any): Behav
   const config = agent.proactive_config || {};
   const triggerConfig = config.triggers || {};
 
-  // Pricing concern detection
+  // Helper function to check URL patterns
+  const matchesUrlPatterns = (url: string, patterns: string[]): boolean => {
+    if (!patterns || patterns.length === 0) return false;
+    
+    const lowerUrl = url.toLowerCase();
+    return patterns.some(pattern => {
+      const lowerPattern = pattern.toLowerCase();
+      if (lowerPattern.startsWith('#')) {
+        // Hash fragment matching
+        return lowerUrl.includes(lowerPattern);
+      } else if (lowerPattern.startsWith('/')) {
+        // Exact path matching
+        return lowerUrl.includes(lowerPattern);
+      } else {
+        // Keyword matching
+        return lowerUrl.includes(lowerPattern);
+      }
+    });
+  };
+
+  // Pricing concern detection with configurable patterns
   if (triggerConfig.pricing_concern?.enabled) {
-    const pricingPages = pageViews.filter(e => 
-      e.page_url.toLowerCase().includes('pricing') || 
-      e.page_url.toLowerCase().includes('plans') ||
-      e.page_url.toLowerCase().includes('cost')
-    );
+    const patterns = triggerConfig.pricing_concern.url_patterns || ['pricing', 'plans', 'cost'];
+    const pricingPages = pageViews.filter(e => matchesUrlPatterns(e.page_url, patterns));
     
     const pricingTime = timeEvents
-      .filter(e => e.page_url.toLowerCase().includes('pricing'))
+      .filter(e => matchesUrlPatterns(e.page_url, patterns))
       .reduce((sum, e) => sum + (e.time_on_page || 0), 0);
 
     const timeThreshold = triggerConfig.pricing_concern.time_threshold || 30;
     if (pricingPages.length > 0 && pricingTime >= timeThreshold) {
       triggers.pricingPagesVisited = pricingPages.length;
       triggers.timeOnPricing = pricingTime;
+      triggers.matchedPatterns = patterns;
       
       return {
         intent: 'pricing_concern',
@@ -183,17 +201,15 @@ function analyzeBehaviorPatterns(events: any[], session: any, agent: any): Behav
     }
   }
 
-  // Feature exploration detection
+  // Feature exploration detection with configurable patterns
   if (triggerConfig.feature_exploration?.enabled) {
-    const featurePages = pageViews.filter(e => 
-      e.page_url.toLowerCase().includes('features') || 
-      e.page_url.toLowerCase().includes('product') ||
-      e.page_url.toLowerCase().includes('demo')
-    );
+    const patterns = triggerConfig.feature_exploration.url_patterns || ['features', 'product', 'demo'];
+    const featurePages = pageViews.filter(e => matchesUrlPatterns(e.page_url, patterns));
 
     const pageThreshold = triggerConfig.feature_exploration.page_threshold || 3;
     if (featurePages.length >= pageThreshold) {
       triggers.featurePagesVisited = featurePages.length;
+      triggers.matchedPatterns = patterns;
       
       return {
         intent: 'feature_exploration',
@@ -219,6 +235,58 @@ function analyzeBehaviorPatterns(events: any[], session: any, agent: any): Behav
         triggers
       };
     }
+  }
+
+  // Custom triggers detection
+  const customTriggers = config.custom_triggers || [];
+  for (const customTrigger of customTriggers) {
+    if (!customTrigger.enabled) continue;
+    
+    const patterns = customTrigger.url_patterns || [];
+    if (patterns.length === 0) continue;
+    
+    const matchingPages = pageViews.filter(e => matchesUrlPatterns(e.page_url, patterns));
+    
+    if (customTrigger.trigger_type === 'time_based') {
+      const timeOnMatchingPages = timeEvents
+        .filter(e => matchesUrlPatterns(e.page_url, patterns))
+        .reduce((sum, e) => sum + (e.time_on_page || 0), 0);
+      
+      const threshold = customTrigger.time_threshold || 30;
+      if (matchingPages.length > 0 && timeOnMatchingPages >= threshold) {
+        triggers.customTriggerMatched = customTrigger.name;
+        triggers.timeOnPages = timeOnMatchingPages;
+        triggers.matchedPatterns = patterns;
+        
+        return {
+          intent: `custom_${customTrigger.id}`,
+          confidence: Math.min(0.8, 0.4 + (timeOnMatchingPages / 60)),
+          suggestedMessage: customTrigger.message,
+          triggers
+        };
+      }
+    } else if (customTrigger.trigger_type === 'scroll_based') {
+      // Check if any scroll events match the patterns and depth
+      const scrollEvents = events.filter(e => 
+        e.event_type === 'scroll' && 
+        matchesUrlPatterns(e.page_url, patterns) &&
+        (e.scroll_depth || 0) >= (customTrigger.scroll_depth || 70)
+      );
+      
+      if (scrollEvents.length > 0) {
+        triggers.customTriggerMatched = customTrigger.name;
+        triggers.maxScrollDepth = Math.max(...scrollEvents.map(e => e.scroll_depth || 0));
+        triggers.matchedPatterns = patterns;
+        
+        return {
+          intent: `custom_${customTrigger.id}`,
+          confidence: 0.75,
+          suggestedMessage: customTrigger.message,
+          triggers
+        };
+      }
+    }
+    // Note: element_interaction and exit_intent would require additional client-side tracking
   }
 
   // Company research detection (fallback behavior)
