@@ -90,7 +90,7 @@ export const Landing = () => {
                 </Button>
               </Link>
               <Link to="/demo">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/30 text-primary hover:bg-primary/10">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto bg-foreground text-background border-foreground hover:bg-foreground/90">
                   Add Chat Agents to My Site
                 </Button>
               </Link>
