@@ -39,7 +39,7 @@ export const pricingPlans: PricingPlan[] = [
       "Priority support"
     ],
     highlighted: true,
-    buttonText: "Start Free Trial",
+    buttonText: "Get Started",
     buttonVariant: "default"
   },
   {
@@ -56,7 +56,7 @@ export const pricingPlans: PricingPlan[] = [
       "Custom integrations",
       "Phone support"
     ],
-    buttonText: "Start Free Trial",
+    buttonText: "Get Started",
     buttonVariant: "outline"
   }
 ];
@@ -87,8 +87,8 @@ export const faqItems = [
     answer: "You can upload PDF, DOCX, TXT, and Markdown files. Each file is processed to extract knowledge for your AI agent."
   },
   {
-    question: "Is there a free trial?",
-    answer: "Yes! All paid plans come with a 14-day free trial. No credit card required to start."
+    question: "How does billing work?",
+    answer: "Billing is monthly and starts immediately when you subscribe. You can upgrade, downgrade, or cancel your subscription at any time."
   },
   {
     question: "How does the chat widget work?",

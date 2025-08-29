@@ -6,16 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bot, Mail, Lock, Eye, EyeOff, User, ArrowLeft } from 'lucide-react';
+import { Bot, Mail, Lock, Eye, EyeOff, User, ArrowLeft, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     agreeToTerms: false
@@ -24,6 +26,7 @@ export const Signup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { createCheckout } = useSubscription();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -87,6 +90,7 @@ export const Signup = () => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: formData.name,
+            phone: formData.phone,
           },
         },
       });
@@ -99,9 +103,26 @@ export const Signup = () => {
           description: "Your account has been created successfully.",
         });
         
-        // If user is immediately confirmed, redirect to dashboard
+        // If user is immediately confirmed, check for selected plan
         if (data.session) {
-          window.location.href = '/dashboard';
+          const selectedPlan = localStorage.getItem('selectedPlan');
+          if (selectedPlan && selectedPlan !== 'Free') {
+            // User signed up for a paid plan, redirect to checkout
+            localStorage.removeItem('selectedPlan');
+            try {
+              const planKey = selectedPlan === "Hobby" ? "hobby" : "standard";
+              await createCheckout(planKey);
+              toast({
+                title: "Redirecting to checkout",
+                description: "Complete your subscription to get started.",
+              });
+            } catch (error) {
+              // If checkout fails, still redirect to dashboard
+              window.location.href = '/dashboard';
+            }
+          } else {
+            window.location.href = '/dashboard';
+          }
         } else {
           // If email confirmation is required, show message and redirect to login
           toast({
@@ -158,6 +179,22 @@ export const Signup = () => {
                   placeholder="Enter your full name"
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={formData.phone}
+                  onChange={(e) => handleChange('phone', e.target.value)}
                   className="pl-10"
                   required
                 />

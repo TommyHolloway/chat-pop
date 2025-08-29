@@ -72,12 +72,13 @@ export const PricingSection = ({ showDescription = true, className = "" }: Prici
     }
 
     if (!user) {
-      // Redirect to login if not authenticated
-      navigate('/auth/login');
+      // Store selected plan and redirect to signup
+      localStorage.setItem('selectedPlan', plan.name);
+      navigate('/auth/signup');
       return;
     }
 
-    // Handle paid plans
+    // Handle paid plans for authenticated users
     try {
       const planKey = plan.name === "Hobby" ? "hobby" : "standard";
       await createCheckout(planKey);
@@ -103,7 +104,7 @@ export const PricingSection = ({ showDescription = true, className = "" }: Prici
               Simple, Transparent Pricing
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that's right for your business. All plans include a 14-day free trial.
+              Choose the plan that's right for your business. Start with our free plan or upgrade for more features.
             </p>
           </div>
         )}
