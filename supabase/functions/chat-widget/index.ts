@@ -318,25 +318,25 @@ serve(async (req) => {
   function createWidget() {
     widget = document.createElement('div');
     widget.style.cssText = \`
-      position: fixed;
-      \${position.includes('right') ? 'right: 24px;' : 'left: 24px;'}
-      \${position.includes('bottom') ? 'bottom: 24px;' : 'top: 24px;'}
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
-      border: none;
-      border-radius: 50%;
-      box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1);
-      cursor: pointer;
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      animation: pulseGlow 3s ease-in-out infinite;
-      backdrop-filter: blur(8px);
-      position: relative;
-      overflow: hidden;
+      position: fixed !important;
+      \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
+      \${position.includes('bottom') ? 'bottom: 20px !important;' : 'top: 20px !important;'}
+      width: 60px !important;
+      height: 60px !important;
+      background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%) !important;
+      border: none !important;
+      border-radius: 50% !important;
+      box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+      cursor: pointer !important;
+      z-index: 999999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      animation: pulseGlow 3s ease-in-out infinite !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
     \`;
 
     // Add hover and animation styles
@@ -406,24 +406,24 @@ serve(async (req) => {
   function createOverlay() {
     overlay = document.createElement('div');
     overlay.style.cssText = \`
-      position: fixed;
-      \${position.includes('right') ? 'right: 24px;' : 'left: 24px;'}
-      \${position.includes('bottom') ? 'bottom: 100px;' : 'top: 100px;'}
-      width: 380px;
-      height: 520px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
+      position: fixed !important;
+      \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
+      \${position.includes('bottom') ? 'bottom: 90px !important;' : 'top: 90px !important;'}
+      width: 360px !important;
+      height: 500px !important;
+      background: rgba(255, 255, 255, 0.98) !important;
+      backdrop-filter: blur(20px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 16px !important;
       box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.1),
+        0 20px 60px rgba(0, 0, 0, 0.15),
         0 8px 32px rgba(132, 204, 22, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-      z-index: 9999;
-      display: none;
-      overflow: hidden;
-      animation: slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      transform-origin: \${position.includes('right') ? 'bottom right' : 'bottom left'};
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+      z-index: 999998 !important;
+      display: none !important;
+      overflow: hidden !important;
+      animation: slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      transform-origin: \${position.includes('right') ? 'bottom right' : 'bottom left'} !important;
     \`;
 
     // Add overlay animation styles
