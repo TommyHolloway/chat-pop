@@ -23,7 +23,7 @@ import Security from "./pages/Security";
 import { Pricing } from "./pages/Pricing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
-import { WorkspaceOverview } from "./pages/WorkspaceOverview";
+import { Dashboard } from "./pages/Dashboard";
 import { WorkspaceDashboard } from "./pages/workspace/WorkspaceDashboard";
 import { Agents } from "./pages/Agents";
 import { Billing } from "./pages/Billing";
@@ -113,9 +113,7 @@ const App = () => (
               {/* Protected Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <WorkspaceOverview />
-                  </AuthenticatedLayout>
+                  <Dashboard />
                 </ProtectedRoute>
               } />
               
