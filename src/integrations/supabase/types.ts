@@ -253,18 +253,21 @@ export type Database = {
           created_at: string
           id: string
           session_id: string
+          visitor_session_id: string | null
         }
         Insert: {
           agent_id: string
           created_at?: string
           id?: string
           session_id: string
+          visitor_session_id?: string | null
         }
         Update: {
           agent_id?: string
           created_at?: string
           id?: string
           session_id?: string
+          visitor_session_id?: string | null
         }
         Relationships: [
           {
@@ -273,6 +276,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "agents"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_visitor_session_id_fkey"
+            columns: ["visitor_session_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_sessions"
+            referencedColumns: ["session_id"]
           },
         ]
       }
@@ -385,6 +395,63 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "conversations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      proactive_suggestions: {
+        Row: {
+          agent_id: string | null
+          behavioral_triggers: Json | null
+          confidence_score: number | null
+          conversation_started: boolean | null
+          created_at: string
+          id: string
+          session_id: string
+          suggestion_message: string
+          suggestion_type: string
+          was_clicked: boolean | null
+          was_shown: boolean | null
+        }
+        Insert: {
+          agent_id?: string | null
+          behavioral_triggers?: Json | null
+          confidence_score?: number | null
+          conversation_started?: boolean | null
+          created_at?: string
+          id?: string
+          session_id: string
+          suggestion_message: string
+          suggestion_type: string
+          was_clicked?: boolean | null
+          was_shown?: boolean | null
+        }
+        Update: {
+          agent_id?: string | null
+          behavioral_triggers?: Json | null
+          confidence_score?: number | null
+          conversation_started?: boolean | null
+          created_at?: string
+          id?: string
+          session_id?: string
+          suggestion_message?: string
+          suggestion_type?: string
+          was_clicked?: boolean | null
+          was_shown?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proactive_suggestions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proactive_suggestions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_sessions"
+            referencedColumns: ["session_id"]
           },
         ]
       }
@@ -607,6 +674,106 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      visitor_behavior_events: {
+        Row: {
+          created_at: string
+          element_selector: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          page_url: string
+          scroll_depth: number | null
+          session_id: string
+          time_on_page: number | null
+        }
+        Insert: {
+          created_at?: string
+          element_selector?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          page_url: string
+          scroll_depth?: number | null
+          session_id: string
+          time_on_page?: number | null
+        }
+        Update: {
+          created_at?: string
+          element_selector?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          page_url?: string
+          scroll_depth?: number | null
+          session_id?: string
+          time_on_page?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_behavior_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_sessions"
+            referencedColumns: ["session_id"]
+          },
+        ]
+      }
+      visitor_sessions: {
+        Row: {
+          agent_id: string | null
+          country_code: string | null
+          created_at: string
+          current_page_url: string | null
+          first_page_url: string | null
+          id: string
+          ip_address: unknown | null
+          referrer: string | null
+          session_id: string
+          total_page_views: number | null
+          total_time_spent: number | null
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          country_code?: string | null
+          created_at?: string
+          current_page_url?: string | null
+          first_page_url?: string | null
+          id?: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          session_id: string
+          total_page_views?: number | null
+          total_time_spent?: number | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          country_code?: string | null
+          created_at?: string
+          current_page_url?: string | null
+          first_page_url?: string | null
+          id?: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          session_id?: string
+          total_page_views?: number | null
+          total_time_spent?: number | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
           },
         ]
       }

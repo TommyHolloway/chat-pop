@@ -16,6 +16,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const agentId = url.searchParams.get('agentId');
+    const sessionId = url.searchParams.get('sessionId'); // Get visitor session ID
 
     if (!agentId) {
       return new Response('Agent ID is required', { status: 400, headers: corsHeaders });
@@ -296,8 +297,18 @@ serve(async (req) => {
 
         // Initialize conversation
         async function initConversation() {
-            const sessionId = crypto.randomUUID();
+            const newSessionId = crypto.randomUUID();
             try {
+                const conversationData = {
+                    agent_id: agentId,
+                    session_id: newSessionId
+                };
+
+                // Link to visitor session if available
+                if ('${sessionId}') {
+                    conversationData.visitor_session_id = '${sessionId}';
+                }
+
                 const response = await fetch('${supabaseUrl}/rest/v1/conversations', {
                     method: 'POST',
                     headers: {
@@ -305,10 +316,7 @@ serve(async (req) => {
                         'apikey': '${supabaseKey}',
                         'Prefer': 'return=representation'
                     },
-                    body: JSON.stringify({
-                        agent_id: agentId,
-                        session_id: sessionId
-                    })
+                    body: JSON.stringify(conversationData)
                 });
                 
                 if (response.ok) {
@@ -331,16 +339,23 @@ serve(async (req) => {
             setLoading(true);
 
             try {
+                const requestBody = {
+                    agentId: agentId,
+                    message: message,
+                    conversationId: conversationId
+                };
+
+                // Include visitor session context if available
+                if ('${sessionId}') {
+                    requestBody.visitorSessionId = '${sessionId}';
+                }
+
                 const response = await fetch('${supabaseUrl}/functions/v1/chat-completion', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        agentId: agentId,
-                        message: message,
-                        conversationId: conversationId
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (response.ok) {

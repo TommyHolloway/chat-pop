@@ -42,6 +42,197 @@ serve(async (req) => {
   let iframe = null;
   let iframeReady = false;
 
+  // Visitor tracking
+  const sessionId = 'vis_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  let startTime = Date.now();
+  let currentPageStartTime = Date.now();
+  let totalPageViews = 0;
+  let hasTrackedCurrentPage = false;
+  let suggestion = null;
+  let suggestionShown = false;
+
+  // Visitor tracking functions
+  function trackBehavior(eventType, data = {}) {
+    const payload = {
+      sessionId: sessionId,
+      agentId: agentId,
+      eventType: eventType,
+      pageUrl: window.location.href,
+      eventData: data,
+      sessionData: {
+        userAgent: navigator.userAgent,
+        referrer: document.referrer,
+        firstPageUrl: window.location.href,
+        totalPageViews: totalPageViews,
+        totalTimeSpent: Math.floor((Date.now() - startTime) / 1000)
+      }
+    };
+
+    fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/track-visitor-behavior', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(error => console.error('Tracking error:', error));
+  }
+
+  function trackPageView() {
+    if (!hasTrackedCurrentPage) {
+      totalPageViews++;
+      trackBehavior('page_view');
+      hasTrackedCurrentPage = true;
+      currentPageStartTime = Date.now();
+    }
+  }
+
+  function trackTimeOnPage() {
+    if (hasTrackedCurrentPage) {
+      const timeSpent = Math.floor((Date.now() - currentPageStartTime) / 1000);
+      if (timeSpent > 10) { // Only track if spent more than 10 seconds
+        trackBehavior('time_spent', { timeOnPage: timeSpent });
+      }
+    }
+  }
+
+  function trackScroll() {
+    const scrollDepth = Math.floor((window.pageYOffset / (document.body.scrollHeight - window.innerHeight)) * 100);
+    if (scrollDepth > 25 && scrollDepth % 25 === 0) { // Track at 25%, 50%, 75%, 100%
+      trackBehavior('scroll', { scrollDepth: scrollDepth });
+    }
+  }
+
+  async function analyzeAndSuggest() {
+    try {
+      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sessionId, agentId: agentId })
+      });
+
+      if (response.ok) {
+        const { analysis } = await response.json();
+        if (analysis && analysis.confidence > 0.6 && !suggestionShown) {
+          showProactiveSuggestion(analysis);
+        }
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+    }
+  }
+
+  function showProactiveSuggestion(analysis) {
+    suggestionShown = true;
+    suggestion = analysis;
+
+    const suggestionBubble = document.createElement('div');
+    suggestionBubble.style.cssText = \`
+      position: fixed;
+      \${position.includes('right') ? 'right: 100px;' : 'left: 100px;'}
+      \${position.includes('bottom') ? 'bottom: 30px;' : 'top: 100px;'}
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 280px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      z-index: 9998;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      animation: slideIn 0.3s ease-out;
+    \`;
+
+    suggestionBubble.innerHTML = \`
+      <div style="margin-bottom: 12px; color: #374151;">
+        \${analysis.suggestedMessage}
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          padding: 6px 12px; 
+          background: #f3f4f6; 
+          border: none; 
+          border-radius: 6px; 
+          font-size: 12px; 
+          cursor: pointer;
+          color: #6b7280;
+        ">Dismiss</button>
+        <button onclick="acceptSuggestion()" style="
+          padding: 6px 12px; 
+          background: #3b82f6; 
+          color: white; 
+          border: none; 
+          border-radius: 6px; 
+          font-size: 12px; 
+          cursor: pointer;
+        ">Chat Now</button>
+      </div>
+    \`;
+
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = \`
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    \`;
+    document.head.appendChild(style);
+
+    document.body.appendChild(suggestionBubble);
+
+    // Auto-remove after 15 seconds
+    setTimeout(() => {
+      if (suggestionBubble.parentNode) {
+        suggestionBubble.remove();
+      }
+    }, 15000);
+  }
+
+  window.acceptSuggestion = function() {
+    // Remove suggestion bubble
+    const bubbles = document.querySelectorAll('[style*="z-index: 9998"]');
+    bubbles.forEach(bubble => bubble.remove());
+    
+    // Open chat
+    if (!isOpen) toggleChat();
+  };
+
+  // Set up tracking listeners
+  function initTracking() {
+    // Track initial page view
+    trackPageView();
+
+    // Track page visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        trackTimeOnPage();
+      }
+    });
+
+    // Track scroll events (throttled)
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(trackScroll, 200);
+    });
+
+    // Track clicks on important elements
+    document.addEventListener('click', (e) => {
+      const element = e.target;
+      if (element.tagName === 'A' || element.tagName === 'BUTTON' || element.closest('a') || element.closest('button')) {
+        let selector = element.tagName.toLowerCase();
+        if (element.id) selector += '#' + element.id;
+        if (element.className) selector += '.' + element.className.split(' ').join('.');
+        
+        trackBehavior('click', { elementSelector: selector });
+      }
+    });
+
+    // Analyze behavior periodically
+    setTimeout(() => analyzeAndSuggest(), 15000); // After 15 seconds
+    setTimeout(() => analyzeAndSuggest(), 45000); // After 45 seconds
+    setTimeout(() => analyzeAndSuggest(), 90000); // After 1.5 minutes
+  }
+
   // Listen for readiness from iframe
   window.addEventListener('message', (event) => {
     if (event && event.data === 'ECCOCHAT_READY') {
@@ -112,7 +303,8 @@ serve(async (req) => {
 
     // Fetch HTML content and use srcdoc to force proper rendering
     console.log('Fetching chat HTML content...');
-    fetch(chatUrl)
+    const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
+    fetch(chatUrlWithSession)
       .then(response => {
         console.log('Chat fetch response status:', response.status);
         console.log('Chat fetch content-type:', response.headers.get('content-type'));
@@ -125,7 +317,7 @@ serve(async (req) => {
       })
       .catch(error => {
         console.error('Failed to fetch chat HTML, falling back to src:', error);
-        iframe.src = chatUrl;
+        iframe.src = chatUrlWithSession;
       });
 
     iframe.addEventListener('load', function() {
@@ -176,6 +368,7 @@ serve(async (req) => {
   function init() {
     createWidget();
     createOverlay();
+    initTracking(); // Initialize visitor tracking
   }
 
   // Wait for DOM ready

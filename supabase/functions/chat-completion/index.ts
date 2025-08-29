@@ -44,9 +44,23 @@ function mapCreativityToTemperature(creativityLevel: number | null): number {
   return Math.max(0.1, Math.min(0.9, creativityLevel * 0.08 + 0.02));
 }
 
-// Generate system prompt based on creativity level
-function generateSystemPrompt(agent: any, knowledgeContext: string): string {
+// Generate system prompt based on creativity level and visitor behavior
+function generateSystemPrompt(agent: any, knowledgeContext: string, visitorContext?: any): string {
   const creativityLevel = agent.creativity_level || 5;
+  
+  let visitorContextPrompt = '';
+  if (visitorContext) {
+    visitorContextPrompt = `VISITOR BEHAVIOR CONTEXT:
+- Pages visited: ${visitorContext.pageHistory?.join(', ') || 'Unknown'}
+- Time spent on site: ${visitorContext.totalTimeSpent || 0} seconds
+- Total page views: ${visitorContext.totalPageViews || 0}
+- Current page: ${visitorContext.currentPage || 'Unknown'}
+- Behavior signals: ${visitorContext.behaviorSignals?.join(', ') || 'None detected'}
+
+Use this context to provide highly relevant, timely assistance. The visitor has shown specific interests based on their browsing behavior.
+
+`;
+  }
   
   let knowledgeInstruction = '';
   if (knowledgeContext) {
@@ -77,7 +91,7 @@ ${agent.description}
 
 Instructions: ${agent.instructions}
 
-${knowledgeInstruction}
+${visitorContextPrompt}${knowledgeInstruction}
 
 Be helpful, accurate, and follow the instructions provided. Keep responses conversational and engaging.`;
 }
@@ -88,7 +102,7 @@ serve(async (req) => {
   }
 
   try {
-    const { agentId, message, conversationId, stream = false } = await req.json();
+    const { agentId, message, conversationId, visitorSessionId, stream = false } = await req.json();
     
     if (!agentId || !message) {
       throw new Error('Agent ID and message are required');
@@ -243,6 +257,60 @@ serve(async (req) => {
       }
     }
 
+    // Get visitor behavior context if visitorSessionId provided
+    let visitorContext = null;
+    if (visitorSessionId) {
+      console.log('Fetching visitor behavior context for session:', visitorSessionId);
+      
+      // Get visitor session data
+      const { data: visitorSession } = await supabase
+        .from('visitor_sessions')
+        .select('*')
+        .eq('session_id', visitorSessionId)
+        .single();
+
+      // Get recent behavior events
+      const { data: behaviorEvents } = await supabase
+        .from('visitor_behavior_events')
+        .select('*')
+        .eq('session_id', visitorSessionId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (visitorSession) {
+        // Build visitor context for AI
+        const pageViews = behaviorEvents?.filter(e => e.event_type === 'page_view') || [];
+        const timeEvents = behaviorEvents?.filter(e => e.event_type === 'time_spent') || [];
+        
+        // Extract behavior signals
+        const behaviorSignals = [];
+        const pricingPages = pageViews.filter(e => 
+          e.page_url.toLowerCase().includes('pricing') || 
+          e.page_url.toLowerCase().includes('plans')
+        );
+        if (pricingPages.length > 0) behaviorSignals.push('pricing_interest');
+        
+        const featurePages = pageViews.filter(e => 
+          e.page_url.toLowerCase().includes('features') || 
+          e.page_url.toLowerCase().includes('product')
+        );
+        if (featurePages.length >= 2) behaviorSignals.push('feature_exploration');
+        
+        if (visitorSession.total_time_spent > 120) behaviorSignals.push('high_engagement');
+        if (visitorSession.total_page_views > 5) behaviorSignals.push('thorough_research');
+
+        visitorContext = {
+          pageHistory: pageViews.slice(0, 5).map(e => e.page_url),
+          totalTimeSpent: visitorSession.total_time_spent,
+          totalPageViews: visitorSession.total_page_views,
+          currentPage: visitorSession.current_page_url,
+          behaviorSignals: behaviorSignals
+        };
+
+        console.log('Built visitor context:', visitorContext);
+      }
+    }
+
     // Define OpenAI tools for action detection
     const tools = [];
     
@@ -305,8 +373,8 @@ serve(async (req) => {
       });
     }
 
-    // Build system prompt based on creativity level
-    const systemPrompt = generateSystemPrompt(agent, knowledgeContext);
+    // Build system prompt based on creativity level and visitor context
+    const systemPrompt = generateSystemPrompt(agent, knowledgeContext, visitorContext);
     
     // Map creativity level to temperature
     const temperature = mapCreativityToTemperature(agent.creativity_level);
