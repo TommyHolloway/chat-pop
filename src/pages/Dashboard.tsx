@@ -6,6 +6,8 @@ import { WorkspaceOverview } from './workspace/sections/WorkspaceOverview';
 export const Dashboard = () => {
   const { currentWorkspace, loading } = useWorkspaces();
 
+  console.log('Dashboard: loading =', loading, 'currentWorkspace =', currentWorkspace);
+
   // Show loading state while fetching workspaces
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;

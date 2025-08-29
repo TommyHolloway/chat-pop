@@ -19,7 +19,12 @@ export const useWorkspaces = () => {
   const { user } = useAuth();
 
   const fetchWorkspaces = async () => {
-    if (!user) return;
+    console.log('fetchWorkspaces called, user =', user);
+    if (!user) {
+      console.log('No user, setting loading to false');
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -164,8 +169,11 @@ export const useWorkspaces = () => {
   };
 
   useEffect(() => {
+    console.log('useWorkspaces useEffect, user =', user);
     if (user) {
       fetchWorkspaces();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
