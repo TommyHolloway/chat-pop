@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { 
   Home, 
   Bot, 
@@ -12,7 +12,19 @@ import {
   Building2,
   ChevronDown,
   UserPlus,
-  BarChart3
+  BarChart3,
+  ArrowLeft,
+  Play,
+  MessageSquare,
+  FileText,
+  Globe,
+  HelpCircle,
+  Calendar,
+  Share2,
+  Code,
+  Zap,
+  Palette,
+  Target
 } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
 import {
@@ -51,6 +63,7 @@ import { useWorkspaces } from '@/hooks/useWorkspaces';
 
 export const WorkspaceSidebar = () => {
   const location = useLocation();
+  const params = useParams();
   const { user } = useAuth();
   const { state } = useSidebar();
   const { isAdmin } = useUserRole();
@@ -65,9 +78,18 @@ export const WorkspaceSidebar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isAgentRoute = location.pathname.includes('/agents');
+  const currentAgentId = params.id;
+  const currentAgent = agents.find(a => a.id === currentAgentId);
 
   // Filter agents for current workspace
   const workspaceAgents = agents.filter(a => a.workspace_id === currentWorkspace?.id);
+
+  // Check if we're in an agent's detailed view
+  const isInAgentDetail = isAgentRoute && currentAgentId;
+
+  const isInSection = (section: string) => {
+    return location.pathname.includes(`/agents/${currentAgentId}/${section}`);
+  };
 
   return (
     <Sidebar className="border-r">
@@ -114,105 +136,336 @@ export const WorkspaceSidebar = () => {
       </SidebarHeader>
       
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/dashboard')}>
-                  <Link to="/dashboard">
-                    <Home className="h-4 w-4" />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <Collapsible defaultOpen={isAgentRoute}>
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      <Bot className="h-4 w-4" />
-                      <span>Agents</span>
-                      <ChevronRight className="ml-auto h-4 w-4" />
+        {isInAgentDetail ? (
+          // Agent-specific navigation
+          <>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link to="/dashboard">
+                        <ArrowLeft className="h-4 w-4" />
+                        <span>Back to Dashboard</span>
+                      </Link>
                     </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {workspaceAgents.slice(0, 5).map((agent) => (
-                        <SidebarMenuSubItem key={agent.id}>
-                          <SidebarMenuSubButton asChild isActive={location.pathname.includes(`/agents/${agent.id}`)}>
-                            <Link to={`/workspace/${currentWorkspace?.id}/agents/${agent.id}/playground`}>
-                              <Avatar className="h-4 w-4">
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                  {agent.name.slice(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="truncate">{agent.name}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <Link to="/dashboard">
-                            <Bot className="h-4 w-4" />
-                            <span>View All</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <Link to="/dashboard">
-                            <Plus className="h-4 w-4" />
-                            <span>Create New</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/leads')}>
-                  <Link to="/leads">
-                    <UserPlus className="h-4 w-4" />
-                    <span>Leads</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/analytics')}>
-                  <Link to="/analytics">
-                    <BarChart3 className="h-4 w-4" />
-                    <span>Analytics</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/billing')}>
-                  <Link to="/billing">
-                    <CreditCard className="h-4 w-4" />
-                    <span>Billing</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              {isAdmin && (
+            <SidebarGroup>
+              <SidebarGroupLabel>{currentAgent?.name}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={isInSection('playground')}>
+                      <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/playground`}>
+                        <Play className="h-4 w-4" />
+                        <span>Playground</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <Collapsible defaultOpen={isInSection('activity')}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <MessageSquare className="h-4 w-4" />
+                          <span>Activity</span>
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/activity/conversations`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/activity/conversations`}>
+                                <span>Conversations</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/activity/leads`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/activity/leads`}>
+                                <span>Leads</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={isInSection('analytics')}>
+                      <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/analytics`}>
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Analytics</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <Collapsible defaultOpen={isInSection('sources')}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <FileText className="h-4 w-4" />
+                          <span>Sources</span>
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/files`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/files`}>
+                                <span>Files</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/text`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/text`}>
+                                <span>Text</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/website`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/website`}>
+                                <span>Website</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/qa`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/sources/qa`}>
+                                <span>Q&A</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+
+                  <Collapsible defaultOpen={isInSection('actions')}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <Zap className="h-4 w-4" />
+                          <span>Actions</span>
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/calendar`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/calendar`}>
+                                <span>Calendar Booking</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/buttons`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/buttons`}>
+                                <span>Custom Buttons</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+
+                  <Collapsible defaultOpen={isInSection('deploy')}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <Share2 className="h-4 w-4" />
+                          <span>Deploy</span>
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/embed`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/embed`}>
+                                <span>Embed</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/share`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/share`}>
+                                <span>Share</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/integrations`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/integrations`}>
+                                <span>Integrations</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+
+                  <Collapsible defaultOpen={isInSection('settings')}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <Settings className="h-4 w-4" />
+                          <span>Settings</span>
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/general`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/general`}>
+                                <span>General</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/ai`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/ai`}>
+                                <span>AI Configuration</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/chat`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/chat`}>
+                                <span>Chat Interface</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/leads`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/leads`}>
+                                <span>Lead Capture</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : (
+          // Regular workspace navigation
+          <SidebarGroup>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/admin')}>
-                    <Link to="/admin">
-                      <Shield className="h-4 w-4" />
-                      <span>Admin Portal</span>
+                  <SidebarMenuButton asChild isActive={isActive('/dashboard')}>
+                    <Link to="/dashboard">
+                      <Home className="h-4 w-4" />
+                      <span>Dashboard</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                
+                <Collapsible defaultOpen={isAgentRoute}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton>
+                        <Bot className="h-4 w-4" />
+                        <span>Agents</span>
+                        <ChevronRight className="ml-auto h-4 w-4" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {workspaceAgents.slice(0, 5).map((agent) => (
+                          <SidebarMenuSubItem key={agent.id}>
+                            <SidebarMenuSubButton asChild isActive={location.pathname.includes(`/agents/${agent.id}`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${agent.id}/playground`}>
+                                <Avatar className="h-4 w-4">
+                                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                    {agent.name.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="truncate">{agent.name}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild>
+                            <Link to="/dashboard">
+                              <Bot className="h-4 w-4" />
+                              <span>View All</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild>
+                            <Link to="/dashboard">
+                              <Plus className="h-4 w-4" />
+                              <span>Create New</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive('/leads')}>
+                    <Link to="/leads">
+                      <UserPlus className="h-4 w-4" />
+                      <span>Leads</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive('/analytics')}>
+                    <Link to="/analytics">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Analytics</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive('/billing')}>
+                    <Link to="/billing">
+                      <CreditCard className="h-4 w-4" />
+                      <span>Billing</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                
+                {isAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={isActive('/admin')}>
+                      <Link to="/admin">
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Portal</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4">

@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, Navigate, Link, Routes, Route } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useParams, Navigate, Routes, Route } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
-import { AgentSidebar } from '@/components/agent/AgentSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { AgentPlayground } from './sections/AgentPlayground';
 import { AgentAnalytics } from './sections/AgentAnalytics';
 import { AgentConversations } from './sections/AgentConversations';
@@ -60,68 +57,42 @@ export const AgentLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="border-b bg-background">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold">{agent.name}</h1>
-              <p className="text-muted-foreground">
-                {agent.description || 'AI Agent Management'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex">
-        <SidebarProvider>
-          <AgentSidebar agent={agent} loading={loading} />
-          <main className="flex-1 p-8">
-            <div className="max-w-6xl mx-auto">
-              <Routes>
-                {/* Main sections */}
-                <Route path="playground" element={<AgentPlayground agent={agent} />} />
-                <Route path="analytics" element={<AgentAnalytics agent={agent} />} />
-                <Route path="visitor-analytics" element={<AgentVisitorAnalytics agent={agent} />} />
-                
-                {/* Activity */}
-                <Route path="activity/conversations" element={<AgentConversations agent={agent} />} />
-                <Route path="activity/leads" element={<AgentLeads agent={agent} />} />
-                
-                {/* Sources */}
-                <Route path="sources/files" element={<AgentSourcesFiles agent={agent} />} />
-                <Route path="sources/text" element={<AgentSourcesText agent={agent} />} />
-                <Route path="sources/website" element={<AgentSourcesWebsite agent={agent} />} />
-                <Route path="sources/qa" element={<AgentSourcesQnA agent={agent} />} />
-                
-                {/* Actions */}
-                <Route path="actions/calendar" element={<AgentActionsCalendar agent={agent} />} />
-                <Route path="actions/buttons" element={<AgentActionsCustom agent={agent} />} />
-                
-                {/* Deploy */}
-                <Route path="deploy/embed" element={<AgentDeployEmbed agent={agent} />} />
-                <Route path="deploy/share" element={<AgentDeployShare agent={agent} />} />
-                <Route path="deploy/integrations" element={<AgentDeployIntegrations agent={agent} />} />
-                
-                {/* Settings */}
-                <Route path="settings/general" element={<AgentSettingsGeneral agent={agent} />} />
-                <Route path="settings/ai" element={<AgentSettingsAI agent={agent} />} />
-                <Route path="settings/chat" element={<AgentSettingsChat agent={agent} />} />
-                <Route path="settings/leads" element={<AgentSettingsLeads agent={agent} />} />
-                
-                {/* Default */}
-                <Route index element={<AgentPlayground agent={agent} />} />
-              </Routes>
-            </div>
-          </main>
-        </SidebarProvider>
+    <div className="flex-1 p-8">
+      <div className="max-w-6xl mx-auto">
+        <Routes>
+          {/* Main sections */}
+          <Route path="playground" element={<AgentPlayground agent={agent} />} />
+          <Route path="analytics" element={<AgentAnalytics agent={agent} />} />
+          <Route path="visitor-analytics" element={<AgentVisitorAnalytics agent={agent} />} />
+          
+          {/* Activity */}
+          <Route path="activity/conversations" element={<AgentConversations agent={agent} />} />
+          <Route path="activity/leads" element={<AgentLeads agent={agent} />} />
+          
+          {/* Sources */}
+          <Route path="sources/files" element={<AgentSourcesFiles agent={agent} />} />
+          <Route path="sources/text" element={<AgentSourcesText agent={agent} />} />
+          <Route path="sources/website" element={<AgentSourcesWebsite agent={agent} />} />
+          <Route path="sources/qa" element={<AgentSourcesQnA agent={agent} />} />
+          
+          {/* Actions */}
+          <Route path="actions/calendar" element={<AgentActionsCalendar agent={agent} />} />
+          <Route path="actions/buttons" element={<AgentActionsCustom agent={agent} />} />
+          
+          {/* Deploy */}
+          <Route path="deploy/embed" element={<AgentDeployEmbed agent={agent} />} />
+          <Route path="deploy/share" element={<AgentDeployShare agent={agent} />} />
+          <Route path="deploy/integrations" element={<AgentDeployIntegrations agent={agent} />} />
+          
+          {/* Settings */}
+          <Route path="settings/general" element={<AgentSettingsGeneral agent={agent} />} />
+          <Route path="settings/ai" element={<AgentSettingsAI agent={agent} />} />
+          <Route path="settings/chat" element={<AgentSettingsChat agent={agent} />} />
+          <Route path="settings/leads" element={<AgentSettingsLeads agent={agent} />} />
+          
+          {/* Default */}
+          <Route index element={<AgentPlayground agent={agent} />} />
+        </Routes>
       </div>
     </div>
   );
