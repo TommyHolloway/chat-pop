@@ -3,6 +3,12 @@ project_id = "etwjtxqjcwyxdamlcorf"
 [functions.public-chat]
 verify_jwt = false
 
+[functions.track-visitor-behavior]
+verify_jwt = false
+
+[functions.analyze-visitor-behavior]
+verify_jwt = false
+
 [functions.chat-widget]
 verify_jwt = false
 

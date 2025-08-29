@@ -17,6 +17,7 @@ serve(async (req) => {
     const url = new URL(req.url);
     const agentId = url.searchParams.get('agentId');
     const sessionId = url.searchParams.get('sessionId'); // Get visitor session ID
+    const proactiveMessage = url.searchParams.get('proactiveMessage'); // Get proactive message
 
     if (!agentId) {
       return new Response('Agent ID is required', { status: 400, headers: corsHeaders });
@@ -668,7 +669,17 @@ serve(async (req) => {
         initConversation();
         
         // Show initial message if available
-        ${agent?.initial_message ? `
+        ${proactiveMessage ? `
+        // Show proactive message if provided (takes priority over initial message)
+        setTimeout(() => {
+          // Remove empty state first
+          const emptyState = document.querySelector('.empty-state');
+          if (emptyState) emptyState.remove();
+          
+          // Add proactive message
+          addMessage('assistant', \`${proactiveMessage.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`);
+        }, 100);
+        ` : agent?.initial_message ? `
         setTimeout(() => {
           // Remove empty state first
           const emptyState = document.querySelector('.empty-state');

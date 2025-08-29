@@ -265,6 +265,26 @@ serve(async (req) => {
     const bubbles = document.querySelectorAll('[style*="z-index: 9998"]');
     bubbles.forEach(bubble => bubble.remove());
     
+    // Store the proactive message for the chat
+    if (suggestion && suggestion.suggestedMessage) {
+      // Update the iframe src to include the proactive message
+      if (iframe) {
+        const chatUrlWithMessage = chatUrl + '&sessionId=' + encodeURIComponent(sessionId) + 
+          '&proactiveMessage=' + encodeURIComponent(suggestion.suggestedMessage);
+        
+        // Reload the iframe with the proactive message
+        fetch(chatUrlWithMessage)
+          .then(response => response.text())
+          .then(html => {
+            iframe.srcdoc = html;
+          })
+          .catch(error => {
+            console.error('Failed to reload chat with proactive message:', error);
+            iframe.src = chatUrlWithMessage;
+          });
+      }
+    }
+    
     // Open chat
     if (!isOpen) toggleChat();
   };
