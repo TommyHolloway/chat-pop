@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
-import { WorkspaceOverview } from './WorkspaceOverview';
+import { WorkspaceOverview } from './workspace/sections/WorkspaceOverview';
 
 export const Dashboard = () => {
   const { currentWorkspace, loading } = useWorkspaces();
