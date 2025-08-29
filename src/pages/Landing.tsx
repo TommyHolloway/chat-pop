@@ -15,7 +15,15 @@ import {
   CheckCircle,
   ArrowRight,
   Sparkles,
-  Play
+  Play,
+  Brain,
+  Target,
+  TrendingUp,
+  Eye,
+  Clock,
+  Users,
+  DollarSign,
+  ChevronDown
 } from 'lucide-react';
 import { PricingSection } from '@/components/PricingSection';
 
@@ -25,7 +33,7 @@ export const Landing = () => {
   useEffect(() => {
     // Add chat widget script
     const script = document.createElement('script');
-    script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=light&color=%233b82f6';
+    script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=dark&color=%2384cc16';
     script.async = true;
     
     const handleScriptLoad = () => {
@@ -52,133 +60,120 @@ export const Landing = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="py-20 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero opacity-5"></div>
+      <section className="relative py-20 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-intelligence opacity-10"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_50%)]"></div>
+        
         <div className="container mx-auto px-4 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Text Content */}
-            <div className="space-y-8">
-              <Badge variant="secondary" className="mb-4 animate-fade-in">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Free to start • No credit card required
-              </Badge>
-              
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight animate-slide-up">
-                Automate Real Estate Inquiries with AI Chatbots—{' '}
-                <span className="text-gradient-hero">Capture Leads 24/7 and Close More Deals</span>
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-muted-foreground animate-fade-in">
-                Tired of missing off-hour queries or wasting time on tire-kickers? EccoChat lets you build intelligent chat agents in minutes—upload listings, qualify buyers, and schedule viewings with OpenAI power.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 animate-scale-in">
-                <Link to="/auth/signup">
-                  <Button size="lg" className="text-lg px-8 py-4 h-auto">
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/demo">
-                  <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto">
-                    Learn More
-                  </Button>
-                </Link>
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            <Badge variant="secondary" className="mb-6 text-base px-4 py-2 bg-primary/10 text-primary border-primary/20">
+              <Brain className="h-4 w-4 mr-2" />
+              Next-Generation Visitor Intelligence
+            </Badge>
+            
+            <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+              Turn Website Visitors Into{' '}
+              <span className="text-gradient-intelligence">Customers Before</span>{' '}
+              They Even Ask
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+              Our AI agents don't just respond—they predict visitor intent through advanced behavioral analysis and engage proactively at the perfect moment to maximize conversions.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+              <Link to="/auth/signup">
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow">
+                  Book a Demo
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/demo">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/30 text-primary hover:bg-primary/10">
+                  Install on Website
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">+316%</div>
+                  <div className="text-sm text-muted-foreground">Growth in conversion rates</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">15%+</div>
+                  <div className="text-sm text-muted-foreground">More visitors converted</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">24/7</div>
+                  <div className="text-sm text-muted-foreground">Proactive engagement</div>
+                </div>
               </div>
-              
-              <p className="text-sm text-muted-foreground">
-                ✨ 1,000+ businesses trust EccoChat • No setup fees • Cancel anytime
-              </p>
             </div>
+          </div>
+        </div>
 
-            {/* Right Column - Video Demo */}
-            <div className="lg:pl-8">
-              {videoLoading ? (
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : activeVideo ? (
-                <div className="relative">
-                  <video
-                    controls
-                    className="w-full rounded-lg shadow-2xl"
-                    preload="metadata"
-                    poster={activeVideo.thumbnail_url || undefined}
-                  >
-                    <source src={activeVideo.file_url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                  {activeVideo.title && (
-                    <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
-                      {activeVideo.title}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20">
-                  <div className="text-center space-y-3">
-                    <Play className="h-16 w-16 mx-auto text-muted-foreground" />
-                    <p className="text-muted-foreground">Demo video coming soon</p>
+        {/* Video Demo Section */}
+        <div className="container mx-auto px-4 pt-16">
+          <div className="max-w-4xl mx-auto">
+            {videoLoading ? (
+              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center shadow-large">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : activeVideo ? (
+              <div className="relative">
+                <video
+                  controls
+                  className="w-full rounded-lg shadow-large border border-primary/20"
+                  preload="metadata"
+                  poster={activeVideo.thumbnail_url || undefined}
+                >
+                  <source src={activeVideo.file_url} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                {activeVideo.title && (
+                  <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
+                    {activeVideo.title}
                   </div>
+                )}
+              </div>
+            ) : (
+              <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg flex items-center justify-center border-2 border-dashed border-primary/20 shadow-large">
+                <div className="text-center space-y-3">
+                  <Play className="h-16 w-16 mx-auto text-primary" />
+                  <p className="text-muted-foreground">See proactive intelligence in action</p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 bg-muted/30">
+      {/* Proactive Intelligence Features */}
+      <section className="py-20 bg-muted/10">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Why Real Estate Agents Choose EccoChat for{' '}
-              <span className="text-gradient-primary">Smarter Client Engagement</span>
+            <h2 className="text-3xl md:text-5xl font-bold">
+              <span className="text-gradient-primary">Proactive Intelligence</span>{' '}
+              That Converts
             </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-20">
-            {benefits.map((benefit, index) => (
-              <Card key={index} className="hover-lift border-0 shadow-soft bg-gradient-card p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <benefit.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
-                    <p className="text-muted-foreground">{benefit.description}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 scroll-mt-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Everything You Need to Build{' '}
-              <span className="text-gradient-primary">Smart Chatbots for Real Estate</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              From knowledge upload to deployment, we've got you covered with powerful features.
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Move beyond reactive chat support to predictive visitor engagement that understands intent before users even ask.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="hover-lift border-0 shadow-soft bg-gradient-card">
+            {intelligenceFeatures.map((feature, index) => (
+              <Card key={index} className="hover-lift border-primary/20 shadow-intelligence bg-gradient-card">
                 <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4 shadow-glow">
+                    <feature.icon className="h-7 w-7 text-primary" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
+                  <CardDescription className="text-base text-muted-foreground">{feature.description}</CardDescription>
                 </CardHeader>
               </Card>
             ))}
@@ -186,28 +181,138 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-20 bg-muted/30">
+      {/* Integration Ecosystem */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Get Your AI Chatbot Up and Running in Just Three Simple Steps
+            <h2 className="text-3xl md:text-5xl font-bold">
+              Integrates With Everything You Use
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              From setup to deployment, everything is designed for real estate professionals.
+              Deploy anywhere in minutes with our API-first approach and pre-built integrations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center max-w-4xl mx-auto mb-12">
+            {['Shopify', 'WordPress', 'Webflow', 'Squarespace', 'HubSpot', 'Salesforce'].map((platform) => (
+              <div key={platform} className="text-center">
+                <div className="h-16 bg-muted/50 rounded-lg flex items-center justify-center border border-primary/10 hover:border-primary/30 transition-colors">
+                  <span className="font-semibold text-muted-foreground">{platform}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Badge variant="secondary" className="text-sm px-3 py-1">
+              + 50+ more integrations via API
+            </Badge>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works - Proactive Process */}
+      <section className="py-20 bg-muted/10">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold">
+              How Proactive Intelligence Works
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Three steps to transform visitors into customers with behavioral intelligence.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {steps.map((step, index) => (
-              <div key={index} className="text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-primary text-white flex items-center justify-center mx-auto text-2xl font-bold">
+            {proactiveSteps.map((step, index) => (
+              <div key={index} className="text-center space-y-6 relative">
+                {index < 2 && (
+                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary to-transparent"></div>
+                )}
+                <div className="h-16 w-16 rounded-full bg-gradient-primary text-white flex items-center justify-center mx-auto text-2xl font-bold shadow-glow">
                   {index + 1}
                 </div>
                 <h3 className="text-xl font-semibold">{step.title}</h3>
                 <p className="text-muted-foreground">{step.description}</p>
+                <div className="mx-auto w-16 h-16 bg-muted/20 rounded-lg flex items-center justify-center border border-primary/20">
+                  <step.icon className="h-8 w-8 text-primary" />
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Results & Impact */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-8 mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold">
+              Proven Results from{' '}
+              <span className="text-gradient-primary">Proactive Engagement</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto mb-16">
+            <Card className="p-8 shadow-large bg-gradient-card border-primary/20">
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-primary">+316%</div>
+                    <div className="text-sm text-muted-foreground">Conversion Rate Increase</div>
+                  </div>
+                </div>
+                <p className="text-lg italic">"Our visitor-to-lead conversion jumped from 2.1% to 8.7% in just two months. The proactive engagement is a game changer."</p>
+                <p className="text-sm text-muted-foreground">– Sarah Chen, E-commerce Director at TechFlow</p>
+              </div>
+            </Card>
+
+            <Card className="p-8 shadow-large bg-gradient-card border-primary/20">
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <DollarSign className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-primary">$2.4M</div>
+                    <div className="text-sm text-muted-foreground">Additional Revenue Generated</div>
+                  </div>
+                </div>
+                <p className="text-lg italic">"The behavioral insights help us understand our visitors before they even start a conversation. ROI was immediate."</p>
+                <p className="text-sm text-muted-foreground">– Michael Rodriguez, VP Sales at Growth Labs</p>
+              </div>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            {metrics.map((metric, index) => (
+              <div key={index} className="text-center">
+                <div className="text-3xl font-bold text-primary mb-2">{metric.value}</div>
+                <div className="text-sm text-muted-foreground">{metric.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Brand Showcase */}
+      <section className="py-16 bg-muted/10">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-8">
+            <h3 className="text-2xl font-semibold text-muted-foreground">Trusted by 1,000+ Growing Businesses</h3>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center opacity-60 max-w-4xl mx-auto">
+              {['TechCorp', 'StartupLab', 'BusinessPro', 'InnovateInc', 'GrowthCo', 'ScaleUp'].map((company) => (
+                <div key={company} className="text-center">
+                  <div className="h-12 bg-muted/30 rounded-lg flex items-center justify-center">
+                    <span className="font-semibold text-muted-foreground">{company}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -215,81 +320,60 @@ export const Landing = () => {
       {/* Pricing */}
       <PricingSection />
 
-      {/* Testimonials & Social Proof */}
-      <section className="py-20">
+      {/* FAQ Section */}
+      <section className="py-20 bg-muted/10">
         <div className="container mx-auto px-4">
-          <div className="text-center space-y-8">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Trusted by Growing Businesses
+          <div className="text-center space-y-4 mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold">
+              Frequently Asked Questions
             </h2>
-            
-            {/* Testimonials */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
-              <Card className="p-6 shadow-soft bg-gradient-card">
-                <p className="text-lg mb-4 italic">"Automated 60% of my inquiries—now I focus on closings!"</p>
-                <p className="text-sm text-muted-foreground">– Sarah T., Independent Agent</p>
-              </Card>
-              <Card className="p-6 shadow-soft bg-gradient-card">
-                <p className="text-lg mb-4 italic">"Qualified leads jumped 20%; best tool for small brokerages."</p>
-                <p className="text-sm text-muted-foreground">– Mike R., Broker Owner</p>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-60">
-              {['TechCorp', 'StartupLab', 'BusinessPro', 'InnovateInc'].map((company) => (
-                <div key={company} className="text-center">
-                  <div className="h-12 bg-muted rounded-lg flex items-center justify-center">
-                    <span className="font-semibold text-muted-foreground">{company}</span>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Everything you need to know about proactive visitor intelligence.
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto space-y-4">
+            {faqItems.map((item, index) => (
+              <Card key={index} className="p-6 border-primary/20">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <h3 className="text-lg font-semibold">{item.question}</h3>
+                    <p className="text-muted-foreground">{item.answer}</p>
                   </div>
+                  <ChevronDown className="h-5 w-5 text-muted-foreground ml-4 flex-shrink-0" />
                 </div>
-              ))}
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-8 text-center">
-              <div>
-                <div className="text-3xl font-bold text-primary">99.9%</div>
-                <div className="text-sm text-muted-foreground">Uptime</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-primary">1M+</div>
-                <div className="text-sm text-muted-foreground">Messages</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-primary">50ms</div>
-                <div className="text-sm text-muted-foreground">Response Time</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-primary">24/7</div>
-                <div className="text-sm text-muted-foreground">Support</div>
-              </div>
-            </div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Final CTA */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center space-y-8 p-8 rounded-2xl bg-gradient-card shadow-large">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Ready to Transform Your Customer Support?
+          <div className="max-w-4xl mx-auto text-center space-y-8 p-12 rounded-2xl bg-gradient-intelligence shadow-large">
+            <h2 className="text-3xl md:text-5xl font-bold text-white">
+              Ready to Transform Visitors Into Customers?
             </h2>
-            <p className="text-xl text-muted-foreground">
-              Join thousands of businesses using EccoChat to provide instant, intelligent customer support.
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              Join the next generation of businesses using proactive visitor intelligence to maximize conversions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth/signup">
-                <Button size="lg" className="text-lg px-8 py-4 h-auto">
-                  Start Building Today
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-white text-primary hover:bg-white/90">
+                  Start Your Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-white/30 text-white hover:bg-white/10">
                   Talk to Sales
                 </Button>
               </Link>
             </div>
+            <p className="text-sm text-white/70">
+              No credit card required • Setup in 5 minutes • Cancel anytime
+            </p>
           </div>
         </div>
       </section>
@@ -297,73 +381,83 @@ export const Landing = () => {
   );
 };
 
-const benefits = [
+const intelligenceFeatures = [
   {
-    icon: MessageSquare,
-    title: 'Capture Every Lead, Day or Night',
-    description: 'Handle 70% of inquiries after hours with embedded AI chat on your site—qualify budgets/preferences instantly, turning browsers into buyers.'
+    icon: Brain,
+    title: 'Behavioral Analysis',
+    description: 'Advanced AI tracks mouse movements, scroll patterns, and time spent to understand visitor intent in real-time.'
   },
   {
-    icon: Bot,
-    title: 'Save 20-30 Hours/Week on Admin',
-    description: 'Automate scheduling, follow-ups, and FAQs—upload MLS listings or neighborhood stats for precise, trust-building responses.'
+    icon: Target,
+    title: 'Intent Prediction',
+    description: 'Predictive algorithms identify high-value visitors and optimal engagement moments before they bounce.'
   },
   {
     icon: Zap,
-    title: 'Build Client Trust Effortlessly',
-    description: 'Personalized, empathetic chats confirm privacy and share market insights—boost credibility in a competitive field where delayed replies lose deals.'
+    title: 'Proactive Engagement',
+    description: 'Smart triggers automatically start relevant conversations at the perfect moment to maximize conversion potential.'
+  },
+  {
+    icon: Eye,
+    title: 'Visitor Context',
+    description: 'Understand what pages visitors viewed, how they arrived, and their engagement level before they even start chatting.'
   },
   {
     icon: BarChart3,
-    title: 'Outperform Bigger Firms on a Budget',
-    description: 'Low-cost plans let small agents scale leads 15-25% with analytics and custom embeds, navigating volatility like high rates/low inventory.'
-  }
-];
-
-const features = [
-  {
-    icon: MessageSquare,
-    title: 'Knowledge Upload',
-    description: 'Upload text files, documents, and web content to train your chatbot with your specific knowledge base.'
-  },
-  {
-    icon: Bot,
-    title: 'AI-Powered Chat',
-    description: 'Advanced AI understands context and provides accurate, helpful responses based on your data.'
-  },
-  {
-    icon: Zap,
-    title: 'Instant Deployment',
-    description: 'Deploy your chatbot with a simple embed code or iframe in minutes, not hours.'
+    title: 'Conversion Analytics',
+    description: 'Deep insights into visitor behavior patterns, conversion funnels, and optimization opportunities.'
   },
   {
     icon: Settings,
-    title: 'Easy Customization',
-    description: 'Customize your bot\'s personality, appearance, and behavior without any coding required.'
-  },
-  {
-    icon: BarChart3,
-    title: 'Analytics Dashboard',
-    description: 'Track conversations, user satisfaction, and performance metrics to optimize your chatbot.'
-  },
-  {
-    icon: Shield,
-    title: 'Enterprise Security',
-    description: 'Bank-level security with data encryption, privacy controls, and compliance standards.'
+    title: 'Smart Personalization',
+    description: 'Dynamic content and conversation starters based on visitor behavior, source, and demonstrated interests.'
   }
 ];
 
-const steps = [
+const proactiveSteps = [
   {
-    title: 'Upload Knowledge',
-    description: 'Upload your documents, FAQs, or paste text content to create your knowledge base.'
+    title: 'Install & Analyze',
+    description: 'Deploy our tracking script and start gathering behavioral intelligence on every visitor.',
+    icon: Eye
   },
   {
-    title: 'Test & Refine',
-    description: 'Use our playground to test your chatbot and refine its responses before going live.'
+    title: 'Predict Intent',
+    description: 'AI algorithms analyze patterns to predict visitor intent and identify conversion opportunities.',
+    icon: Brain
   },
   {
-    title: 'Deploy Everywhere',
-    description: 'Embed your chatbot on your website, app, or any platform with our simple embed code.'
+    title: 'Engage & Convert',
+    description: 'Proactively engage high-intent visitors with personalized conversations that drive conversions.',
+    icon: Target
+  }
+];
+
+const metrics = [
+  { value: '99.9%', label: 'Uptime' },
+  { value: '<50ms', label: 'Response Time' },
+  { value: '1M+', label: 'Conversations' },
+  { value: '24/7', label: 'Intelligence' }
+];
+
+const faqItems = [
+  {
+    question: 'How is this different from traditional chatbots?',
+    answer: 'Traditional chatbots wait for visitors to initiate contact. Our proactive intelligence analyzes visitor behavior in real-time and engages them at optimal moments based on their demonstrated intent and likelihood to convert.'
+  },
+  {
+    question: 'What behavioral data do you track?',
+    answer: 'We track mouse movements, scroll patterns, time on page, page navigation, traffic source, and engagement metrics - all processed in real-time to understand visitor intent without storing personal information.'
+  },
+  {
+    question: 'How quickly can I see results?',
+    answer: 'Most customers see immediate improvements in engagement rates within 24-48 hours. Significant conversion increases typically occur within 2-4 weeks as the AI learns your visitor patterns.'
+  },
+  {
+    question: 'Does this work with my existing website?',
+    answer: 'Yes! Our solution integrates with any website through a simple script embed. Works with Shopify, WordPress, Webflow, custom sites, and 50+ other platforms.'
+  },
+  {
+    question: 'Is visitor data secure and compliant?',
+    answer: 'Absolutely. We\'re GDPR and CCPA compliant, use bank-level encryption, and only track behavioral patterns - never personal information without explicit consent.'
   }
 ];
