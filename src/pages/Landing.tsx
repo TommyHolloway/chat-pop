@@ -327,7 +327,9 @@ export const Landing = () => {
       </section>
 
       {/* Pricing */}
-      <PricingSection />
+      <div id="pricing">
+        <PricingSection />
+      </div>
 
       {/* FAQ Section */}
       <section className="py-20 bg-muted/10">
