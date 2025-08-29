@@ -73,10 +73,9 @@ export const Landing = () => {
               Stop Losing 97% of Your Website Visitors
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-              <span className="text-gradient-intelligence">Stop Visitor Loss</span>{' '}
-              with AI That{' '}
-              Engages First
+            <h1 className="text-5xl md:text-7xl font-bold leading-tight text-white">
+              The next generation of{' '}
+              <span className="text-primary">AI chat agents</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
