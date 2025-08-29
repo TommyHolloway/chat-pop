@@ -263,7 +263,7 @@ serve(async (req) => {
         }
         
         .message.user .message-content {
-          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+          background: #84cc16;
           color: white;
           box-shadow: 0 8px 24px rgba(132, 204, 22, 0.25);
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -313,7 +313,7 @@ serve(async (req) => {
         
         .input-area button {
           padding: 1rem 1.5rem;
-          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+          background: #84cc16;
           color: white;
           border: none;
           border-radius: 16px;
@@ -402,7 +402,7 @@ serve(async (req) => {
         .empty-state-icon {
           width: 64px;
           height: 64px;
-          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+          background: #84cc16;
           border-radius: 32px;
           display: flex;
           align-items: center;
