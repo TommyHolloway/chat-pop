@@ -73,7 +73,7 @@ export const Landing = () => {
               Stop Losing 97% of Your Website Visitors
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-bold leading-tight text-white">
+            <h1 className="text-5xl md:text-7xl font-bold leading-tight text-foreground">
               The next generation of{' '}
               <span className="text-primary">AI chat agents</span>
             </h1>
