@@ -23,8 +23,7 @@ import Security from "./pages/Security";
 import { Pricing } from "./pages/Pricing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
-import { Dashboard } from "./pages/Dashboard";
-import { WorkspaceDashboard } from "./pages/workspace/WorkspaceDashboard";
+import { WorkspaceOverview } from "./pages/WorkspaceOverview";
 import { Agents } from "./pages/Agents";
 import { Billing } from "./pages/Billing";
 import { Settings } from "./pages/Settings";
@@ -113,18 +112,11 @@ const App = () => (
               {/* Protected Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <AuthenticatedLayout>
+                    <WorkspaceOverview />
+                  </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
-              
-              {/* Workspace Routes - New main dashboard */}
-              <Route path="/workspace/:workspaceId/*" element={
-                <ProtectedRoute>
-                  <WorkspaceDashboard />
-                </ProtectedRoute>
-              } />
-              
-              {/* Legacy agent routes - keep for backward compatibility */}
               <Route path="/workspace/:workspaceId/agents/:id/*" element={
                 <ProtectedRoute>
                   <AuthenticatedLayout>
