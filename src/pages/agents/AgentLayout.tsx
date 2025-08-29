@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Navigate, Routes, Route } from 'react-router-dom';
+import { useParams, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
 import { AgentPlayground } from './sections/AgentPlayground';
@@ -23,9 +23,14 @@ import { AgentVisitorAnalyticsWrapper } from './sections/AgentVisitorAnalyticsWr
 
 export const AgentLayout = () => {
   const { id, workspaceId } = useParams();
+  const location = useLocation();
   const { getAgent } = useAgents();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Check if we're on playground route (either /playground or index)
+  const isPlaygroundRoute = location.pathname.endsWith('/playground') || 
+                           location.pathname.split('/').pop() === id;
 
   useEffect(() => {
     const loadAgent = async () => {
@@ -57,8 +62,8 @@ export const AgentLayout = () => {
   }
 
   return (
-    <div className="flex-1 p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className={`flex-1 ${isPlaygroundRoute ? '' : 'p-8'}`}>
+      <div className={isPlaygroundRoute ? '' : 'max-w-6xl mx-auto'}>
         <Routes>
           {/* Main sections */}
           <Route path="playground" element={<AgentPlayground agent={agent} />} />
