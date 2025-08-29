@@ -24,6 +24,7 @@ import { Pricing } from "./pages/Pricing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
 import { WorkspaceOverview } from "./pages/WorkspaceOverview";
+import { WorkspaceDashboard } from "./pages/workspace/WorkspaceDashboard";
 import { Agents } from "./pages/Agents";
 import { Billing } from "./pages/Billing";
 import { Settings } from "./pages/Settings";
@@ -117,6 +118,15 @@ const App = () => (
                   </AuthenticatedLayout>
                 </ProtectedRoute>
               } />
+              
+              {/* Workspace Routes - New main dashboard */}
+              <Route path="/workspace/:workspaceId/*" element={
+                <ProtectedRoute>
+                  <WorkspaceDashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Legacy agent routes - keep for backward compatibility */}
               <Route path="/workspace/:workspaceId/agents/:id/*" element={
                 <ProtectedRoute>
                   <AuthenticatedLayout>
