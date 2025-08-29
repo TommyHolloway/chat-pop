@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { useState } from 'react';
 import { 
   Home, 
   Bot, 
@@ -58,8 +59,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useAgents } from '@/hooks/useAgents';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
+import { PlanUpgradeDialog } from '@/components/PlanUpgradeDialog';
 
 export const WorkspaceSidebar = () => {
   const location = useLocation();
@@ -69,6 +73,8 @@ export const WorkspaceSidebar = () => {
   const { isAdmin } = useUserRole();
   const { agents } = useAgents();
   const { workspaces, currentWorkspace, switchWorkspace } = useWorkspaces();
+  const { canViewVisitorAnalytics } = usePlanEnforcement();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
   const isCollapsed = state === 'collapsed';
   
@@ -89,6 +95,13 @@ export const WorkspaceSidebar = () => {
 
   const isInSection = (section: string) => {
     return location.pathname.includes(`/agents/${currentAgentId}/${section}`);
+  };
+
+  const handleProactiveEngagementClick = (e: React.MouseEvent) => {
+    if (!canViewVisitorAnalytics) {
+      e.preventDefault();
+      setShowUpgradeDialog(true);
+    }
   };
 
   return (
@@ -164,6 +177,28 @@ export const WorkspaceSidebar = () => {
                         <Play className="h-4 w-4" />
                         <span>Playground</span>
                       </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      asChild={canViewVisitorAnalytics}
+                      isActive={isInSection('settings/proactive')}
+                      onClick={handleProactiveEngagementClick}
+                    >
+                      {canViewVisitorAnalytics ? (
+                        <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/proactive`}>
+                          <Target className="h-4 w-4" />
+                          <span>Proactive Engagement</span>
+                          <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                        </Link>
+                      ) : (
+                        <button className="w-full">
+                          <Target className="h-4 w-4" />
+                          <span>Proactive Engagement</span>
+                          <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                        </button>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
@@ -495,6 +530,15 @@ export const WorkspaceSidebar = () => {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      {/* Plan Upgrade Dialog */}
+      <PlanUpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        feature="Proactive Engagement"
+        currentLimit="Feature requires Pro plan"
+        recommendedPlan="standard"
+      />
     </Sidebar>
   );
 };
