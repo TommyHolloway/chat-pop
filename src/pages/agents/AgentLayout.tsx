@@ -19,6 +19,7 @@ import { AgentSettingsGeneral } from './sections/AgentSettingsGeneral';
 import { AgentSettingsAI } from './sections/AgentSettingsAI';
 import { AgentSettingsChat } from './sections/AgentSettingsChat';
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
+import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
 import { AgentVisitorAnalyticsWrapper } from './sections/AgentVisitorAnalyticsWrapper';
 
 export const AgentLayout = () => {
@@ -94,6 +95,7 @@ export const AgentLayout = () => {
           <Route path="settings/ai" element={<AgentSettingsAI agent={agent} />} />
           <Route path="settings/chat" element={<AgentSettingsChat agent={agent} />} />
           <Route path="settings/leads" element={<AgentSettingsLeads agent={agent} />} />
+          <Route path="settings/proactive" element={<AgentSettingsProactive agent={agent} />} />
           
           {/* Default */}
           <Route index element={<AgentPlayground agent={agent} />} />

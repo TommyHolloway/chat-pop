@@ -57,10 +57,10 @@ serve(async (req) => {
       throw eventsError;
     }
 
-    // Get agent data for business context
+    // Get agent data for business context and proactive config
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('name, description')
+      .select('name, description, enable_proactive_engagement, proactive_config')
       .eq('id', agentId)
       .single();
 
@@ -69,11 +69,41 @@ serve(async (req) => {
       throw new Error('Agent not found');
     }
 
-    // Analyze behavior patterns
+    // Check if proactive engagement is enabled for this agent
+    if (!agent.enable_proactive_engagement || !agent.proactive_config?.enabled) {
+      console.log('Proactive engagement is disabled for this agent');
+      return new Response(
+        JSON.stringify({ success: true, analysis: null, message: 'Proactive engagement disabled' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // Check frequency limits - don't show more suggestions than configured
+    const { data: existingSuggestions, error: suggestionCheckError } = await supabase
+      .from('proactive_suggestions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('was_shown', true);
+
+    if (suggestionCheckError) {
+      console.error('Error checking existing suggestions:', suggestionCheckError);
+    }
+
+    const frequencyLimit = agent.proactive_config.frequency_limit || 3;
+    if (existingSuggestions && existingSuggestions.length >= frequencyLimit) {
+      console.log(`Frequency limit reached (${existingSuggestions.length}/${frequencyLimit})`);
+      return new Response(
+        JSON.stringify({ success: true, analysis: null, message: 'Frequency limit reached' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // Analyze behavior patterns with agent's configuration
     const analysis = analyzeBehaviorPatterns(events, session, agent);
 
-    // Store the suggestion if confidence is high enough
-    if (analysis.confidence > 0.6) {
+    // Store the suggestion if confidence meets the configured threshold
+    const confidenceThreshold = agent.proactive_config.confidence_threshold || 0.7;
+    if (analysis.confidence >= confidenceThreshold) {
       const { error: suggestionError } = await supabase
         .from('proactive_suggestions')
         .insert({
@@ -124,60 +154,74 @@ function analyzeBehaviorPatterns(events: any[], session: any, agent: any): Behav
     recentPages: pageViews.slice(0, 5).map(e => e.page_url)
   };
 
-  // Pricing concern detection
-  const pricingPages = pageViews.filter(e => 
-    e.page_url.toLowerCase().includes('pricing') || 
-    e.page_url.toLowerCase().includes('plans') ||
-    e.page_url.toLowerCase().includes('cost')
-  );
-  
-  const pricingTime = timeEvents
-    .filter(e => e.page_url.toLowerCase().includes('pricing'))
-    .reduce((sum, e) => sum + (e.time_on_page || 0), 0);
+  const config = agent.proactive_config || {};
+  const triggerConfig = config.triggers || {};
 
-  if (pricingPages.length > 0 && pricingTime > 30) {
-    triggers.pricingPagesVisited = pricingPages.length;
-    triggers.timeOnPricing = pricingTime;
+  // Pricing concern detection
+  if (triggerConfig.pricing_concern?.enabled) {
+    const pricingPages = pageViews.filter(e => 
+      e.page_url.toLowerCase().includes('pricing') || 
+      e.page_url.toLowerCase().includes('plans') ||
+      e.page_url.toLowerCase().includes('cost')
+    );
     
-    return {
-      intent: 'pricing_concern',
-      confidence: Math.min(0.9, 0.3 + (pricingTime / 100) + (pricingPages.length * 0.2)),
-      suggestedMessage: `Is pricing a concern? I'd be happy to explain our plans and find the best fit for you!`,
-      triggers
-    };
+    const pricingTime = timeEvents
+      .filter(e => e.page_url.toLowerCase().includes('pricing'))
+      .reduce((sum, e) => sum + (e.time_on_page || 0), 0);
+
+    const timeThreshold = triggerConfig.pricing_concern.time_threshold || 30;
+    if (pricingPages.length > 0 && pricingTime >= timeThreshold) {
+      triggers.pricingPagesVisited = pricingPages.length;
+      triggers.timeOnPricing = pricingTime;
+      
+      return {
+        intent: 'pricing_concern',
+        confidence: Math.min(0.9, 0.3 + (pricingTime / 100) + (pricingPages.length * 0.2)),
+        suggestedMessage: triggerConfig.pricing_concern.message || `Hi! I noticed you're looking at our pricing. I'd be happy to help you find the perfect plan for your needs!`,
+        triggers
+      };
+    }
   }
 
   // Feature exploration detection
-  const featurePages = pageViews.filter(e => 
-    e.page_url.toLowerCase().includes('features') || 
-    e.page_url.toLowerCase().includes('product') ||
-    e.page_url.toLowerCase().includes('demo')
-  );
+  if (triggerConfig.feature_exploration?.enabled) {
+    const featurePages = pageViews.filter(e => 
+      e.page_url.toLowerCase().includes('features') || 
+      e.page_url.toLowerCase().includes('product') ||
+      e.page_url.toLowerCase().includes('demo')
+    );
 
-  if (featurePages.length >= 2) {
-    triggers.featurePagesVisited = featurePages.length;
-    
-    return {
-      intent: 'feature_exploration',
-      confidence: Math.min(0.85, 0.4 + (featurePages.length * 0.15)),
-      suggestedMessage: `Wondering if ${agent.name} can solve your specific problem? I'm here to help you understand how we can assist!`,
-      triggers
-    };
+    const pageThreshold = triggerConfig.feature_exploration.page_threshold || 3;
+    if (featurePages.length >= pageThreshold) {
+      triggers.featurePagesVisited = featurePages.length;
+      
+      return {
+        intent: 'feature_exploration',
+        confidence: Math.min(0.85, 0.4 + (featurePages.length * 0.15)),
+        suggestedMessage: triggerConfig.feature_exploration.message || `I see you're exploring our features. Want to learn more about how they can benefit you?`,
+        triggers
+      };
+    }
   }
 
   // High engagement detection
-  if (session.total_time_spent > 120 && session.total_page_views > 3) {
-    triggers.highEngagement = true;
+  if (triggerConfig.high_engagement?.enabled) {
+    const timeThreshold = triggerConfig.high_engagement.time_threshold || 120;
+    const pageViewsThreshold = triggerConfig.high_engagement.page_views_threshold || 5;
     
-    return {
-      intent: 'high_engagement',
-      confidence: 0.75,
-      suggestedMessage: `I see you're exploring our platform! Any questions I can help you with?`,
-      triggers
-    };
+    if (session.total_time_spent >= timeThreshold && session.total_page_views >= pageViewsThreshold) {
+      triggers.highEngagement = true;
+      
+      return {
+        intent: 'high_engagement',
+        confidence: 0.75,
+        suggestedMessage: triggerConfig.high_engagement.message || `You seem really interested in what we offer! Would you like to chat about how we can help you?`,
+        triggers
+      };
+    }
   }
 
-  // Bouncing behavior detection
+  // Company research detection (fallback behavior)
   const aboutPages = pageViews.filter(e => 
     e.page_url.toLowerCase().includes('about') || 
     e.page_url.toLowerCase().includes('company')

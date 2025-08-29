@@ -215,12 +215,14 @@ export type Database = {
           creativity_level: number | null
           description: string | null
           enable_lead_capture: boolean | null
+          enable_proactive_engagement: boolean | null
           id: string
           initial_message: string | null
           instructions: string
           lead_capture_config: Json | null
           message_bubble_color: string | null
           name: string
+          proactive_config: Json | null
           profile_image_url: string | null
           status: string | null
           updated_at: string
@@ -233,12 +235,14 @@ export type Database = {
           creativity_level?: number | null
           description?: string | null
           enable_lead_capture?: boolean | null
+          enable_proactive_engagement?: boolean | null
           id?: string
           initial_message?: string | null
           instructions: string
           lead_capture_config?: Json | null
           message_bubble_color?: string | null
           name: string
+          proactive_config?: Json | null
           profile_image_url?: string | null
           status?: string | null
           updated_at?: string
@@ -251,12 +255,14 @@ export type Database = {
           creativity_level?: number | null
           description?: string | null
           enable_lead_capture?: boolean | null
+          enable_proactive_engagement?: boolean | null
           id?: string
           initial_message?: string | null
           instructions?: string
           lead_capture_config?: Json | null
           message_bubble_color?: string | null
           name?: string
+          proactive_config?: Json | null
           profile_image_url?: string | null
           status?: string | null
           updated_at?: string

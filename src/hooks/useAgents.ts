@@ -18,6 +18,8 @@ export interface Agent {
   profile_image_url?: string | null;
   message_bubble_color?: string | null;
   chat_interface_theme?: string | null;
+  enable_proactive_engagement?: boolean | null;
+  proactive_config?: any | null;
 }
 
 export interface KnowledgeFile {
@@ -112,6 +114,8 @@ export const useAgents = () => {
     profile_image_url?: string;
     message_bubble_color?: string;
     chat_interface_theme?: string;
+    enable_proactive_engagement?: boolean;
+    proactive_config?: any;
   }) => {
     const { data, error } = await supabase
       .from('agents')

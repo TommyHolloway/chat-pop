@@ -419,6 +419,14 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/proactive`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/proactive`}>
+                            <Zap className="h-4 w-4" />
+                            <span>Proactive Engagement</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
