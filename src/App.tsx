@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PublicNavbar } from "@/components/Layout/PublicNavbar";
 import { AuthenticatedNavbar } from "@/components/Layout/AuthenticatedNavbar";
 import { AppSidebar } from "@/components/Layout/AppSidebar";
+import { WorkspaceLayout } from "@/components/Layout/WorkspaceLayout";
 import { Footer } from "@/components/Layout/Footer";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
@@ -112,38 +113,38 @@ const App = () => (
               {/* Protected Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <AuthenticatedLayout>
+                  <WorkspaceLayout>
                     <WorkspaceOverview />
-                  </AuthenticatedLayout>
+                  </WorkspaceLayout>
                 </ProtectedRoute>
               } />
               <Route path="/workspace/:workspaceId/agents/:id/*" element={
                 <ProtectedRoute>
-                  <AuthenticatedLayout>
+                  <WorkspaceLayout>
                     <AgentLayout />
-                  </AuthenticatedLayout>
+                  </WorkspaceLayout>
                 </ProtectedRoute>
               } />
               <Route path="/billing" element={
                 <ProtectedRoute>
-                  <AuthenticatedLayout>
+                  <WorkspaceLayout>
                     <Billing />
-                  </AuthenticatedLayout>
+                  </WorkspaceLayout>
                 </ProtectedRoute>
               } />
               <Route path="/settings" element={
                 <ProtectedRoute>
-                  <AuthenticatedLayout>
+                  <WorkspaceLayout>
                     <Settings />
-                  </AuthenticatedLayout>
+                  </WorkspaceLayout>
                 </ProtectedRoute>
               } />
               
               <Route path="/admin" element={
                 <AdminRoute>
-                  <AuthenticatedLayout>
+                  <WorkspaceLayout>
                     <AdminPortal />
-                  </AuthenticatedLayout>
+                  </WorkspaceLayout>
                 </AdminRoute>
               } />
               
