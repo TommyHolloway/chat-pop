@@ -16,7 +16,6 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 // Pages
 import { Landing } from "./pages/Landing";
-import { Demo } from "./pages/Demo";
 import { Contact } from "./pages/Contact";
 import { TermsOfService } from "./pages/TermsOfService";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy";
@@ -70,11 +69,6 @@ const App = () => (
               <Route path="/" element={
                 <PublicLayout>
                   <Landing />
-                </PublicLayout>
-              } />
-              <Route path="/demo" element={
-                <PublicLayout>
-                  <Demo />
                 </PublicLayout>
               } />
               <Route path="/contact" element={

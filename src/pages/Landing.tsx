@@ -83,13 +83,23 @@ export const Landing = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow"
+                onClick={() => {
+                  const demoSection = document.getElementById('video-demo');
+                  if (demoSection) {
+                    demoSection.scrollIntoView({ 
+                      behavior: 'smooth', 
+                      block: 'start' 
+                    });
+                  }
+                }}
+              >
+                See AI Chat Agents in Action
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Link to="/auth/signup">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow">
-                  See AI Chat Agents in Action
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/demo">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto bg-foreground text-background border-foreground hover:bg-foreground/90">
                   Add Chat Agents to My Site
                 </Button>
@@ -116,7 +126,7 @@ export const Landing = () => {
         </div>
 
         {/* Video Demo Section */}
-        <div className="container mx-auto px-4 pt-16">
+        <div id="video-demo" className="container mx-auto px-4 pt-16">
           <div className="max-w-4xl mx-auto">
             {videoLoading ? (
               <div className="aspect-video bg-muted rounded-lg flex items-center justify-center shadow-large">
