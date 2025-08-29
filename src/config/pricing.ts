@@ -52,6 +52,7 @@ export const pricingPlans: PricingPlan[] = [
       "12,000 message credits/month",
       "Unlimited training links",
       "5 AI agents",
+      "Visitor Intelligence & Proactive Chat",
       "Advanced analytics",
       "Custom integrations",
       "Phone support"

@@ -23,7 +23,8 @@ import {
   Loader2,
   Building2,
   ChevronDown,
-  Plus
+  Plus,
+  Eye
 } from 'lucide-react';
 import {
   Sidebar,
@@ -218,14 +219,38 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
               </Collapsible>
 
               {/* Analytics */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics`)}>
-                  <Link to={`/workspace/${workspaceId}/agents/${id}/analytics`}>
-                    <BarChart3 className="h-4 w-4" />
-                    <span>Analytics</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible defaultOpen={isInSection('analytics')}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Analytics</span>
+                      <ChevronRight className="ml-auto h-4 w-4" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics`}>
+                            <BarChart3 className="h-4 w-4" />
+                            <span>Performance</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics/visitor`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/visitor`}>
+                            <Eye className="h-4 w-4" />
+                            <span>Visitor Intelligence</span>
+                            <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
 
               {/* Sources */}
               <Collapsible defaultOpen={isInSection('sources')}>

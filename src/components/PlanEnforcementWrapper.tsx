@@ -2,11 +2,11 @@ import React, { ReactNode, useState } from 'react';
 import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
 import { PlanUpgradeDialog } from './PlanUpgradeDialog';
 import { Button } from './ui/button';
-import { Lock } from 'lucide-react';
+import { Lock, Crown } from 'lucide-react';
 
 interface PlanEnforcementWrapperProps {
   children: ReactNode;
-  feature: 'agent' | 'message' | 'link' | 'storage';
+  feature: 'agent' | 'message' | 'link' | 'storage' | 'visitor_analytics';
   agentId?: string;
   fileSize?: number;
   fallbackContent?: ReactNode;
@@ -28,6 +28,8 @@ export const PlanEnforcementWrapper = ({
         return enforcement.canCreateAgent;
       case 'message':
         return enforcement.canSendMessage;
+      case 'visitor_analytics':
+        return enforcement.canViewVisitorAnalytics;
       case 'link':
         return agentId ? await enforcement.canAddLink(agentId) : false;
       case 'storage':
@@ -43,6 +45,8 @@ export const PlanEnforcementWrapper = ({
         return `${enforcement.usage.currentAgents}/${enforcement.limits.agents === -1 ? '∞' : enforcement.limits.agents} agents`;
       case 'message':
         return `${enforcement.usage.currentMessageCredits}/${enforcement.limits.messageCredits === -1 ? '∞' : enforcement.limits.messageCredits} credits`;
+      case 'visitor_analytics':
+        return 'Pro plan required';
       case 'link':
         return `${enforcement.limits.links === -1 ? '∞' : enforcement.limits.links} links per agent`;
       case 'storage':
@@ -53,6 +57,7 @@ export const PlanEnforcementWrapper = ({
   };
 
   const getRecommendedPlan = (): 'hobby' | 'standard' => {
+    if (feature === 'visitor_analytics') return 'standard';
     const currentPlan = enforcement.limits.messageCredits;
     if (currentPlan <= 100) return 'hobby'; // Free -> Hobby
     return 'standard'; // Hobby -> Pro
@@ -75,16 +80,22 @@ export const PlanEnforcementWrapper = ({
 
   // Show upgrade prompt
   const defaultFallback = (
-    <div className="flex flex-col items-center gap-3 p-6 border border-dashed rounded-lg bg-muted/50">
-      <Lock className="h-8 w-8 text-muted-foreground" />
-      <div className="text-center">
-        <h3 className="font-medium">Plan Limit Reached</h3>
-        <p className="text-sm text-muted-foreground">
-          You've reached your {feature} limit ({getFeatureLimit()})
+    <div className="flex flex-col items-center gap-4 p-8 border border-dashed rounded-lg bg-muted/50">
+      <Crown className="h-12 w-12 text-yellow-500" />
+      <div className="text-center space-y-2">
+        <h3 className="text-lg font-semibold">
+          {feature === 'visitor_analytics' ? 'Visitor Intelligence' : 'Plan Limit Reached'}
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-md">
+          {feature === 'visitor_analytics' 
+            ? 'Unlock visitor behavior analytics, proactive chat triggers, and advanced conversion insights with Pro.'
+            : `You've reached your ${feature} limit (${getFeatureLimit()})`
+          }
         </p>
       </div>
-      <Button onClick={() => setShowUpgradeDialog(true)}>
-        Upgrade Plan
+      <Button onClick={() => setShowUpgradeDialog(true)} className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
+        <Crown className="h-4 w-4 mr-2" />
+        Upgrade to Pro
       </Button>
     </div>
   );
@@ -102,4 +113,3 @@ export const PlanEnforcementWrapper = ({
     </>
   );
 };
-

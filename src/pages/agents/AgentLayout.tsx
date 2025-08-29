@@ -19,7 +19,7 @@ import { AgentSettingsGeneral } from './sections/AgentSettingsGeneral';
 import { AgentSettingsAI } from './sections/AgentSettingsAI';
 import { AgentSettingsChat } from './sections/AgentSettingsChat';
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
-import { AgentVisitorAnalytics } from './sections/AgentVisitorAnalytics';
+import { AgentVisitorAnalyticsWrapper } from './sections/AgentVisitorAnalyticsWrapper';
 
 export const AgentLayout = () => {
   const { id, workspaceId } = useParams();
@@ -63,7 +63,7 @@ export const AgentLayout = () => {
           {/* Main sections */}
           <Route path="playground" element={<AgentPlayground agent={agent} />} />
           <Route path="analytics" element={<AgentAnalytics agent={agent} />} />
-          <Route path="visitor-analytics" element={<AgentVisitorAnalytics agent={agent} />} />
+          <Route path="analytics/visitor" element={<AgentVisitorAnalyticsWrapper agent={agent} />} />
           
           {/* Activity */}
           <Route path="activity/conversations" element={<AgentConversations agent={agent} />} />
