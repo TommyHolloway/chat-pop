@@ -885,6 +885,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_public_agent_data: {
+        Args: { agent_uuid: string }
+        Returns: {
+          chat_interface_theme: string
+          id: string
+          initial_message: string
+          message_bubble_color: string
+          name: string
+          profile_image_url: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
