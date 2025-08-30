@@ -96,7 +96,7 @@ export const Playground = () => {
   const actionsCount = enabledActions.length;
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="h-full bg-background flex flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <div className="w-80 border-r bg-card flex flex-col">
