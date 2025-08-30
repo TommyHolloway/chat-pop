@@ -28,17 +28,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch agent details including customization fields
-    const { data: agent, error } = await supabase
-      .from('agents')
-      .select('name, initial_message, profile_image_url, message_bubble_color, chat_interface_theme')
-      .eq('id', agentId)
-      .eq('status', 'active')
-      .single();
+    // Fetch agent details using secure function
+    const { data: agentData, error } = await supabase.rpc('get_public_agent_data', { agent_uuid: agentId });
 
-    if (error || !agent) {
+    if (error || !agentData || agentData.length === 0) {
       return new Response('Agent not found', { status: 404, headers: corsHeaders });
     }
+    
+    const agent = agentData[0];
 
     // Escape agent data to prevent XSS
     const safeName = agent.name?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'Agent';

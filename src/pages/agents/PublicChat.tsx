@@ -41,15 +41,17 @@ export const PublicChat = () => {
 
   const fetchAgent = async () => {
     try {
-      const { data, error } = await supabase
-        .from('agents')
-        .select('id, name, description, message_bubble_color')
-        .eq('id', id)
-        .eq('status', 'active')
-        .single();
+      const { data, error } = await supabase.rpc('get_public_agent_data', { agent_uuid: id });
 
-      if (error) throw error;
-      setAgent(data);
+      if (error || !data || data.length === 0) throw new Error('Agent not found');
+      
+      const agentData = data[0];
+      setAgent({
+        id: agentData.id,
+        name: agentData.name,
+        description: '', // Not exposed in public function
+        message_bubble_color: agentData.message_bubble_color
+      });
     } catch (error) {
       console.error('Error fetching agent:', error);
     }

@@ -9,6 +9,7 @@ import { useAgents } from '@/hooks/useAgents';
 import { useKnowledgeFiles } from '@/hooks/useAgents';
 import { useAgentTextKnowledge } from '@/hooks/useAgentTextKnowledge';
 import { useAgentQnAKnowledge } from '@/hooks/useAgentQnAKnowledge';
+import { useAgentLinks } from '@/hooks/useAgentLinks';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CompletionStep {
@@ -32,6 +33,7 @@ export const AgentCompletionProgress = ({ agent }: AgentCompletionProgressProps)
   const { files } = useKnowledgeFiles(agent?.id);
   const { textKnowledge } = useAgentTextKnowledge(agent?.id);
   const { qnaKnowledge } = useAgentQnAKnowledge(agent?.id);
+  const { links } = useAgentLinks(agent?.id);
 
   // Check if agent has had playground activity
   useEffect(() => {
@@ -78,7 +80,7 @@ export const AgentCompletionProgress = ({ agent }: AgentCompletionProgressProps)
       title: 'Knowledge Sources',
       description: 'At least one knowledge source added',
       icon: FileText,
-      completed: (files?.length > 0) || (textKnowledge?.length > 0) || (qnaKnowledge?.length > 0) || (agent?.agent_links?.length > 0),
+      completed: (files?.length > 0) || (textKnowledge?.length > 0) || (qnaKnowledge?.length > 0) || (links?.length > 0),
       route: 'sources/files'
     },
     {
