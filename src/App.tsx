@@ -31,6 +31,7 @@ import NotFound from "./pages/NotFound";
 import AdminPortal from "./pages/AdminPortal";
 import { AdminRoute } from "./components/AdminRoute";
 import { AgentLayout } from "./pages/agents/AgentLayout";
+import { PublicChat } from "./pages/agents/PublicChat";
 
 const queryClient = new QueryClient();
 
@@ -98,7 +99,7 @@ const App = () => (
               } />
               
               {/* Public Agent Routes */}
-              <Route path="/agents/:id/chat" element={<div>Public Chat Coming Soon</div>} />
+              <Route path="/agents/:id/chat" element={<PublicChat />} />
               
               {/* Auth Routes */}
               <Route path="/auth/login" element={<Login />} />

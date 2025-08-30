@@ -32,6 +32,7 @@ import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
 import { useAgentActions } from '@/hooks/useAgentActions';
 import { ActionButtons } from '@/components/chat/ActionButtons';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
+import { ActionTestingPanel } from '@/components/agent/ActionTestingPanel';
 
 export const Playground = () => {
   const { id } = useParams();
@@ -221,6 +222,9 @@ export const Playground = () => {
                 )}
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Action Testing */}
+            <ActionTestingPanel agentId={id || ''} userMessage={inputValue} />
 
             {/* Test Scenarios */}
             <div className="space-y-2">

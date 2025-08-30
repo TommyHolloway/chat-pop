@@ -21,6 +21,7 @@ import { AgentSettingsChat } from './sections/AgentSettingsChat';
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
 import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
 import { AgentVisitorAnalyticsWrapper } from './sections/AgentVisitorAnalyticsWrapper';
+import { AgentCompletionProgress } from '@/components/agent/AgentCompletionProgress';
 
 export const AgentLayout = () => {
   const { id, workspaceId } = useParams();
@@ -65,6 +66,7 @@ export const AgentLayout = () => {
   return (
     <div className={`flex-1 ${isPlaygroundRoute ? '' : 'p-8'}`}>
       <div className={isPlaygroundRoute ? '' : 'max-w-6xl mx-auto'}>
+        {!isPlaygroundRoute && <AgentCompletionProgress agent={agent} />}
         <Routes>
           {/* Main sections */}
           <Route path="playground" element={<AgentPlayground agent={agent} />} />

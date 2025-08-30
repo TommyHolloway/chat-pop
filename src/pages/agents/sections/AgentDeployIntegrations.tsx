@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Webhook, Slack, MessageSquare, Mail, Settings, Copy } from 'lucide-react';
+import { Webhook, Slack, MessageSquare, Mail, Settings, Copy, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export const AgentDeployIntegrations = ({ agent }: { agent: any }) => {
@@ -35,28 +35,28 @@ export const AgentDeployIntegrations = ({ agent }: { agent: any }) => {
       status: 'available',
     },
     {
-      name: 'Slack',
-      description: 'Send notifications to Slack channels',
-      icon: Slack,
-      enabled: slackEnabled,
-      onToggle: setSlackEnabled,
-      status: 'coming-soon',
-    },
-    {
-      name: 'Discord',
-      description: 'Integration with Discord servers',
-      icon: MessageSquare,
-      enabled: false,
-      onToggle: () => {},
-      status: 'coming-soon',
-    },
-    {
       name: 'Email Notifications',
       description: 'Get notified via email for new conversations',
       icon: Mail,
       enabled: emailEnabled,
       onToggle: setEmailEnabled,
       status: 'available',
+    },
+    {
+      name: 'Public Chat Pages',
+      description: 'Direct links to chat with your agent',
+      icon: MessageSquare,
+      enabled: true,
+      onToggle: () => {},
+      status: 'active',
+    },
+    {
+      name: 'Slack',
+      description: 'Send notifications to Slack channels',
+      icon: Slack,
+      enabled: slackEnabled,
+      onToggle: setSlackEnabled,
+      status: 'coming-soon',
     },
   ];
 
@@ -81,8 +81,17 @@ export const AgentDeployIntegrations = ({ agent }: { agent: any }) => {
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{integration.name}</h4>
-                      <Badge variant={integration.status === 'available' ? 'default' : 'secondary'}>
-                        {integration.status === 'available' ? 'Available' : 'Coming Soon'}
+                      <Badge variant={
+                        integration.status === 'active' ? 'default' :
+                        integration.status === 'available' ? 'secondary' : 
+                        'outline'
+                      }>
+                        {integration.status === 'active' ? (
+                          <>
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Active
+                          </>
+                        ) : integration.status === 'available' ? 'Available' : 'Coming Soon'}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{integration.description}</p>
@@ -91,7 +100,7 @@ export const AgentDeployIntegrations = ({ agent }: { agent: any }) => {
                 <Switch
                   checked={integration.enabled}
                   onCheckedChange={integration.onToggle}
-                  disabled={integration.status !== 'available'}
+                  disabled={integration.status === 'coming-soon' || integration.status === 'active'}
                 />
               </div>
             ))}
