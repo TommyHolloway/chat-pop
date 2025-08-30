@@ -63,8 +63,8 @@ export const Landing = () => {
     <div className="min-h-screen bg-muted/30">
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-intelligence opacity-10"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-muted/5"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--muted-foreground)/0.05),transparent_50%)]"></div>
         
         <div className="container mx-auto px-4 relative">
           <div className="max-w-5xl mx-auto text-center space-y-8">
