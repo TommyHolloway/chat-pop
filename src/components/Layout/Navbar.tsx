@@ -1,18 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { Bot, Moon, Sun, Menu, User, Settings, LogOut } from 'lucide-react';
-import { Logo } from './Logo';
+import { Bot, Moon, Sun, Menu } from 'lucide-react';
 import { useState } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
@@ -23,7 +13,10 @@ export const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Logo />
+          <Link to="/" className="flex items-center space-x-2 font-bold text-xl">
+            <Bot className="h-6 w-6 text-primary" />
+            <span className="text-gradient-primary">EccoChat</span>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
