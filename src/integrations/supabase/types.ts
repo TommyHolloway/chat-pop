@@ -872,6 +872,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anonymize_ip_address: {
+        Args: { ip_addr: unknown }
+        Returns: unknown
+      }
       check_user_plan_limits: {
         Args: {
           p_agent_id?: string
@@ -882,6 +886,10 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_visitor_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
