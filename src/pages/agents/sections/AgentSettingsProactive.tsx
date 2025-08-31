@@ -80,16 +80,32 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
   });
 
   useEffect(() => {
-    if (agent?.proactive_config) {
-      setConfig(prev => ({
-        ...prev,
-        ...agent.proactive_config,
-        triggers: {
-          ...prev.triggers,
-          ...agent.proactive_config.triggers
+    let mounted = true;
+    
+    if (agent?.proactive_config && mounted) {
+      setConfig(prev => {
+        // Only update if there are actual changes to prevent unnecessary re-renders
+        const newConfig = {
+          ...prev,
+          ...agent.proactive_config,
+          triggers: {
+            ...prev.triggers,
+            ...agent.proactive_config.triggers
+          }
+        };
+        
+        // Deep comparison to avoid unnecessary updates
+        if (JSON.stringify(newConfig) === JSON.stringify(prev)) {
+          return prev;
         }
-      }));
+        
+        return newConfig;
+      });
     }
+    
+    return () => {
+      mounted = false;
+    };
   }, [agent?.proactive_config]);
 
   const handleSave = async () => {

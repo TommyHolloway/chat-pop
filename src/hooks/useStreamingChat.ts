@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { withTimeout, withRetry, isRetryableError } from '@/utils/apiHelpers';
+import { sanitizeInput } from '@/utils/validation';
 
 export interface StreamingChatMessage {
   id: string;
@@ -14,6 +16,7 @@ export const useStreamingChat = (agentId: string) => {
   const [messages, setMessages] = useState<StreamingChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const { toast } = useToast();
 
   const initializeChat = async () => {
@@ -37,7 +40,20 @@ export const useStreamingChat = (agentId: string) => {
 
   const createConversation = async () => {
     if (conversationId) return conversationId;
+    if (isCreatingConversation) {
+      // Wait for existing creation to complete
+      await new Promise(resolve => {
+        const checkInterval = setInterval(() => {
+          if (!isCreatingConversation || conversationId) {
+            clearInterval(checkInterval);
+            resolve(void 0);
+          }
+        }, 50);
+      });
+      return conversationId;
+    }
     
+    setIsCreatingConversation(true);
     try {
       const { data: conversation, error } = await supabase
         .from('conversations')
@@ -54,18 +70,21 @@ export const useStreamingChat = (agentId: string) => {
     } catch (error) {
       console.error('Error creating conversation:', error);
       throw error;
+    } finally {
+      setIsCreatingConversation(false);
     }
   };
 
   const sendMessage = useCallback(async (content: string, enableStreaming = true) => {
-    if (!content.trim()) return;
+    const sanitizedContent = sanitizeInput(content);
+    if (!sanitizedContent.trim()) return;
 
     // Create conversation on first message
     const currentConversationId = await createConversation();
 
     const userMessage: StreamingChatMessage = {
       id: Date.now().toString(),
-      content,
+      content: sanitizedContent,
       sender: 'user',
       timestamp: new Date()
     };
@@ -99,7 +118,7 @@ export const useStreamingChat = (agentId: string) => {
             },
             body: JSON.stringify({
               agentId,
-              message: content,
+              message: sanitizedContent,
               conversationId: currentConversationId,
               stream: true
             })
@@ -154,15 +173,21 @@ export const useStreamingChat = (agentId: string) => {
         }
       }
 
-      // Fallback to regular request
-      const { data, error } = await supabase.functions.invoke('chat-completion', {
-        body: {
-          agentId,
-          message: content,
-          conversationId: currentConversationId,
-          stream: false
-        }
-      });
+      // Fallback to regular request with retry logic
+      const { data, error } = await withRetry(
+        () => withTimeout(
+          supabase.functions.invoke('chat-completion', {
+            body: {
+              agentId,
+              message: sanitizedContent,
+              conversationId: currentConversationId,
+              stream: false
+            }
+          }),
+          30000 // 30 second timeout
+        ),
+        { maxAttempts: 2 } // Only retry once for chat completion
+      );
 
       if (error) throw error;
 
@@ -194,6 +219,8 @@ export const useStreamingChat = (agentId: string) => {
 
   const resetChat = async () => {
     setMessages([]);
+    setConversationId(null);
+    setIsCreatingConversation(false);
     await initializeChat();
   };
 
