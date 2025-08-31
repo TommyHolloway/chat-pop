@@ -927,9 +927,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_sensitive_access: {
+        Args: {
+          additional_data?: Json
+          operation_type: string
+          record_id?: string
+          table_name: string
+        }
+        Returns: undefined
+      }
       sanitize_text_input: {
         Args: { input_text: string }
         Returns: string
+      }
+      schedule_visitor_cleanup: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_storage_usage: {
         Args: { p_size_change: number; p_user_id: string }
