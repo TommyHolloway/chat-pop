@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUserPlan } from '@/hooks/useUserPlan';
 import { useProfile } from '@/hooks/useProfile';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { ChangePasswordDialog } from '@/components/auth/ChangePasswordDialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageUpload } from '@/components/agent/ImageUpload';
 import { User, Bell, Shield, CreditCard } from 'lucide-react';
@@ -18,6 +20,7 @@ export const Settings = () => {
   const { theme, toggleTheme } = useTheme();
   const { plan: currentPlan, isAdminOverride } = useUserPlan();
   const { profile, loading: profileLoading, updateProfile, updateAvatar } = useProfile();
+  const { preferences, loading: preferencesLoading, updatePreferences } = useNotificationPreferences();
   const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
@@ -134,7 +137,11 @@ export const Settings = () => {
                   Receive notifications about your agents via email
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={preferences?.email_notifications ?? true}
+                onCheckedChange={(checked) => updatePreferences({ email_notifications: checked })}
+                disabled={preferencesLoading}
+              />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -143,7 +150,11 @@ export const Settings = () => {
                   Get weekly performance reports for your agents
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={preferences?.weekly_reports ?? true}
+                onCheckedChange={(checked) => updatePreferences({ weekly_reports: checked })}
+                disabled={preferencesLoading}
+              />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -152,7 +163,11 @@ export const Settings = () => {
                   Receive updates about new features and tips
                 </p>
               </div>
-              <Switch />
+              <Switch 
+                checked={preferences?.marketing_emails ?? false}
+                onCheckedChange={(checked) => updatePreferences({ marketing_emails: checked })}
+                disabled={preferencesLoading}
+              />
             </div>
           </CardContent>
         </Card>
@@ -193,10 +208,12 @@ export const Settings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button variant="outline">Change Password</Button>
-            <div className="text-sm text-muted-foreground">
-              Last signed in: Today at {new Date().toLocaleTimeString()}
-            </div>
+            <ChangePasswordDialog />
+        <div className="text-sm text-muted-foreground">
+          Last signed in: {user?.last_sign_in_at 
+            ? new Date(user.last_sign_in_at).toLocaleString() 
+            : 'Today at ' + new Date().toLocaleTimeString()}
+        </div>
           </CardContent>
         </Card>
 

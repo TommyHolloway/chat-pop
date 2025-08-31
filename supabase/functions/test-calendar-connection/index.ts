@@ -18,8 +18,6 @@ serve(async (req) => {
       throw new Error('Provider and API key are required');
     }
 
-    console.log(`Testing connection for ${provider}`);
-
     let testResult = false;
     let message = '';
 
@@ -48,7 +46,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error testing calendar connection:', error);
     return new Response(JSON.stringify({ 
       success: false,
       message: error.message 
@@ -70,7 +67,6 @@ async function testCalendlyConnection(apiKey: string): Promise<boolean> {
 
     return response.ok;
   } catch (error) {
-    console.error('Calendly connection test failed:', error);
     return false;
   }
 }
@@ -81,7 +77,6 @@ async function testCalcomConnection(apiKey: string): Promise<boolean> {
     // TODO: Implement actual Cal.com API test when available
     return apiKey.length > 10; // Simple validation
   } catch (error) {
-    console.error('Cal.com connection test failed:', error);
     return false;
   }
 }
@@ -92,7 +87,6 @@ async function testGoogleConnection(apiKey: string): Promise<boolean> {
     // TODO: Implement actual Google Calendar API test
     return apiKey.length > 10; // Simple validation
   } catch (error) {
-    console.error('Google Calendar connection test failed:', error);
     return false;
   }
 }

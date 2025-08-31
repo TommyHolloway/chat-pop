@@ -19,8 +19,6 @@ serve(async (req) => {
       throw new Error('Missing required parameters');
     }
 
-    console.log(`Fetching availability for ${provider} agent ${agentId}`);
-
     // Get calendar integration from database  
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -39,8 +37,16 @@ serve(async (req) => {
       throw new Error('No encrypted API key found for this integration');
     }
 
-    // Decrypt API key (placeholder - implement decryption)
-    const apiKey = integration.api_key_encrypted; // TODO: Decrypt this
+    // Decrypt API key using decryption service
+    const { data: decryptData, error: decryptError } = await supabase.functions.invoke('decrypt-api-key', {
+      body: { encrypted_key: integration.api_key_encrypted }
+    });
+    
+    if (decryptError || !decryptData?.success) {
+      throw new Error('Failed to decrypt API key');
+    }
+    
+    const apiKey = decryptData.decrypted_key;
 
     let slots: any[] = [];
 
@@ -66,7 +72,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error fetching calendar availability:', error);
     return new Response(JSON.stringify({ 
       success: false,
       error: error.message 
@@ -139,93 +144,119 @@ async function getCalendlyAvailability(apiKey: string, config: any): Promise<any
     }));
 
   } catch (error) {
-    console.error('Calendly API error:', error);
-    return [];
+    throw new Error(`Calendly availability failed: ${error.message}`);
   }
 }
 
 async function getCalcomAvailability(apiKey: string, config: any): Promise<any[]> {
-  // Cal.com API implementation
   try {
-    // Mock implementation for now
+    // Cal.com API implementation - using their public API when available
+    // For now implementing with mock data since Cal.com API structure varies
+    
     const slots = [];
+    const startDate = new Date();
+    
+    // Generate availability for next 7 days (9 AM - 5 PM business hours)
     for (let i = 1; i <= 7; i++) {
-      const date = new Date();
+      const date = new Date(startDate);
       date.setDate(date.getDate() + i);
       
-      // Add some sample slots
-      const morningSlot = new Date(date);
-      morningSlot.setHours(10, 0, 0, 0);
+      // Skip weekends for business scheduling
+      if (date.getDay() === 0 || date.getDay() === 6) continue;
       
-      const afternoonSlot = new Date(date);
-      afternoonSlot.setHours(14, 0, 0, 0);
-      
-      slots.push({
-        id: morningSlot.toISOString(),
-        date: morningSlot.toLocaleDateString(),
-        time: morningSlot.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        datetime: morningSlot.toISOString()
-      });
-      
-      slots.push({
-        id: afternoonSlot.toISOString(),
-        date: afternoonSlot.toLocaleDateString(),
-        time: afternoonSlot.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        datetime: afternoonSlot.toISOString()
-      });
+      // Generate slots every 30 minutes during business hours
+      for (let hour = 9; hour < 17; hour++) {
+        for (let minute of [0, 30]) {
+          const slotTime = new Date(date);
+          slotTime.setHours(hour, minute, 0, 0);
+          
+          slots.push({
+            id: slotTime.toISOString(),
+            date: slotTime.toLocaleDateString(),
+            time: slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            datetime: slotTime.toISOString()
+          });
+        }
+      }
     }
     
-    return slots;
+    return slots.slice(0, 20); // Return max 20 slots to avoid overwhelming UI
   } catch (error) {
-    console.error('Cal.com API error:', error);
-    return [];
+    throw new Error(`Cal.com availability failed: ${error.message}`);
   }
 }
 
 async function getGoogleCalendarAvailability(apiKey: string, config: any): Promise<any[]> {
-  // Google Calendar API implementation
   try {
-    // Mock implementation for now
-    const slots = [];
-    for (let i = 1; i <= 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      
-      // Add some sample slots
-      const slot1 = new Date(date);
-      slot1.setHours(9, 0, 0, 0);
-      
-      const slot2 = new Date(date);
-      slot2.setHours(13, 30, 0, 0);
-      
-      const slot3 = new Date(date);
-      slot3.setHours(16, 0, 0, 0);
-      
-      slots.push(
-        {
-          id: slot1.toISOString(),
-          date: slot1.toLocaleDateString(),
-          time: slot1.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          datetime: slot1.toISOString()
+    // Google Calendar API - fetch free/busy information
+    const calendarId = config.calendarId || 'primary';
+    const timeMin = new Date().toISOString();
+    const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
+    // Get busy times first
+    const freeBusyResponse = await fetch(
+      'https://www.googleapis.com/calendar/v3/freeBusy',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
         },
-        {
-          id: slot2.toISOString(),
-          date: slot2.toLocaleDateString(),
-          time: slot2.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          datetime: slot2.toISOString()
-        },
-        {
-          id: slot3.toISOString(),
-          date: slot3.toLocaleDateString(),
-          time: slot3.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          datetime: slot3.toISOString()
-        }
-      );
+        body: JSON.stringify({
+          timeMin,
+          timeMax,
+          items: [{ id: calendarId }]
+        })
+      }
+    );
+    
+    if (!freeBusyResponse.ok) {
+      throw new Error(`Google Calendar API error: ${freeBusyResponse.status}`);
     }
     
-    return slots;
+    const freeBusyData = await freeBusyResponse.json();
+    const busyTimes = freeBusyData.calendars[calendarId]?.busy || [];
+    
+    // Generate available slots (excluding busy times)
+    const slots = [];
+    const startDate = new Date();
+    
+    for (let i = 1; i <= 7; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      
+      // Skip weekends unless configured otherwise
+      if (date.getDay() === 0 || date.getDay() === 6) continue;
+      
+      // Generate slots every 30 minutes during business hours (9 AM - 5 PM)
+      for (let hour = 9; hour < 17; hour++) {
+        for (let minute of [0, 30]) {
+          const slotTime = new Date(date);
+          slotTime.setHours(hour, minute, 0, 0);
+          const slotEnd = new Date(slotTime.getTime() + 30 * 60 * 1000);
+          
+          // Check if this slot conflicts with any busy time
+          const isConflict = busyTimes.some((busy: any) => {
+            const busyStart = new Date(busy.start);
+            const busyEnd = new Date(busy.end);
+            return (slotTime >= busyStart && slotTime < busyEnd) ||
+                   (slotEnd > busyStart && slotEnd <= busyEnd);
+          });
+          
+          if (!isConflict) {
+            slots.push({
+              id: slotTime.toISOString(),
+              date: slotTime.toLocaleDateString(),
+              time: slotTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              datetime: slotTime.toISOString()
+            });
+          }
+        }
+      }
+    }
+    
+    return slots.slice(0, 20); // Return max 20 slots
   } catch (error) {
-    console.error('Google Calendar API error:', error);
-    return [];
+    throw new Error(`Google Calendar availability failed: ${error.message}`);
   }
 }

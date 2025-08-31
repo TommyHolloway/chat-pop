@@ -136,7 +136,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error encrypting API key:', error);
     
     // Log error without exposing sensitive details
     try {
@@ -150,7 +149,7 @@ serve(async (req) => {
         }
       });
     } catch (logError) {
-      console.error('Failed to log error:', logError);
+      // Silently fail on logging errors
     }
     
     return new Response(JSON.stringify({ 

@@ -708,6 +708,36 @@ export type Database = {
           },
         ]
       }
+      user_notification_preferences: {
+        Row: {
+          created_at: string
+          email_notifications: boolean
+          id: string
+          marketing_emails: boolean
+          updated_at: string
+          user_id: string
+          weekly_reports: boolean
+        }
+        Insert: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          marketing_emails?: boolean
+          updated_at?: string
+          user_id: string
+          weekly_reports?: boolean
+        }
+        Update: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          marketing_emails?: boolean
+          updated_at?: string
+          user_id?: string
+          weekly_reports?: boolean
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
