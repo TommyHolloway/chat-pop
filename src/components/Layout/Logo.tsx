@@ -16,7 +16,7 @@ export const Logo = ({ to = "/", className = "flex items-center space-x-2 font-b
         <img 
           src="/lovable-uploads/bee86699-1746-4fa0-b626-746619c93cc6.png" 
           alt="EccoChat" 
-          className="h-8 w-auto"
+          className="h-12 w-auto"
         />
       ) : (
         <>
