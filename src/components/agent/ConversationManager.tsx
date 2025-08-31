@@ -77,7 +77,7 @@ export const ConversationManager = ({ agentId }: ConversationManagerProps) => {
     try {
       setLoading(true);
       
-      // Get conversations for this agent with message counts
+      // Get conversations for this agent with message counts (exclude empty conversations)
       const { data: conversationsData, error } = await supabase
         .from('conversations')
         .select(`
@@ -91,9 +91,16 @@ export const ConversationManager = ({ agentId }: ConversationManagerProps) => {
 
       if (error) throw error;
 
-      // Get last message for each conversation
+      // Get last message for each conversation and filter out empty ones
       const conversationsWithDetails = await Promise.all(
         conversationsData?.map(async (conv) => {
+          const messageCount = conv.messages?.[0]?.count || 0;
+          
+          // Skip conversations with no messages
+          if (messageCount === 0) {
+            return null;
+          }
+
           const { data: lastMessage } = await supabase
             .from('messages')
             .select('content, role')
@@ -106,14 +113,17 @@ export const ConversationManager = ({ agentId }: ConversationManagerProps) => {
             id: conv.id,
             session_id: conv.session_id,
             created_at: conv.created_at,
-            message_count: conv.messages?.[0]?.count || 0,
+            message_count: messageCount,
             last_message: lastMessage?.content || 'No messages',
             status: 'active' as const // For now, all conversations are active
           };
         }) || []
       );
 
-      setConversations(conversationsWithDetails);
+      // Filter out null values (empty conversations)
+      const filteredConversations = conversationsWithDetails.filter(conv => conv !== null);
+
+      setConversations(filteredConversations);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {

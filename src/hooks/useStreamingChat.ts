@@ -18,18 +18,6 @@ export const useStreamingChat = (agentId: string) => {
 
   const initializeChat = async () => {
     try {
-      const { data: conversation, error } = await supabase
-        .from('conversations')
-        .insert({
-          agent_id: agentId,
-          session_id: `session_${Date.now()}`
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      setConversationId(conversation.id);
-      
       const welcomeMessage: StreamingChatMessage = {
         id: '1',
         content: 'Hello! How can I help you today?',
@@ -47,8 +35,33 @@ export const useStreamingChat = (agentId: string) => {
     }
   };
 
+  const createConversation = async () => {
+    if (conversationId) return conversationId;
+    
+    try {
+      const { data: conversation, error } = await supabase
+        .from('conversations')
+        .insert({
+          agent_id: agentId,
+          session_id: `session_${Date.now()}`
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setConversationId(conversation.id);
+      return conversation.id;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
+    }
+  };
+
   const sendMessage = useCallback(async (content: string, enableStreaming = true) => {
-    if (!content.trim() || !conversationId) return;
+    if (!content.trim()) return;
+
+    // Create conversation on first message
+    const currentConversationId = await createConversation();
 
     const userMessage: StreamingChatMessage = {
       id: Date.now().toString(),
@@ -87,7 +100,7 @@ export const useStreamingChat = (agentId: string) => {
             body: JSON.stringify({
               agentId,
               message: content,
-              conversationId,
+              conversationId: currentConversationId,
               stream: true
             })
           });
@@ -146,7 +159,7 @@ export const useStreamingChat = (agentId: string) => {
         body: {
           agentId,
           message: content,
-          conversationId,
+          conversationId: currentConversationId,
           stream: false
         }
       });
@@ -177,7 +190,7 @@ export const useStreamingChat = (agentId: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [agentId, conversationId, toast]);
+  }, [agentId, conversationId, toast, createConversation]);
 
   const resetChat = async () => {
     setMessages([]);

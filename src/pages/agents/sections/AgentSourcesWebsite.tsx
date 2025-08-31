@@ -86,7 +86,9 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            The system will crawl and extract content from the provided URL to add to your agent's knowledge base.
+            <strong>Note:</strong> This section is for adding individual website URLs to scrape content for your agent's knowledge base. 
+            For URL pattern matching in proactive engagement (like "pricing, plans, contact"), go to the 
+            <strong> Proactive Engagement</strong> section in Settings.
           </p>
         </CardContent>
       </Card>

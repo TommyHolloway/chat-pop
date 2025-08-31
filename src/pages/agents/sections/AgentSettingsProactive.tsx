@@ -81,9 +81,16 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
 
   useEffect(() => {
     if (agent?.proactive_config) {
-      setConfig(agent.proactive_config);
+      setConfig(prev => ({
+        ...prev,
+        ...agent.proactive_config,
+        triggers: {
+          ...prev.triggers,
+          ...agent.proactive_config.triggers
+        }
+      }));
     }
-  }, [agent]);
+  }, [agent?.proactive_config]);
 
   const handleSave = async () => {
     setLoading(true);
