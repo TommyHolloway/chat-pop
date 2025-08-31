@@ -461,24 +461,6 @@ export const WorkspaceSidebar = () => {
                 </Collapsible>
                 
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/leads')}>
-                    <Link to="/leads">
-                      <UserPlus className="h-4 w-4" />
-                      <span>Leads</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/analytics')}>
-                    <Link to="/analytics">
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Analytics</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive('/billing')}>
                     <Link to="/billing">
                       <CreditCard className="h-4 w-4" />

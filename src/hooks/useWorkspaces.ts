@@ -67,9 +67,14 @@ export const useWorkspaces = () => {
 
       if (error) throw error;
 
-      setWorkspaces(prev => [...prev, data]);
+      // Update local state immediately
+      const newWorkspaces = [...workspaces, data];
+      setWorkspaces(newWorkspaces);
       setCurrentWorkspace(data);
       localStorage.setItem('currentWorkspaceId', data.id);
+      
+      // Force re-fetch to ensure dropdown updates
+      await fetchWorkspaces();
       
       toast({
         title: "Success",

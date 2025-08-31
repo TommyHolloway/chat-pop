@@ -45,7 +45,7 @@ export const CreateAgentDialog = ({ open, onOpenChange, workspaceId }: CreateAge
       setDescription('');
       setInstructions('');
       onOpenChange(false);
-      navigate(`/workspace/${workspaceId}/agents/${result.id}/playground`);
+      navigate(`/workspace/${workspaceId}/agents/${result.id}/settings/general`);
     }
     setLoading(false);
   };

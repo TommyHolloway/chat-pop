@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Users, Calendar, BarChart3, Settings } from 'lucide-react';
+import { Plus, Users, Calendar, BarChart3, Settings, Edit2 } from 'lucide-react';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useAgents } from '@/hooks/useAgents';
 import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
@@ -10,11 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
 import { CreateWorkspaceDialog } from '@/components/CreateWorkspaceDialog';
 import { CreateAgentDialog } from '@/components/CreateAgentDialog';
+import { EditWorkspaceDialog } from '@/components/EditWorkspaceDialog';
 import { Link } from 'react-router-dom';
 
 export const WorkspaceOverview = () => {
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [showCreateAgent, setShowCreateAgent] = useState(false);
+  const [showEditWorkspace, setShowEditWorkspace] = useState(false);
   const { currentWorkspace, workspaces } = useWorkspaces();
   const { agents, loading: agentsLoading } = useAgents();
   const { leads } = useLeads();
@@ -58,11 +60,21 @@ export const WorkspaceOverview = () => {
     <div className="container mx-auto py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{currentWorkspace.name}</h1>
-          {currentWorkspace.description && (
-            <p className="text-muted-foreground mt-1">{currentWorkspace.description}</p>
-          )}
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">{currentWorkspace.name}</h1>
+            {currentWorkspace.description && (
+              <p className="text-muted-foreground mt-1">{currentWorkspace.description}</p>
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setShowEditWorkspace(true)}
+            className="h-8 w-8 p-0"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
         </div>
         <div className="flex gap-2">
           {canCreateWorkspace ? (
@@ -231,6 +243,11 @@ export const WorkspaceOverview = () => {
         open={showCreateAgent} 
         onOpenChange={setShowCreateAgent}
         workspaceId={currentWorkspace.id}
+      />
+      <EditWorkspaceDialog
+        open={showEditWorkspace}
+        onOpenChange={setShowEditWorkspace}
+        workspace={currentWorkspace}
       />
     </div>
   );
