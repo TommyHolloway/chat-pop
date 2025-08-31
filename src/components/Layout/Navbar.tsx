@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Bot, Moon, Sun, Menu } from 'lucide-react';
+import { Moon, Sun, Menu } from 'lucide-react';
 import { useState } from 'react';
+import { Logo } from './Logo';
 
 export const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
@@ -13,10 +14,7 @@ export const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 font-bold text-xl">
-            <Bot className="h-6 w-6 text-primary" />
-            <span className="text-gradient-primary">EccoChat</span>
-          </Link>
+          <Logo />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">

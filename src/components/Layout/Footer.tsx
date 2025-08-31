@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bot } from 'lucide-react';
+import { Logo } from './Logo';
 
 export const Footer = () => {
   return (
@@ -8,10 +8,7 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2 font-bold text-xl">
-              <Bot className="h-6 w-6 text-primary" />
-              <span className="text-gradient-primary">EccoChat</span>
-            </Link>
+            <Logo />
             <p className="text-sm text-muted-foreground">
               Build and deploy AI chat agents for your business in minutes.
             </p>
