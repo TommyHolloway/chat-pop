@@ -7,16 +7,35 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUserPlan } from '@/hooks/useUserPlan';
+import { useProfile } from '@/hooks/useProfile';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ImageUpload } from '@/components/agent/ImageUpload';
 import { User, Bell, Shield, CreditCard } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export const Settings = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { plan: currentPlan, isAdminOverride } = useUserPlan();
+  const { profile, loading: profileLoading, updateProfile, updateAvatar } = useProfile();
+  const [displayName, setDisplayName] = useState('');
+
+  useEffect(() => {
+    if (profile?.display_name) {
+      setDisplayName(profile.display_name);
+    }
+  }, [profile]);
 
   const getInitials = (email: string) => {
     return email ? email.slice(0, 2).toUpperCase() : 'U';
+  };
+
+  const handleSaveProfile = () => {
+    updateProfile({ display_name: displayName });
+  };
+
+  const handleAvatarChange = (imageUrl: string | null) => {
+    updateAvatar(imageUrl);
   };
 
   return (
@@ -41,14 +60,21 @@ export const Settings = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src="" alt={user?.email || 'User'} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                  {getInitials(user?.email || '')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="space-y-2">
+            <div className="flex items-center gap-6">
+              <div className="flex flex-col items-center">
+                <Avatar className="h-20 w-20 mb-4">
+                  <AvatarImage src={profile?.avatar_url || ""} alt={user?.email || 'User'} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                    {getInitials(user?.email || '')}
+                  </AvatarFallback>
+                </Avatar>
+                <ImageUpload
+                  currentImage={profile?.avatar_url || undefined}
+                  onImageChange={handleAvatarChange}
+                  disabled={profileLoading}
+                />
+              </div>
+              <div className="space-y-2 flex-1">
                 <h3 className="font-medium">{user?.email}</h3>
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground">
@@ -62,9 +88,6 @@ export const Settings = () => {
                     </span>
                   )}
                 </div>
-                <Button variant="outline" size="sm">
-                  Change Avatar
-                </Button>
               </div>
             </div>
             
@@ -77,11 +100,18 @@ export const Settings = () => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="name">Display Name</Label>
-                <Input id="name" placeholder="Enter your display name" />
+                <Input 
+                  id="name" 
+                  placeholder="Enter your display name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                />
               </div>
             </div>
             
-            <Button>Save Changes</Button>
+            <Button onClick={handleSaveProfile} disabled={profileLoading}>
+              Save Changes
+            </Button>
           </CardContent>
         </Card>
 

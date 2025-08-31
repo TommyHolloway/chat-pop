@@ -56,16 +56,17 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       const fileName = `${timestamp}-${file.name}`;
       const filePath = `${user.id}/${fileName}`;
 
-      // Upload file
+      // Upload file to user-avatars bucket if no agentId, otherwise agent-avatars
+      const bucketName = agentId ? 'agent-avatars' : 'user-avatars';
       const { error: uploadError } = await supabase.storage
-        .from('agent-avatars')
+        .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data } = supabase.storage
-        .from('agent-avatars')
+        .from(bucketName)
         .getPublicUrl(filePath);
 
       const imageUrl = data.publicUrl;

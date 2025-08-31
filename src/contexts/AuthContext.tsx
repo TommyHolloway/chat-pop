@@ -54,6 +54,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
+    setLoading(true);
+    
     try {
       // Clean up auth state
       const cleanupAuthState = () => {
@@ -68,12 +70,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       await supabase.auth.signOut({ scope: 'global' });
       
-      // Force page reload for clean state
-      window.location.href = '/';
+      // Use React Router navigation instead of window.location for smoother transition
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     } catch (error) {
       console.error('Error signing out:', error);
       // Force redirect even on error
-      window.location.href = '/';
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     }
   };
 
