@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Bot, Moon, Sun, Settings, LogOut, User } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Logo } from './Logo';
 
 export const AuthenticatedNavbar = () => {
   const { theme, toggleTheme } = useTheme();
@@ -25,10 +26,7 @@ export const AuthenticatedNavbar = () => {
         {/* Left side - Sidebar trigger and Logo */}
         <div className="flex items-center space-x-4">
           <SidebarTrigger />
-          <Link to="/dashboard" className="flex items-center space-x-2 font-bold text-xl">
-            <Bot className="h-6 w-6 text-primary" />
-            <span className="text-gradient-primary">EccoChat</span>
-          </Link>
+          <Logo />
         </div>
 
         {/* Right side - Theme toggle and User menu */}
