@@ -908,12 +908,28 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_role_safe: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          details_param?: Json
+          event_type: string
+          user_id_param?: string
+        }
+        Returns: undefined
+      }
+      sanitize_text_input: {
+        Args: { input_text: string }
+        Returns: string
       }
       update_storage_usage: {
         Args: { p_size_change: number; p_user_id: string }
@@ -935,6 +951,18 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      user_owns_workspace: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: boolean
+      }
+      validate_email: {
+        Args: { email_input: string }
+        Returns: boolean
+      }
+      validate_phone: {
+        Args: { phone_input: string }
+        Returns: boolean
       }
     }
     Enums: {
