@@ -61,8 +61,8 @@ serve(async (req) => {
             const isAllowed = restrictions.allowed_urls.some(pattern => {
               // Convert pattern to regex - handle wildcards
               const regexPattern = pattern
-                .replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&')  // Escape special chars
-                .replace(/\\\\\\*/g, '.*');  // Convert * to .*
+                .replace(/[].*+?^${}()|\\[]/g, '\\\\$&')  // Escape special chars
+                .replace(/\\\\\\\*/g, '.*');  // Convert * to .*
               
               const regex = new RegExp(regexPattern, 'i');
               return regex.test(currentUrl) || regex.test(currentPath);
