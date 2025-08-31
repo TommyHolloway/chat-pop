@@ -908,6 +908,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_visitor_privacy_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       enforce_data_retention: {
         Args: Record<PropertyKey, never>
         Returns: undefined
