@@ -303,6 +303,9 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
                      <Input
                        value={(config.triggers.pricing_concern.url_patterns || []).join(', ')}
                        onChange={(e) => updateTrigger('pricing_concern', { 
+                         url_patterns: e.target.value.split(',').map(s => s.trim())
+                       })}
+                       onBlur={(e) => updateTrigger('pricing_concern', { 
                          url_patterns: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                        })}
                        placeholder="pricing, plans, cost, #pricing"
@@ -409,6 +412,9 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
                      <Input
                        value={(config.triggers.feature_exploration.url_patterns || []).join(', ')}
                        onChange={(e) => updateTrigger('feature_exploration', { 
+                         url_patterns: e.target.value.split(',').map(s => s.trim())
+                       })}
+                       onBlur={(e) => updateTrigger('feature_exploration', { 
                          url_patterns: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                        })}
                        placeholder="features, product, demo, #features"
@@ -511,15 +517,18 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>URL Patterns (comma-separated)</Label>
-                        <Input
-                          value={(trigger.url_patterns || []).join(', ')}
-                          onChange={(e) => updateCustomTrigger(trigger.id, { 
-                            url_patterns: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                          })}
-                          placeholder="contact, about, /subscribe, #section"
-                        />
+                       <div className="space-y-2">
+                         <Label>URL Patterns (comma-separated)</Label>
+                         <Input
+                           value={(trigger.url_patterns || []).join(', ')}
+                           onChange={(e) => updateCustomTrigger(trigger.id, { 
+                             url_patterns: e.target.value.split(',').map(s => s.trim())
+                           })}
+                           onBlur={(e) => updateCustomTrigger(trigger.id, { 
+                             url_patterns: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                           })}
+                           placeholder="contact, about, /subscribe, #section"
+                         />
                         <p className="text-xs text-muted-foreground">
                           URL patterns to match. Use # for sections, / for exact paths, or keywords
                         </p>
