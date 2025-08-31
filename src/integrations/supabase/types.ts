@@ -869,7 +869,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      security_audit_summary: {
+        Row: {
+          audit_date: string | null
+          lead_operations: number | null
+          security_events: number | null
+          service_role_ops: number | null
+          total_operations: number | null
+          unique_ips: number | null
+          visitor_operations: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       anonymize_ip_address: {
@@ -890,6 +901,10 @@ export type Database = {
         Returns: undefined
       }
       cleanup_old_visitor_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      enforce_data_retention: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -936,6 +951,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_service_role_operation: {
+        Args: {
+          context_data?: Json
+          operation_type: string
+          record_data?: Json
+          table_name: string
+        }
+        Returns: undefined
+      }
       sanitize_text_input: {
         Args: { input_text: string }
         Returns: string
@@ -967,6 +991,10 @@ export type Database = {
       }
       user_owns_workspace: {
         Args: { _user_id: string; _workspace_id: string }
+        Returns: boolean
+      }
+      validate_edge_function_request: {
+        Args: { client_ip?: unknown; function_name: string; request_data: Json }
         Returns: boolean
       }
       validate_email: {
