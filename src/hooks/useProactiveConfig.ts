@@ -80,34 +80,48 @@ export const useProactiveConfig = (agent: any) => {
       customTriggersCount: agent?.proactive_config?.custom_triggers?.length || 0
     });
     
-    if (agent?.proactive_config && mounted) {
-      const loadedConfig = agent.proactive_config;
+    // Only process if agent is available and component is still mounted
+    if (agent && mounted) {
+      setConfigLoading(true);
       
-      // Ensure custom_triggers is properly preserved and loaded
-      const mergedConfig = {
-        ...defaultConfig,
-        ...loadedConfig,
-        triggers: {
-          ...defaultConfig.triggers,
-          ...loadedConfig.triggers
-        },
-        // Explicitly preserve custom_triggers from the loaded config
-        custom_triggers: loadedConfig.custom_triggers || []
+      // Use setTimeout to prevent race conditions in React StrictMode
+      const timeoutId = setTimeout(() => {
+        if (!mounted) return;
+        
+        if (agent.proactive_config) {
+          const loadedConfig = agent.proactive_config;
+          
+          // Ensure custom_triggers is properly preserved and loaded
+          const mergedConfig = {
+            ...defaultConfig,
+            ...loadedConfig,
+            triggers: {
+              ...defaultConfig.triggers,
+              ...loadedConfig.triggers
+            },
+            // Explicitly preserve custom_triggers from the loaded config
+            custom_triggers: Array.isArray(loadedConfig.custom_triggers) ? loadedConfig.custom_triggers : []
+          };
+          
+          console.log('useProactiveConfig: Loading config', { 
+            loadedConfig, 
+            mergedConfig,
+            customTriggersLoaded: mergedConfig.custom_triggers?.length || 0
+          });
+          
+          setConfig(mergedConfig);
+        } else {
+          // Agent loaded but no proactive config - use default
+          console.log('useProactiveConfig: No proactive config found, using default');
+          setConfig(defaultConfig);
+        }
+        
+        setConfigLoading(false);
+      }, 0);
+      
+      return () => {
+        clearTimeout(timeoutId);
       };
-      
-      console.log('useProactiveConfig: Loading config', { 
-        loadedConfig, 
-        mergedConfig,
-        customTriggersLoaded: mergedConfig.custom_triggers?.length || 0
-      });
-      
-      setConfig(mergedConfig);
-      setConfigLoading(false);
-    } else if (agent && !agent.proactive_config && mounted) {
-      // Agent loaded but no proactive config - use default
-      console.log('useProactiveConfig: No proactive config found, using default');
-      setConfig(defaultConfig);
-      setConfigLoading(false);
     } else if (!agent) {
       // Agent not loaded yet
       console.log('useProactiveConfig: Agent not loaded yet');
@@ -117,7 +131,7 @@ export const useProactiveConfig = (agent: any) => {
     return () => {
       mounted = false;
     };
-  }, [agent?.id, agent?.proactive_config]);
+  }, [agent?.id, agent?.proactive_config, agent?.updated_at]);
 
   const updateConfig = (updates: Partial<ProactiveConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));

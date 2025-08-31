@@ -398,6 +398,9 @@ serve(async (req) => {
         
         // Initialize
         async function init() {
+            // Store start time for time-based triggers
+            window.startTime = Date.now();
+            
             await loadAgent();
             addMessage('bot', agent?.initial_message || 'Hello! How can I help you today?');
             
@@ -414,8 +417,10 @@ serve(async (req) => {
             // Set up behavior tracking
             setupBehaviorTracking();
             
-            // Check for proactive suggestions every 10 seconds
-            setInterval(checkProactiveSuggestions, 10000);
+            // Check for proactive suggestions every 5 seconds
+            setInterval(checkProactiveSuggestions, 5000);
+            
+            console.log('Chat widget initialized for agent:', AGENT_ID, 'on URL:', window.location.href);
         }
         
         async function loadAgent() {
@@ -605,6 +610,13 @@ serve(async (req) => {
         async function checkProactiveSuggestions() {
             if (hasShownSuggestion) return;
             
+            console.log('Checking proactive suggestions...', { 
+                sessionId, 
+                agentId: AGENT_ID, 
+                currentUrl: window.location.href,
+                timeOnPage: Date.now() - window.startTime || 0
+            });
+            
             try {
                 const response = await fetch(\`\${SUPABASE_URL}/functions/v1/analyze-visitor-behavior\`, {
                     method: 'POST',
@@ -613,14 +625,29 @@ serve(async (req) => {
                     },
                     body: JSON.stringify({
                         sessionId,
-                        agentId: AGENT_ID
+                        agentId: AGENT_ID,
+                        currentUrl: window.location.href,
+                        currentPath: window.location.pathname,
+                        timeOnPage: Date.now() - (window.startTime || Date.now())
                     })
                 });
                 
                 const data = await response.json();
+                console.log('Proactive suggestion analysis result:', data);
                 
-                if (data.success && data.analysis && data.analysis.confidence > 0.7) {
-                    showProactiveSuggestion(data.analysis.suggestedMessage);
+                if (data.success && data.analysis) {
+                    // Lower confidence threshold for time-based custom triggers
+                    const requiredConfidence = data.analysis.triggerType === 'time_based' ? 0.3 : 0.7;
+                    console.log('Confidence check:', { 
+                        actualConfidence: data.analysis.confidence, 
+                        requiredConfidence,
+                        triggerType: data.analysis.triggerType 
+                    });
+                    
+                    if (data.analysis.confidence > requiredConfidence) {
+                        console.log('Showing proactive suggestion:', data.analysis.suggestedMessage);
+                        showProactiveSuggestion(data.analysis.suggestedMessage);
+                    }
                 }
             } catch (error) {
                 console.error('Error checking proactive suggestions:', error);
