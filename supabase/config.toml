@@ -41,3 +41,9 @@ verify_jwt = true
 
 [functions.get-users-admin]
 verify_jwt = true
+
+[functions.encrypt-api-key]
+verify_jwt = true
+
+[functions.security-monitor]
+verify_jwt = true
