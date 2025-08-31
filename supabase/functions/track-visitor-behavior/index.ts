@@ -18,6 +18,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const requestBody = await req.json();
     const { 
       sessionId, 
       agentId, 
@@ -28,7 +29,53 @@ serve(async (req) => {
       timeOnPage,
       eventData,
       sessionData 
-    } = await req.json();
+    } = requestBody;
+
+    // Get client IP for security validation
+    const clientIP = req.headers.get('x-forwarded-for') || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+
+    // Validate the request using our new security function
+    const { error: validationError } = await supabase.rpc('validate_edge_function_request', {
+      function_name: 'track-visitor-behavior',
+      request_data: requestBody,
+      client_ip: clientIP
+    });
+
+    if (validationError) {
+      console.error('Request validation failed:', validationError);
+      return new Response(
+        JSON.stringify({ error: 'Request validation failed' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429
+        }
+      );
+    }
+
+    // Validate required fields
+    if (!sessionId || !eventType || !pageUrl) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: sessionId, eventType, pageUrl' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
+    }
+
+    // Validate event type
+    const validEventTypes = ['page_view', 'click', 'scroll', 'time_spent', 'form_interaction'];
+    if (!validEventTypes.includes(eventType)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid event type' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
+    }
 
     console.log('Tracking visitor behavior:', { sessionId, eventType, pageUrl });
 

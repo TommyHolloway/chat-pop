@@ -13,16 +13,40 @@ serve(async (req) => {
   }
 
   try {
-    const { agentId, conversationId, leadData } = await req.json();
+    const requestBody = await req.json();
+    const { agentId, conversationId, leadData } = requestBody;
     
-    if (!agentId || !conversationId || !leadData) {
-      throw new Error('Agent ID, conversation ID, and lead data are required');
-    }
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get client IP for security validation
+    const clientIP = req.headers.get('x-forwarded-for') || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+
+    // Validate the request using our new security function
+    const { error: validationError } = await supabase.rpc('validate_edge_function_request', {
+      function_name: 'capture-lead',
+      request_data: requestBody,
+      client_ip: clientIP
+    });
+
+    if (validationError) {
+      console.error('Request validation failed:', validationError);
+      return new Response(
+        JSON.stringify({ error: 'Request validation failed' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429
+        }
+      );
+    }
+    
+    if (!agentId || !conversationId || !leadData) {
+      throw new Error('Agent ID, conversation ID, and lead data are required');
+    }
 
     // Validate that the agent exists and get lead capture configuration
     const { data: agent, error: agentError } = await supabase
