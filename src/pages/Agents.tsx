@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,10 +11,14 @@ import { useAgents } from '@/hooks/useAgents';
 import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
 import { useToast } from '@/hooks/use-toast';
 import { AgentCard } from '@/components/shared/AgentCard';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { CreateAgentDialog } from '@/components/CreateAgentDialog';
 
 export const Agents = () => {
   const { agents, loading, deleteAgent, refetchAgents } = useAgents();
+  const { currentWorkspace } = useWorkspaces();
   const { toast } = useToast();
+  const [showCreateAgent, setShowCreateAgent] = useState(false);
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
     try {
@@ -58,12 +62,10 @@ export const Agents = () => {
               </p>
             </div>
             <PlanEnforcementWrapper feature="agent">
-              <Link to="/agents/new">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Agent
-                </Button>
-              </Link>
+              <Button onClick={() => setShowCreateAgent(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Agent
+              </Button>
             </PlanEnforcementWrapper>
           </div>
         </div>
@@ -80,12 +82,10 @@ export const Agents = () => {
                   Create your first AI agent to get started
                 </p>
                 <PlanEnforcementWrapper feature="agent">
-                  <Link to="/agents/new">
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Agent
-                    </Button>
-                  </Link>
+                  <Button onClick={() => setShowCreateAgent(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Agent
+                  </Button>
                 </PlanEnforcementWrapper>
               </CardContent>
             </Card>
@@ -103,6 +103,15 @@ export const Agents = () => {
           )}
         </div>
       </div>
+      
+      {/* Create Agent Dialog */}
+      {currentWorkspace && (
+        <CreateAgentDialog 
+          open={showCreateAgent} 
+          onOpenChange={setShowCreateAgent}
+          workspaceId={currentWorkspace.id}
+        />
+      )}
     </div>
   );
 };

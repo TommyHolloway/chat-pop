@@ -115,6 +115,13 @@ const App = () => (
                   </WorkspaceLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/agents" element={
+                <ProtectedRoute>
+                  <WorkspaceLayout>
+                    <Agents />
+                  </WorkspaceLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/workspace/:workspaceId/agents/:id/*" element={
                 <ProtectedRoute>
                   <WorkspaceLayout>

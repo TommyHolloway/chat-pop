@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,10 +38,15 @@ interface AgentCardProps {
 }
 
 export function AgentCard({ agent, onDelete, variant = 'dashboard' }: AgentCardProps) {
+  const { currentWorkspace } = useWorkspaces();
+  const workspaceId = currentWorkspace?.id;
+  
   const primaryAction = variant === 'dashboard' ? 'Edit' : 'Manage';
-  const primaryLink = variant === 'dashboard' ? `/agents/${agent.id}/edit` : `/agents/${agent.id}`;
+  const primaryLink = variant === 'dashboard' 
+    ? `/workspace/${workspaceId}/agents/${agent.id}/settings/general` 
+    : `/workspace/${workspaceId}/agents/${agent.id}`;
   const PrimaryIcon = variant === 'dashboard' ? Edit : Settings;
-  const testLink = variant === 'dashboard' ? `/agents/${agent.id}/playground` : `/agents/${agent.id}/test`;
+  const testLink = `/workspace/${workspaceId}/agents/${agent.id}/playground`;
 
   return (
     <Card className="hover-lift">
@@ -73,14 +79,14 @@ export function AgentCard({ agent, onDelete, variant = 'dashboard' }: AgentCardP
           <DropdownMenuContent align="end">
             {variant === 'agents' && (
               <DropdownMenuItem asChild>
-                <Link to={`/agents/${agent.id}`} className="flex items-center">
+                <Link to={`/workspace/${workspaceId}/agents/${agent.id}`} className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
                   View Details
                 </Link>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
-              <Link to={`/agents/${agent.id}/edit`} className="flex items-center">
+              <Link to={`/workspace/${workspaceId}/agents/${agent.id}/settings/general`} className="flex items-center">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Agent
               </Link>
@@ -92,7 +98,7 @@ export function AgentCard({ agent, onDelete, variant = 'dashboard' }: AgentCardP
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to={`/agents/${agent.id}/deploy`} className="flex items-center">
+              <Link to={`/workspace/${workspaceId}/agents/${agent.id}/deploy/embed`} className="flex items-center">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Deploy
               </Link>
