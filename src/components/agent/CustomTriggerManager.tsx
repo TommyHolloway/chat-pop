@@ -19,6 +19,11 @@ interface CustomTriggerManagerProps {
 }
 
 export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: CustomTriggerManagerProps) => {
+  console.log('CustomTriggerManager: Rendering', { 
+    triggersCount: triggers.length,
+    triggers: triggers.map(t => ({ id: t.id, name: t.name, enabled: t.enabled }))
+  });
+
   const getTriggerIcon = (type: string) => {
     switch (type) {
       case 'time_based':
@@ -34,6 +39,21 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
     }
   };
 
+  const handleAdd = () => {
+    console.log('CustomTriggerManager: Add button clicked');
+    onAdd();
+  };
+
+  const handleRemove = (triggerId: string) => {
+    console.log('CustomTriggerManager: Remove button clicked', triggerId);
+    onRemove(triggerId);
+  };
+
+  const handleUpdate = (triggerId: string, updates: Partial<CustomTrigger>) => {
+    console.log('CustomTriggerManager: Update called', { triggerId, updates });
+    onUpdate(triggerId, updates);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -42,7 +62,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
             <Plus className="h-5 w-5" />
             Custom Triggers
           </CardTitle>
-          <Button onClick={onAdd} size="sm" className="flex items-center gap-2">
+          <Button onClick={handleAdd} size="sm" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Add Custom Trigger
           </Button>
@@ -65,7 +85,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                     </Badge>
                     <Input
                       value={trigger.name}
-                      onChange={(e) => onUpdate(trigger.id, { name: e.target.value })}
+                      onChange={(e) => handleUpdate(trigger.id, { name: e.target.value })}
                       className="font-medium border-none p-0 h-auto bg-transparent text-base"
                       placeholder="Trigger name"
                     />
@@ -73,12 +93,12 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={trigger.enabled}
-                      onCheckedChange={(enabled) => onUpdate(trigger.id, { enabled })}
+                      onCheckedChange={(enabled) => handleUpdate(trigger.id, { enabled })}
                     />
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onRemove(trigger.id)}
+                      onClick={() => handleRemove(trigger.id)}
                       className="text-red-500 hover:text-red-600 h-6 w-6 p-0"
                     >
                       <X className="h-4 w-4" />
@@ -94,7 +114,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                       <Label>Trigger Type</Label>
                       <Select
                         value={trigger.trigger_type}
-                        onValueChange={(value: any) => onUpdate(trigger.id, { trigger_type: value })}
+                        onValueChange={(value: any) => handleUpdate(trigger.id, { trigger_type: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -114,7 +134,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                       <Label>Time Threshold: {trigger.time_threshold} seconds</Label>
                       <Slider
                         value={[trigger.time_threshold || 30]}
-                        onValueChange={([value]) => onUpdate(trigger.id, { time_threshold: value })}
+                        onValueChange={([value]) => handleUpdate(trigger.id, { time_threshold: value })}
                         min={5}
                         max={300}
                         step={5}
@@ -128,7 +148,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                       <Label>Scroll Depth: {trigger.scroll_depth}%</Label>
                       <Slider
                         value={[trigger.scroll_depth || 50]}
-                        onValueChange={([value]) => onUpdate(trigger.id, { scroll_depth: value })}
+                        onValueChange={([value]) => handleUpdate(trigger.id, { scroll_depth: value })}
                         min={10}
                         max={100}
                         step={5}
@@ -142,7 +162,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                       <Label>Element Selector</Label>
                       <Input
                         value={trigger.element_selector || ''}
-                        onChange={(e) => onUpdate(trigger.id, { element_selector: e.target.value })}
+                        onChange={(e) => handleUpdate(trigger.id, { element_selector: e.target.value })}
                         placeholder=".button-class, #element-id"
                       />
                       <p className="text-xs text-muted-foreground">
@@ -155,10 +175,10 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                     <Label>URL Patterns (comma-separated)</Label>
                     <Input
                       value={(trigger.url_patterns || []).join(', ')}
-                      onChange={(e) => onUpdate(trigger.id, { 
+                      onChange={(e) => handleUpdate(trigger.id, { 
                         url_patterns: e.target.value.split(',').map(s => s.trim())
                       })}
-                      onBlur={(e) => onUpdate(trigger.id, { 
+                      onBlur={(e) => handleUpdate(trigger.id, { 
                         url_patterns: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                       })}
                       placeholder="specific-page, /products, #section"
@@ -169,7 +189,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                     <Label>Trigger Message</Label>
                     <Textarea
                       value={trigger.message}
-                      onChange={(e) => onUpdate(trigger.id, { message: e.target.value })}
+                      onChange={(e) => handleUpdate(trigger.id, { message: e.target.value })}
                       placeholder="Message to show when this trigger activates"
                       rows={2}
                     />

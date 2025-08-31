@@ -14,6 +14,7 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
   const { 
     config, 
     loading, 
+    configLoading,
     updateConfig, 
     updateTrigger, 
     addCustomTrigger, 
@@ -21,6 +22,30 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
     updateCustomTrigger, 
     saveConfig 
   } = useProactiveConfig(agent);
+
+  console.log('AgentSettingsProactive: Rendering', { 
+    hasAgent: !!agent,
+    configLoading,
+    configEnabled: config.enabled,
+    customTriggersCount: config.custom_triggers?.length || 0,
+    agentId: agent?.id
+  });
+
+  if (configLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Proactive Engagement</h2>
+          <p className="text-muted-foreground">
+            Loading configuration...
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   const contentComponent = (
     <div className="space-y-6">
@@ -117,6 +142,7 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
       {/* Custom Triggers */}
       {config.enabled && (
         <CustomTriggerManager
+          key={`custom-triggers-${agent?.id}-${config.custom_triggers?.length || 0}`}
           triggers={config.custom_triggers || []}
           onAdd={addCustomTrigger}
           onRemove={removeCustomTrigger}
