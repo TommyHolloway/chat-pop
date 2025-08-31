@@ -137,7 +137,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       let triggerMet = false;
       
       if (trigger.trigger_type === 'time_based' && trigger.time_threshold) {
-        const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage / 1000) : timeOnPage || 0;
+        const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage) : timeOnPage || 0;
         triggerMet = timeInSeconds >= trigger.time_threshold;
         console.log('Time-based trigger check:', { 
           triggerName: trigger.name,
@@ -174,7 +174,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
     // Check pricing concern trigger
     if (config.triggers.pricing_concern && config.triggers.pricing_concern.enabled) {
       const trigger = config.triggers.pricing_concern;
-      const timeInSeconds = Math.floor(timeOnPage / 1000);
+      const timeInSeconds = Math.floor(timeOnPage);
       
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
@@ -229,7 +229,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
     // Check high engagement trigger
     if (config.triggers.high_engagement && config.triggers.high_engagement.enabled) {
       const trigger = config.triggers.high_engagement;
-      const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage / 1000) : timeOnPage || 0;
+      const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage) : timeOnPage || 0;
       
       if (timeInSeconds >= (trigger.time_threshold || 120)) {
         console.log('High engagement trigger activated');
