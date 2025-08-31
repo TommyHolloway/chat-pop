@@ -70,9 +70,9 @@ export const AgentCompletionProgress = ({ agent }: AgentCompletionProgressProps)
     {
       id: 'ai-config',
       title: 'AI Configuration',
-      description: 'Instructions and model settings',
+      description: 'Instructions configured',
       icon: Bot,
-      completed: !!(agent?.instructions && agent?.model),
+      completed: !!(agent?.instructions),
       route: 'settings/ai'
     },
     {
@@ -105,33 +105,24 @@ export const AgentCompletionProgress = ({ agent }: AgentCompletionProgressProps)
     navigate(`/workspace/${workspaceId}/agents/${agent.id}/playground`);
   };
 
+  // Hide the component if fully complete
+  if (isFullyComplete) {
+    return null;
+  }
+
   return (
-    <Card className="mb-6">
-      <CardHeader>
+    <Card className="mb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              Agent Setup Progress
-              {isFullyComplete && (
-                <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Complete
-                </Badge>
-              )}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+            <CardTitle className="text-lg">Agent Setup Progress</CardTitle>
+            <p className="text-sm text-muted-foreground">
               Complete these steps to get your agent ready
             </p>
           </div>
-          {isFullyComplete && (
-            <Button onClick={handleTestNow} size="sm">
-              <Play className="h-4 w-4 mr-2" />
-              Test Agent
-            </Button>
-          )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>{completedSteps} of {steps.length} steps completed</span>
@@ -140,39 +131,39 @@ export const AgentCompletionProgress = ({ agent }: AgentCompletionProgressProps)
           <Progress value={progressPercentage} className="h-2" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {steps.map((step, index) => (
             <div
               key={step.id}
               onClick={() => handleStepClick(step)}
               className={`
-                p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm
+                p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm
                 ${step.completed 
                   ? 'bg-green-50 border-green-200 hover:bg-green-100' 
                   : 'bg-muted/50 hover:bg-muted'
                 }
               `}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <div className={`
-                  p-2 rounded-full 
+                  p-1.5 rounded-full 
                   ${step.completed ? 'bg-green-100 text-green-600' : 'bg-muted text-muted-foreground'}
                 `}>
                   {step.completed ? (
-                    <CheckCircle className="h-4 w-4" />
+                    <CheckCircle className="h-3 w-3" />
                   ) : (
-                    <Circle className="h-4 w-4" />
+                    <Circle className="h-3 w-3" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className={`
-                    font-medium text-sm 
+                    font-medium text-xs 
                     ${step.completed ? 'text-green-900' : 'text-foreground'}
                   `}>
                     {step.title}
                   </h4>
                   <p className={`
-                    text-xs mt-1 
+                    text-xs mt-0.5 
                     ${step.completed ? 'text-green-700' : 'text-muted-foreground'}
                   `}>
                     {step.description}
@@ -183,13 +174,11 @@ export const AgentCompletionProgress = ({ agent }: AgentCompletionProgressProps)
           ))}
         </div>
 
-        {!isFullyComplete && (
-          <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground">
-              Click on any step above to complete it. Your agent will be ready to deploy once all steps are finished.
-            </p>
-          </div>
-        )}
+        <div className="pt-2 border-t">
+          <p className="text-xs text-muted-foreground">
+            Click on any step above to complete it. Your agent will be ready to deploy once all steps are finished.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
