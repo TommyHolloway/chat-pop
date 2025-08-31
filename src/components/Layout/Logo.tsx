@@ -16,11 +16,11 @@ export const Logo = ({ to = "/", className = "flex items-center space-x-2 font-b
         <img 
           src="/lovable-uploads/bee86699-1746-4fa0-b626-746619c93cc6.png" 
           alt="EccoChat" 
-          className="h-36 w-auto"
+          className="h-40 w-auto"
         />
       ) : (
         <>
-          <Bot className="h-6 w-6 text-primary" />
+          <Bot className="h-7 w-7 text-primary" />
           <span className="text-gradient-primary">EccoChat</span>
         </>
       )}
