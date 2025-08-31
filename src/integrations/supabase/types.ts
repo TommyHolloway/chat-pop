@@ -896,6 +896,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_empty_conversations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_expired_cache: {
         Args: Record<PropertyKey, never>
         Returns: undefined
