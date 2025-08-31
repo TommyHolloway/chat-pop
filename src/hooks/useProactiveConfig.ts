@@ -25,6 +25,7 @@ export interface ProactiveConfig {
   confidence_threshold: number;
   timing_delay: number;
   frequency_limit: number;
+  message_display_duration: number;
   triggers: {
     pricing_concern: ProactiveTrigger;
     high_engagement: ProactiveTrigger;
@@ -38,6 +39,7 @@ const defaultConfig: ProactiveConfig = {
   confidence_threshold: 0.7,
   timing_delay: 5000,
   frequency_limit: 3,
+  message_display_duration: 15000,
   triggers: {
     pricing_concern: {
       enabled: true,

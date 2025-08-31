@@ -120,7 +120,7 @@ serve(async (req) => {
         const data = await response.json();
         
         if (data.success && data.analysis && data.analysis.confidence > 0.4 && !suggestionShown) {
-          showProactiveSuggestion(data.analysis);
+          showProactiveSuggestion(data.analysis, data.messageDisplayDuration || 15000);
         }
       }
     } catch (error) {
@@ -128,7 +128,7 @@ serve(async (req) => {
     }
   }
 
-  function showProactiveSuggestion(analysis) {
+  function showProactiveSuggestion(analysis, displayDuration = 15000) {
     suggestionShown = true;
     suggestion = analysis;
 
@@ -254,7 +254,7 @@ serve(async (req) => {
       if (suggestionBubble.parentNode) {
         suggestionBubble.remove();
       }
-    }, 15000);
+    }, displayDuration);
   }
 
   window.acceptSuggestion = function() {

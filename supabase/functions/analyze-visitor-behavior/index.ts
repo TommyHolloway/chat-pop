@@ -83,7 +83,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        analysis: analysis
+        analysis: analysis,
+        messageDisplayDuration: config.message_display_duration || 15000
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

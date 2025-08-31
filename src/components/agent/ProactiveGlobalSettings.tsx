@@ -67,6 +67,22 @@ export const ProactiveGlobalSettings = ({ config, onUpdate }: ProactiveGlobalSet
             Limit how many proactive suggestions to show during one visitor session
           </p>
         </div>
+
+        {/* Message Display Duration */}
+        <div className="space-y-2">
+          <Label>Message Display Duration: {(config.message_display_duration / 1000)} seconds</Label>
+          <Slider
+            value={[config.message_display_duration]}
+            onValueChange={([value]) => onUpdate({ message_display_duration: value })}
+            min={5000}
+            max={60000}
+            step={5000}
+            className="w-full"
+          />
+          <p className="text-sm text-muted-foreground">
+            How long proactive popup messages stay visible before auto-hiding
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
