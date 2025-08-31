@@ -25,7 +25,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { sessionId, agentId, currentUrl, currentPath, timeOnPage } = await req.json();
+    const requestData = await req.json();
+    const { sessionId, agentId, currentUrl } = requestData;
+    const currentPath = requestData.currentPath || new URL(currentUrl).pathname;
+    const timeOnPage = requestData.timeOnPage || requestData.timeSpentOnPage || 0;
 
     console.log('Analyzing visitor behavior:', { 
       sessionId, 
@@ -113,14 +116,15 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       // Check URL pattern matching
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
+          if (!pattern) return false;
           const normalizedPattern = pattern.toLowerCase().trim();
-          const normalizedUrl = currentUrl.toLowerCase();
-          const normalizedPath = currentPath.toLowerCase();
+          const normalizedUrl = (currentUrl || '').toLowerCase();
+          const normalizedPath = (currentPath || '').toLowerCase();
           
           return normalizedUrl.includes(normalizedPattern) || 
                  normalizedPath.includes(normalizedPattern) ||
-                 currentUrl.includes(pattern) ||
-                 currentPath.includes(pattern);
+                 (currentUrl || '').includes(pattern) ||
+                 (currentPath || '').includes(pattern);
         });
 
         if (!urlMatches) {
@@ -133,7 +137,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       let triggerMet = false;
       
       if (trigger.trigger_type === 'time_based' && trigger.time_threshold) {
-        const timeInSeconds = Math.floor(timeOnPage / 1000);
+        const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage / 1000) : timeOnPage || 0;
         triggerMet = timeInSeconds >= trigger.time_threshold;
         console.log('Time-based trigger check:', { 
           triggerName: trigger.name,
@@ -174,9 +178,10 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
+          if (!pattern) return false;
           const normalizedPattern = pattern.toLowerCase().trim();
-          const normalizedUrl = currentUrl.toLowerCase();
-          const normalizedPath = currentPath.toLowerCase();
+          const normalizedUrl = (currentUrl || '').toLowerCase();
+          const normalizedPath = (currentPath || '').toLowerCase();
           
           return normalizedUrl.includes(normalizedPattern) || 
                  normalizedPath.includes(normalizedPattern);
@@ -200,9 +205,10 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
+          if (!pattern) return false;
           const normalizedPattern = pattern.toLowerCase().trim();
-          const normalizedUrl = currentUrl.toLowerCase();
-          const normalizedPath = currentPath.toLowerCase();
+          const normalizedUrl = (currentUrl || '').toLowerCase();
+          const normalizedPath = (currentPath || '').toLowerCase();
           
           return normalizedUrl.includes(normalizedPattern) || 
                  normalizedPath.includes(normalizedPattern);
@@ -223,7 +229,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
     // Check high engagement trigger
     if (config.triggers.high_engagement && config.triggers.high_engagement.enabled) {
       const trigger = config.triggers.high_engagement;
-      const timeInSeconds = Math.floor(timeOnPage / 1000);
+      const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage / 1000) : timeOnPage || 0;
       
       if (timeInSeconds >= (trigger.time_threshold || 120)) {
         console.log('High engagement trigger activated');

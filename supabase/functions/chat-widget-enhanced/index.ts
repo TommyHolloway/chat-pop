@@ -109,15 +109,22 @@ serve(async (req) => {
           sessionId: sessionId, 
           agentId: agentId, 
           currentUrl: window.location.href,
+          currentPath: window.location.pathname,
           timeSpentOnPage: Math.floor((Date.now() - currentPageStartTime) / 1000)
         })
       });
 
       if (response.ok) {
-        const { analysis } = await response.json();
-        if (analysis && analysis.confidence > 0.4 && !suggestionShown) {
-          showProactiveSuggestion(analysis);
+        const data = await response.json();
+        console.log('Analysis response:', data);
+        
+        if (data.success && data.analysis && data.analysis.confidence > 0.4 && !suggestionShown) {
+          showProactiveSuggestion(data.analysis);
+        } else if (!data.success) {
+          console.log('Analysis failed:', data.reason || data.error);
         }
+      } else {
+        console.error('Analysis request failed:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Analysis error:', error);
