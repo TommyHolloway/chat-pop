@@ -101,10 +101,8 @@ serve(async (req) => {
   }
 
   async function analyzeAndSuggest() {
-    console.log('🔍 analyzeAndSuggest called - suggestionShown:', suggestionShown);
     try {
       const timeOnPage = Math.floor((Date.now() - currentPageStartTime) / 1000);
-      console.log('⏱️ Time on page:', timeOnPage, 'seconds');
       
       const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
         method: 'POST',
@@ -120,72 +118,44 @@ serve(async (req) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 Analysis response:', data);
-        
-        console.log('🔍 Condition check:', {
-          success: data.success,
-          hasAnalysis: !!data.analysis,
-          confidence: data.analysis?.confidence,
-          confidenceCheck: data.analysis?.confidence > 0.4,
-          suggestionShown: suggestionShown,
-          allConditionsMet: data.success && data.analysis && data.analysis.confidence > 0.4 && !suggestionShown
-        });
         
         if (data.success && data.analysis && data.analysis.confidence > 0.4 && !suggestionShown) {
-          console.log('✅ All conditions met - showing proactive suggestion');
           showProactiveSuggestion(data.analysis);
-        } else if (!data.success) {
-          console.log('❌ Analysis failed:', data.reason || data.error);
-        } else {
-          console.log('⚠️ Conditions not met for showing suggestion');
         }
-      } else {
-        console.error('❌ Analysis request failed:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('💥 Analysis error:', error);
+      console.error('Analysis error:', error);
     }
   }
 
   function showProactiveSuggestion(analysis) {
-    console.log('🎯 showProactiveSuggestion called with:', analysis);
     suggestionShown = true;
     suggestion = analysis;
 
-    console.log('🎨 Creating suggestion bubble...');
     const suggestionBubble = document.createElement('div');
     
-    // Make it SUPER visible for debugging - bright red background
     suggestionBubble.style.cssText = \`
       position: fixed !important;
       \${position.includes('right') ? 'right: 100px !important;' : 'left: 100px !important;'}
       \${position.includes('bottom') ? 'bottom: 30px !important;' : 'top: 100px !important;'}
-      background: rgba(255, 0, 0, 0.9) !important;
+      background: rgba(255, 255, 255, 0.98) !important;
       backdrop-filter: blur(16px);
-      border: 3px solid #ff0000 !important;
+      border: 1px solid rgba(132, 204, 22, 0.2) !important;
       border-radius: 16px;
       padding: 20px;
-      max-width: 320px;
+      max-width: 300px;
       box-shadow: 
-        0 16px 48px rgba(255, 0, 0, 0.5),
-        0 4px 16px rgba(132, 204, 22, 0.15),
+        0 20px 60px rgba(0, 0, 0, 0.15),
+        0 8px 32px rgba(132, 204, 22, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
       z-index: 999999 !important;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.5;
       animation: slideInSuggestion 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
-      color: white !important;
+      color: #374151 !important;
     \`;
-
-    console.log('📍 Positioning bubble with position:', position);
-    console.log('📏 Computed styles will be:', {
-      right: position.includes('right') ? '100px' : 'auto',
-      left: position.includes('right') ? 'auto' : '100px',
-      bottom: position.includes('bottom') ? '30px' : 'auto',
-      top: position.includes('bottom') ? 'auto' : '100px'
-    });
 
     suggestionBubble.innerHTML = \`
       <div style="
@@ -205,8 +175,8 @@ serve(async (req) => {
         padding-top: 4px;
       ">
         <div style="
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
           border-radius: 50%;
           display: flex;
@@ -214,50 +184,50 @@ serve(async (req) => {
           justify-content: center;
           box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
         ">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M9 12l2 2 4-4"/>
-            <circle cx="12" cy="12" r="10"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
           </svg>
         </div>
         <div style="
           font-weight: 600;
-          color: white;
-          font-size: 14px;
-        ">AI Assistant [DEBUG MODE]</div>
+          color: #374151;
+          font-size: 13px;
+        ">AI Assistant</div>
       </div>
       <div style="
-        margin-bottom: 20px; 
-        color: white;
-        font-weight: 500;
+        margin-bottom: 18px; 
+        color: #6b7280;
+        font-weight: 400;
+        line-height: 1.6;
       ">
         \${analysis.suggestedMessage}
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button onclick="this.parentElement.parentElement.remove(); console.log('✅ Maybe Later clicked')" style="
-          padding: 10px 16px; 
-          background: rgba(255, 255, 255, 0.2); 
-          border: 1px solid rgba(255, 255, 255, 0.3); 
-          border-radius: 10px; 
-          font-size: 13px; 
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          padding: 8px 14px; 
+          background: rgba(156, 163, 175, 0.1); 
+          border: 1px solid rgba(156, 163, 175, 0.2); 
+          border-radius: 8px; 
+          font-size: 12px; 
           cursor: pointer;
-          color: white;
+          color: #6b7280;
           font-weight: 500;
           transition: all 0.2s ease;
-        ">
+        " onmouseover="this.style.background='rgba(156, 163, 175, 0.15)'" onmouseout="this.style.background='rgba(156, 163, 175, 0.1)'">
           Maybe Later
         </button>
-        <button onclick="acceptSuggestion(); console.log('✅ Start Chat clicked')" style="
-          padding: 10px 20px; 
+        <button onclick="acceptSuggestion()" style="
+          padding: 8px 16px; 
           background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); 
           color: white; 
           border: none; 
-          border-radius: 10px; 
-          font-size: 13px; 
+          border-radius: 8px; 
+          font-size: 12px; 
           cursor: pointer;
           font-weight: 600;
-          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
+          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.25);
           transition: all 0.2s ease;
-        ">
+        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(132, 204, 22, 0.35)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(132, 204, 22, 0.25)'">
           Start Chat
         </button>
       </div>
@@ -278,25 +248,10 @@ serve(async (req) => {
     \`;
     document.head.appendChild(style);
 
-    console.log('🚀 Adding bubble to DOM...');
     document.body.appendChild(suggestionBubble);
-    console.log('✅ Bubble added to DOM, element:', suggestionBubble);
-    
-    // Check if it's actually visible
-    setTimeout(() => {
-      const rect = suggestionBubble.getBoundingClientRect();
-      console.log('📍 Bubble position after render:', {
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-        visible: rect.width > 0 && rect.height > 0
-      });
-    }, 100);
 
     setTimeout(() => {
       if (suggestionBubble.parentNode) {
-        console.log('⏰ Auto-removing suggestion bubble after 15s');
         suggestionBubble.remove();
       }
     }, 15000);
