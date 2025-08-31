@@ -25,6 +25,12 @@ export interface ProactiveConfig {
   confidence_threshold: number;
   timing_delay: number;
   frequency_limit: number;
+  message_display_duration: number;
+  url_restrictions: {
+    enabled: boolean;
+    restrict_to_specific_urls: boolean;
+    allowed_urls: string[];
+  };
   triggers: {
     pricing_concern: ProactiveTrigger;
     high_engagement: ProactiveTrigger;
@@ -38,6 +44,12 @@ const defaultConfig: ProactiveConfig = {
   confidence_threshold: 0.7,
   timing_delay: 5000,
   frequency_limit: 3,
+  message_display_duration: 15000,
+  url_restrictions: {
+    enabled: false,
+    restrict_to_specific_urls: false,
+    allowed_urls: []
+  },
   triggers: {
     pricing_concern: {
       enabled: true,
@@ -99,6 +111,12 @@ export const useProactiveConfig = (agent: any) => {
               ...defaultConfig.triggers,
               ...loadedConfig.triggers
             },
+            // Preserve url_restrictions and message_display_duration if they exist
+            url_restrictions: {
+              ...defaultConfig.url_restrictions,
+              ...(loadedConfig.url_restrictions || {})
+            },
+            message_display_duration: loadedConfig.message_display_duration || defaultConfig.message_display_duration,
             // Explicitly preserve custom_triggers from the loaded config
             custom_triggers: Array.isArray(loadedConfig.custom_triggers) ? loadedConfig.custom_triggers : []
           };

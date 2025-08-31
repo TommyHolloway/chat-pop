@@ -41,6 +41,47 @@ serve(async (req) => {
   let overlay = null;
   let iframe = null;
   let iframeReady = false;
+  let agentData = null;
+  
+  // Fetch agent data first
+  async function fetchAgentData() {
+    try {
+      const response = await fetch(\`https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/get-public-agent-data?agentId=\${agentId}\`);
+      if (response.ok) {
+        agentData = await response.json();
+        
+        // Check URL restrictions
+        if (agentData?.proactive_config?.url_restrictions?.enabled) {
+          const restrictions = agentData.proactive_config.url_restrictions;
+          
+          if (restrictions.restrict_to_specific_urls && restrictions.allowed_urls?.length > 0) {
+            const currentUrl = window.location.href;
+            const currentPath = window.location.pathname;
+            
+            const isAllowed = restrictions.allowed_urls.some(pattern => {
+              // Convert pattern to regex - handle wildcards
+              const regexPattern = pattern
+                .replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&')  // Escape special chars
+                .replace(/\\\\\\*/g, '.*');  // Convert * to .*
+              
+              const regex = new RegExp(regexPattern, 'i');
+              return regex.test(currentUrl) || regex.test(currentPath);
+            });
+            
+            if (!isAllowed) {
+              console.log('EccoChat: Widget restricted on this URL');
+              return false; // Don't load widget
+            }
+          }
+        }
+        
+        return true; // Widget allowed to load
+      }
+    } catch (error) {
+      console.error('Failed to fetch agent data:', error);
+    }
+    return true; // Default to allowing widget if fetch fails
+  }
 
   // Visitor tracking
   const sessionId = 'vis_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -250,11 +291,12 @@ serve(async (req) => {
 
     document.body.appendChild(suggestionBubble);
 
+    const displayDuration = agentData?.proactive_config?.message_display_duration || 15000;
     setTimeout(() => {
       if (suggestionBubble.parentNode) {
         suggestionBubble.remove();
       }
-    }, 15000);
+    }, displayDuration);
   }
 
   window.acceptSuggestion = function() {
@@ -524,9 +566,16 @@ serve(async (req) => {
   }
 
   // Initialize everything
-  function init() {
+  async function init() {
     console.log('🚀 Initializing Enhanced Chat Widget for agent:', agentId);
     console.log('🎯 Position:', position, 'Theme:', theme, 'Color:', primaryColor);
+    
+    const canLoad = await fetchAgentData();
+    if (!canLoad) {
+      console.log('🚫 Widget loading blocked by URL restrictions');
+      return;
+    }
+    
     createWidget();
     initTracking();
     
