@@ -101,7 +101,11 @@ serve(async (req) => {
   }
 
   async function analyzeAndSuggest() {
+    console.log('🔍 analyzeAndSuggest called - suggestionShown:', suggestionShown);
     try {
+      const timeOnPage = Math.floor((Date.now() - currentPageStartTime) / 1000);
+      console.log('⏱️ Time on page:', timeOnPage, 'seconds');
+      
       const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,54 +114,78 @@ serve(async (req) => {
           agentId: agentId, 
           currentUrl: window.location.href,
           currentPath: window.location.pathname,
-          timeSpentOnPage: Math.floor((Date.now() - currentPageStartTime) / 1000)
+          timeOnPage: timeOnPage
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Analysis response:', data);
+        console.log('📊 Analysis response:', data);
+        
+        console.log('🔍 Condition check:', {
+          success: data.success,
+          hasAnalysis: !!data.analysis,
+          confidence: data.analysis?.confidence,
+          confidenceCheck: data.analysis?.confidence > 0.4,
+          suggestionShown: suggestionShown,
+          allConditionsMet: data.success && data.analysis && data.analysis.confidence > 0.4 && !suggestionShown
+        });
         
         if (data.success && data.analysis && data.analysis.confidence > 0.4 && !suggestionShown) {
+          console.log('✅ All conditions met - showing proactive suggestion');
           showProactiveSuggestion(data.analysis);
         } else if (!data.success) {
-          console.log('Analysis failed:', data.reason || data.error);
+          console.log('❌ Analysis failed:', data.reason || data.error);
+        } else {
+          console.log('⚠️ Conditions not met for showing suggestion');
         }
       } else {
-        console.error('Analysis request failed:', response.status, response.statusText);
+        console.error('❌ Analysis request failed:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.error('💥 Analysis error:', error);
     }
   }
 
   function showProactiveSuggestion(analysis) {
+    console.log('🎯 showProactiveSuggestion called with:', analysis);
     suggestionShown = true;
     suggestion = analysis;
 
+    console.log('🎨 Creating suggestion bubble...');
     const suggestionBubble = document.createElement('div');
+    
+    // Make it SUPER visible for debugging - bright red background
     suggestionBubble.style.cssText = \`
-      position: fixed;
-      \${position.includes('right') ? 'right: 100px;' : 'left: 100px;'}
-      \${position.includes('bottom') ? 'bottom: 30px;' : 'top: 100px;'}
-      background: rgba(255, 255, 255, 0.95);
+      position: fixed !important;
+      \${position.includes('right') ? 'right: 100px !important;' : 'left: 100px !important;'}
+      \${position.includes('bottom') ? 'bottom: 30px !important;' : 'top: 100px !important;'}
+      background: rgba(255, 0, 0, 0.9) !important;
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(132, 204, 22, 0.2);
+      border: 3px solid #ff0000 !important;
       border-radius: 16px;
       padding: 20px;
       max-width: 320px;
       box-shadow: 
-        0 16px 48px rgba(0, 0, 0, 0.1),
+        0 16px 48px rgba(255, 0, 0, 0.5),
         0 4px 16px rgba(132, 204, 22, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
-      z-index: 9998;
+      z-index: 999999 !important;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 15px;
       line-height: 1.5;
       animation: slideInSuggestion 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
       overflow: hidden;
+      color: white !important;
     \`;
+
+    console.log('📍 Positioning bubble with position:', position);
+    console.log('📏 Computed styles will be:', {
+      right: position.includes('right') ? '100px' : 'auto',
+      left: position.includes('right') ? 'auto' : '100px',
+      bottom: position.includes('bottom') ? '30px' : 'auto',
+      top: position.includes('bottom') ? 'auto' : '100px'
+    });
 
     suggestionBubble.innerHTML = \`
       <div style="
@@ -193,32 +221,32 @@ serve(async (req) => {
         </div>
         <div style="
           font-weight: 600;
-          color: #111827;
+          color: white;
           font-size: 14px;
-        ">AI Assistant</div>
+        ">AI Assistant [DEBUG MODE]</div>
       </div>
       <div style="
         margin-bottom: 20px; 
-        color: #374151;
+        color: white;
         font-weight: 500;
       ">
         \${analysis.suggestedMessage}
       </div>
       <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button onclick="this.parentElement.parentElement.remove()" style="
+        <button onclick="this.parentElement.parentElement.remove(); console.log('✅ Maybe Later clicked')" style="
           padding: 10px 16px; 
-          background: rgba(107, 114, 128, 0.1); 
-          border: 1px solid rgba(107, 114, 128, 0.2); 
+          background: rgba(255, 255, 255, 0.2); 
+          border: 1px solid rgba(255, 255, 255, 0.3); 
           border-radius: 10px; 
           font-size: 13px; 
           cursor: pointer;
-          color: #6b7280;
+          color: white;
           font-weight: 500;
           transition: all 0.2s ease;
-        " onmouseover="this.style.background='rgba(107, 114, 128, 0.15)'" onmouseout="this.style.background='rgba(107, 114, 128, 0.1)'">
+        ">
           Maybe Later
         </button>
-        <button onclick="acceptSuggestion()" style="
+        <button onclick="acceptSuggestion(); console.log('✅ Start Chat clicked')" style="
           padding: 10px 20px; 
           background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); 
           color: white; 
@@ -229,7 +257,7 @@ serve(async (req) => {
           font-weight: 600;
           box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
           transition: all 0.2s ease;
-        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(132, 204, 22, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(132, 204, 22, 0.3)'">
+        ">
           Start Chat
         </button>
       </div>
@@ -250,10 +278,25 @@ serve(async (req) => {
     \`;
     document.head.appendChild(style);
 
+    console.log('🚀 Adding bubble to DOM...');
     document.body.appendChild(suggestionBubble);
+    console.log('✅ Bubble added to DOM, element:', suggestionBubble);
+    
+    // Check if it's actually visible
+    setTimeout(() => {
+      const rect = suggestionBubble.getBoundingClientRect();
+      console.log('📍 Bubble position after render:', {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        visible: rect.width > 0 && rect.height > 0
+      });
+    }, 100);
 
     setTimeout(() => {
       if (suggestionBubble.parentNode) {
+        console.log('⏰ Auto-removing suggestion bubble after 15s');
         suggestionBubble.remove();
       }
     }, 15000);
@@ -527,16 +570,36 @@ serve(async (req) => {
 
   // Initialize everything
   function init() {
-    console.log('Initializing Enhanced Chat Widget for agent:', agentId);
+    console.log('🚀 Initializing Enhanced Chat Widget for agent:', agentId);
+    console.log('🎯 Position:', position, 'Theme:', theme, 'Color:', primaryColor);
     createWidget();
     initTracking();
+    
+    // Add manual test function for debugging
+    window.testProactiveMessage = function() {
+      console.log('🧪 Manual test triggered');
+      showProactiveSuggestion({
+        confidence: 0.9,
+        suggestedMessage: "Test message: Hi! Can I help you with anything?",
+        triggerType: "manual_test",
+        triggerName: "Manual Test",
+        reason: "Manual test triggered"
+      });
+    };
+    
+    console.log('🛠️ Debug functions available:');
+    console.log('- window.testProactiveMessage() - manually trigger proactive message');
+    console.log('- Current suggestionShown state:', suggestionShown);
     
     // Mark widget as loaded
     window.EccoChatWidget = {
       agentId: agentId,
       toggleChat: toggleChat,
-      isOpen: () => isOpen
+      isOpen: () => isOpen,
+      testMessage: window.testProactiveMessage
     };
+    
+    console.log('✅ Widget initialization complete');
   }
 
   // Start initialization when DOM is ready
