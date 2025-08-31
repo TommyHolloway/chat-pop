@@ -11,9 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { EmailVerificationDialog } from '@/components/EmailVerificationDialog';
 
 export const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -124,14 +127,9 @@ export const Signup = () => {
             window.location.href = '/dashboard';
           }
         } else {
-          // If email confirmation is required, show message and redirect to login
-          toast({
-            title: "Check your email",
-            description: "Please confirm your email address to complete signup.",
-          });
-          setTimeout(() => {
-            navigate('/auth/login');
-          }, 2000);
+          // If email confirmation is required, show email verification dialog
+          setSignupEmail(formData.email);
+          setShowEmailDialog(true);
         }
       }
     } catch (error: any) {
@@ -294,6 +292,12 @@ export const Signup = () => {
           </div>
         </CardContent>
       </Card>
+
+      <EmailVerificationDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        email={signupEmail}
+      />
     </div>
   );
 };

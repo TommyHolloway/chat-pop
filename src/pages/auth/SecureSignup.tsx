@@ -14,6 +14,7 @@ import { signupSchema, type SignupFormData } from '@/lib/validation';
 import { Label } from '@/components/ui/label';
 import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
 import { useFormContext } from 'react-hook-form';
+import { EmailVerificationDialog } from '@/components/EmailVerificationDialog';
 
 const TermsCheckbox = () => {
   const form = useFormContext();
@@ -49,6 +50,8 @@ const TermsCheckbox = () => {
 
 export const SecureSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -123,14 +126,9 @@ export const SecureSignup = () => {
             window.location.href = '/dashboard';
           }
         } else {
-          // If email confirmation is required, show message and redirect to login
-          toast({
-            title: "Check your email",
-            description: "Please confirm your email address to complete signup.",
-          });
-          setTimeout(() => {
-            navigate('/auth/login');
-          }, 2000);
+          // If email confirmation is required, show email verification dialog
+          setSignupEmail(data.email);
+          setShowEmailDialog(true);
         }
       }
     } catch (error: any) {
@@ -233,6 +231,12 @@ export const SecureSignup = () => {
           </div>
         </CardContent>
       </Card>
+
+      <EmailVerificationDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        email={signupEmail}
+      />
     </div>
   );
 };
