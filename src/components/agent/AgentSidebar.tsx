@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Bot,
   Play,
@@ -75,11 +75,33 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
   const { canViewVisitorAnalytics } = usePlanEnforcement();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
+  // State for controlling which sections are open
+  const [openSections, setOpenSections] = useState({
+    activity: false,
+    analytics: false,
+    sources: false,
+    actions: false,
+    deploy: false,
+    settings: false,
+  });
+  
   // Filter agents for current workspace
   const workspaceAgents = agents.filter(a => a.workspace_id === workspaceId);
   
   const isActive = (path: string) => location.pathname === path;
   const isInSection = (section: string) => location.pathname.includes(`/${section}`);
+
+  // Effect to update open sections based on current route
+  useEffect(() => {
+    setOpenSections({
+      activity: isInSection('activity'),
+      analytics: isInSection('analytics'),
+      sources: isInSection('sources'),
+      actions: isInSection('actions'),
+      deploy: isInSection('deploy'),
+      settings: isInSection('settings'),
+    });
+  }, [location.pathname]);
 
   const handleProactiveEngagementClick = (e: React.MouseEvent) => {
     if (!canViewVisitorAnalytics) {
@@ -222,7 +244,10 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
               </SidebarMenuItem>
 
               {/* Activity */}
-              <Collapsible defaultOpen={isInSection('activity')}>
+              <Collapsible 
+                open={openSections.activity}
+                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, activity: open }))}
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
@@ -255,7 +280,10 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
               </Collapsible>
 
               {/* Analytics */}
-              <Collapsible defaultOpen={isInSection('analytics')}>
+              <Collapsible 
+                open={openSections.analytics}
+                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, analytics: open }))}
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
@@ -289,7 +317,10 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
               </Collapsible>
 
               {/* Sources */}
-              <Collapsible defaultOpen={isInSection('sources')}>
+              <Collapsible 
+                open={openSections.sources}
+                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, sources: open }))}
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
@@ -338,7 +369,10 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
               </Collapsible>
 
               {/* Actions */}
-              <Collapsible defaultOpen={isInSection('actions')}>
+              <Collapsible 
+                open={openSections.actions}
+                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, actions: open }))}
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
@@ -371,7 +405,10 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
               </Collapsible>
 
               {/* Deploy */}
-              <Collapsible defaultOpen={isInSection('deploy')}>
+              <Collapsible 
+                open={openSections.deploy}
+                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, deploy: open }))}
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
@@ -412,7 +449,10 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
               </Collapsible>
 
               {/* Settings */}
-              <Collapsible defaultOpen={isInSection('settings')}>
+              <Collapsible 
+                open={openSections.settings}
+                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, settings: open }))}
+              >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
