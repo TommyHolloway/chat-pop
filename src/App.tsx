@@ -21,8 +21,8 @@ import { TermsOfService } from "./pages/TermsOfService";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy";
 import Security from "./pages/Security";
 import { Pricing } from "./pages/Pricing";
-import { Login } from "./pages/auth/Login";
-import { Signup } from "./pages/auth/Signup";
+import { SecureLogin } from "./pages/auth/SecureLogin";
+import { SecureSignup } from "./pages/auth/SecureSignup";
 import { WorkspaceOverview } from "./pages/WorkspaceOverview";
 import { Agents } from "./pages/Agents";
 import { Billing } from "./pages/Billing";
@@ -102,8 +102,8 @@ const App = () => (
               <Route path="/agents/:id/chat" element={<PublicChat />} />
               
               {/* Auth Routes */}
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/signup" element={<Signup />} />
+              <Route path="/auth/login" element={<SecureLogin />} />
+              <Route path="/auth/signup" element={<SecureSignup />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={
