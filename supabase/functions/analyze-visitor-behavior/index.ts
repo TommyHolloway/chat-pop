@@ -160,7 +160,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       if (triggerMet) {
         console.log('Custom trigger activated:', trigger.name);
         return {
-          confidence: 0.9, // High confidence for custom triggers
+          triggered: true,
           suggestedMessage: trigger.message,
           triggerType: trigger.trigger_type,
           triggerName: trigger.name,
@@ -191,7 +191,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
         if (urlMatches && timeInSeconds >= (trigger.time_threshold || 30)) {
           console.log('Pricing concern trigger activated');
           return {
-            confidence: 0.8,
+            triggered: true,
             suggestedMessage: trigger.message,
             triggerType: 'pricing_concern',
             reason: 'Pricing page engagement detected'
@@ -218,7 +218,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
         if (urlMatches) {
           console.log('Feature exploration trigger activated');
           return {
-            confidence: 0.7,
+            triggered: true,
             suggestedMessage: trigger.message,
             triggerType: 'feature_exploration',
             reason: 'Feature exploration detected'
@@ -235,7 +235,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       if (timeInSeconds >= (trigger.time_threshold || 120)) {
         console.log('High engagement trigger activated');
         return {
-          confidence: 0.6,
+          triggered: true,
           suggestedMessage: trigger.message,
           triggerType: 'high_engagement',
           reason: 'High engagement time detected'
@@ -246,7 +246,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
 
   console.log('No triggers activated');
   return {
-    confidence: 0,
+    triggered: false,
     suggestedMessage: null,
     triggerType: null,
     reason: 'No triggers met'

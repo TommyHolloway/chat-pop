@@ -20,22 +20,6 @@ export const ProactiveGlobalSettings = ({ config, onUpdate }: ProactiveGlobalSet
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Confidence Threshold */}
-        <div className="space-y-2">
-          <Label>Confidence Threshold: {config.confidence_threshold.toFixed(1)}</Label>
-          <Slider
-            value={[config.confidence_threshold]}
-            onValueChange={([value]) => onUpdate({ confidence_threshold: value })}
-            min={0.1}
-            max={0.9}
-            step={0.1}
-            className="w-full"
-          />
-          <p className="text-sm text-muted-foreground">
-            Minimum confidence level to trigger proactive suggestions (0.1 = less strict, 0.9 = very strict)
-          </p>
-        </div>
-
         {/* Timing Delay */}
         <div className="space-y-2">
           <Label>Initial Delay: {(config.timing_delay / 1000)} seconds</Label>

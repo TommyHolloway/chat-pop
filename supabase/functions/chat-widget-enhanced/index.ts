@@ -119,7 +119,7 @@ serve(async (req) => {
       if (response.ok) {
         const data = await response.json();
         
-        if (data.success && data.analysis && data.analysis.confidence > 0.4 && !suggestionShown) {
+        if (data.success && data.analysis && data.analysis.triggered && !suggestionShown) {
           showProactiveSuggestion(data.analysis, data.messageDisplayDuration || 15000);
         }
       }

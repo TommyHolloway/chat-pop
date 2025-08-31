@@ -22,7 +22,6 @@ export interface CustomTrigger extends ProactiveTrigger {
 
 export interface ProactiveConfig {
   enabled: boolean;
-  confidence_threshold: number;
   timing_delay: number;
   frequency_limit: number;
   message_display_duration: number;
@@ -36,7 +35,6 @@ export interface ProactiveConfig {
 
 const defaultConfig: ProactiveConfig = {
   enabled: false,
-  confidence_threshold: 0.7,
   timing_delay: 5000,
   frequency_limit: 3,
   message_display_duration: 15000,
