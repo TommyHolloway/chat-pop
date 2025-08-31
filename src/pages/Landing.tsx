@@ -33,7 +33,7 @@ export const Landing = () => {
   useEffect(() => {
     // Add chat widget script
     const script = document.createElement('script');
-    script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget-enhanced?agent=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=dark&color=%2384cc16';
+    script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget-enhanced?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=dark&color=%2384cc16';
     script.async = true;
     
     const handleScriptLoad = () => {

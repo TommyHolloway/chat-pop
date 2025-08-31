@@ -1,8 +1,10 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/javascript',
 };
 
 serve(async (req) => {
@@ -13,696 +15,542 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const agentId = url.searchParams.get('agent');
-    
+    const agentId = url.searchParams.get('agentId');
+    const position = url.searchParams.get('position') || 'bottom-right';
+    const theme = url.searchParams.get('theme') || 'light';
+    const color = url.searchParams.get('color') || '#84cc16';
+
     if (!agentId) {
-      return new Response('Agent ID is required', { 
-        status: 400, 
-        headers: corsHeaders 
-      });
+      return new Response('Agent ID is required', { status: 400 });
     }
 
-    // Enhanced chat widget with proactive engagement
-    const widgetHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat Widget</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f5f7fa;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-        
-        .header-info h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-        
-        .header-info .status {
-            font-size: 12px;
-            opacity: 0.9;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #4ade80;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .message {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            max-width: 85%;
-        }
-        
-        .message.user {
-            flex-direction: row-reverse;
-            margin-left: auto;
-        }
-        
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-        
-        .message.bot .message-avatar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .message.user .message-avatar {
-            background: #e2e8f0;
-            color: #475569;
-        }
-        
-        .message-content {
-            background: white;
-            padding: 12px 16px;
-            border-radius: 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-        
-        .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 12px 16px;
-        }
-        
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            background: #94a3b8;
-            border-radius: 50%;
-            animation: typing 1.4s infinite ease-in-out;
-        }
-        
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-        
-        .input-container {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            gap: 12px;
-            align-items: end;
-        }
-        
-        .input-field {
-            flex: 1;
-            border: 2px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 12px 16px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-            resize: none;
-            min-height: 44px;
-            max-height: 120px;
-            font-family: inherit;
-        }
-        
-        .input-field:focus {
-            border-color: #667eea;
-        }
-        
-        .send-button {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-            font-size: 18px;
-        }
-        
-        .send-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-        
-        .send-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        /* Proactive Suggestion Popup */
-        .proactive-suggestion {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            max-width: 320px;
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-            border: 1px solid #e2e8f0;
-            z-index: 10000;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .proactive-suggestion.visible {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        
-        .suggestion-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .suggestion-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .suggestion-info h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 2px;
-        }
-        
-        .suggestion-info .badge {
-            font-size: 11px;
-            background: #f1f5f9;
-            color: #64748b;
-            padding: 2px 8px;
-            border-radius: 12px;
-        }
-        
-        .suggestion-message {
-            color: #475569;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 16px;
-        }
-        
-        .suggestion-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .suggestion-button {
-            flex: 1;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
-        
-        .suggestion-button.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .suggestion-button.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-        
-        .suggestion-button.secondary {
-            background: #f8fafc;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .suggestion-button.secondary:hover {
-            background: #f1f5f9;
-        }
-        
-        .close-button {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 24px;
-            height: 24px;
-            border: none;
-            background: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .close-button:hover {
-            color: #64748b;
-        }
-    </style>
-</head>
-<body>
-    <div class="chat-header">
-        <div class="avatar">AI</div>
-        <div class="header-info">
-            <h3 id="agent-name">AI Assistant</h3>
-            <div class="status">
-                <div class="status-dot"></div>
-                <span>Online</span>
-            </div>
-        </div>
-    </div>
-    
-    <div id="messages" class="messages-container">
-        <!-- Messages will be added here -->
-    </div>
-    
-    <div class="input-container">
-        <textarea id="messageInput" class="input-field" placeholder="Type your message..." rows="1"></textarea>
-        <button id="sendButton" class="send-button">→</button>
-    </div>
+    const widgetScript = `
+(function() {
+  // Check if widget is already loaded
+  if (window.EccoChatWidget) return;
 
-    <!-- Proactive Suggestion Template -->
-    <div id="proactiveSuggestion" class="proactive-suggestion" style="display: none;">
-        <button class="close-button" onclick="closeSuggestion()">×</button>
-        <div class="suggestion-header">
-            <div class="suggestion-avatar">AI</div>
-            <div class="suggestion-info">
-                <h4 id="suggestion-agent-name">AI Assistant</h4>
-                <span class="badge">Smart Suggestion</span>
-            </div>
-        </div>
-        <div id="suggestionMessage" class="suggestion-message"></div>
-        <div class="suggestion-actions">
-            <button class="suggestion-button primary" onclick="acceptSuggestion()">Start Chat</button>
-            <button class="suggestion-button secondary" onclick="closeSuggestion()">Maybe Later</button>
-        </div>
-    </div>
+  const agentId = '${agentId}';
+  const position = '${position}';
+  const theme = '${theme}';
+  const primaryColor = '${color}';
+  const chatUrl = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/public-chat?agentId=' + agentId;
 
-    <script>
-        const AGENT_ID = '${agentId}';
-        const SUPABASE_URL = 'https://etwjtxqjcwyxdamlcorf.supabase.co';
-        
-        // Session tracking
-        let sessionId = 'vis_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-        let isLoading = false;
-        let agent = null;
-        let conversationId = null;
-        let hasShownSuggestion = false;
-        
-        // DOM elements
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const suggestionPopup = document.getElementById('proactiveSuggestion');
-        
-        // Initialize
-        async function init() {
-            // Store start time for time-based triggers
-            window.startTime = Date.now();
-            
-            await loadAgent();
-            addMessage('bot', agent?.initial_message || 'Hello! How can I help you today?');
-            
-            // Set up input handlers
-            messageInput.addEventListener('keydown', handleKeyDown);
-            sendButton.addEventListener('click', sendMessage);
-            
-            // Auto-resize textarea
-            messageInput.addEventListener('input', autoResize);
-            
-            // Track page view
-            trackBehavior('page_view', window.location.href);
-            
-            // Set up behavior tracking
-            setupBehaviorTracking();
-            
-            // Check for proactive suggestions every 5 seconds
-            setInterval(checkProactiveSuggestions, 5000);
-            
-            console.log('Chat widget initialized for agent:', AGENT_ID, 'on URL:', window.location.href);
+  // Widget state
+  let isOpen = false;
+  let widget = null;
+  let overlay = null;
+  let iframe = null;
+  let iframeReady = false;
+
+  // Visitor tracking
+  const sessionId = 'vis_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  let startTime = Date.now();
+  let currentPageStartTime = Date.now();
+  let totalPageViews = 0;
+  let hasTrackedCurrentPage = false;
+  let suggestion = null;
+  let suggestionShown = false;
+
+  // Visitor tracking functions
+  function trackBehavior(eventType, data = {}) {
+    const payload = {
+      sessionId: sessionId,
+      agentId: agentId,
+      eventType: eventType,
+      pageUrl: window.location.href,
+      eventData: data,
+      sessionData: {
+        userAgent: navigator.userAgent,
+        referrer: document.referrer,
+        firstPageUrl: window.location.href,
+        totalPageViews: totalPageViews,
+        totalTimeSpent: Math.floor((Date.now() - startTime) / 1000)
+      }
+    };
+
+    fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/track-visitor-behavior', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(error => console.error('Tracking error:', error));
+  }
+
+  function trackPageView() {
+    if (!hasTrackedCurrentPage) {
+      totalPageViews++;
+      trackBehavior('page_view');
+      hasTrackedCurrentPage = true;
+      currentPageStartTime = Date.now();
+    }
+  }
+
+  function trackTimeOnPage() {
+    if (hasTrackedCurrentPage) {
+      const timeSpent = Math.floor((Date.now() - currentPageStartTime) / 1000);
+      if (timeSpent > 10) {
+        trackBehavior('time_spent', { timeOnPage: timeSpent });
+      }
+    }
+  }
+
+  function trackScroll() {
+    const scrollDepth = Math.floor((window.pageYOffset / (document.body.scrollHeight - window.innerHeight)) * 100);
+    if (scrollDepth > 25 && scrollDepth % 25 === 0) {
+      trackBehavior('scroll', { scrollDepth: scrollDepth });
+    }
+  }
+
+  async function analyzeAndSuggest() {
+    try {
+      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          sessionId: sessionId, 
+          agentId: agentId, 
+          currentUrl: window.location.href,
+          timeSpentOnPage: Math.floor((Date.now() - currentPageStartTime) / 1000)
+        })
+      });
+
+      if (response.ok) {
+        const { analysis } = await response.json();
+        if (analysis && analysis.confidence > 0.4 && !suggestionShown) {
+          showProactiveSuggestion(analysis);
         }
-        
-        async function loadAgent() {
-            try {
-                const response = await fetch(\`\${SUPABASE_URL}/rest/v1/agents?id=eq.\${AGENT_ID}&select=*\`, {
-                    headers: {
-                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDc2MzEsImV4cCI6MjA3MjAyMzYzMX0.zEq6nfkYLNm3D-wDJfmY6FVdL12CKbm8IqWKDka7vSI'
-                    }
-                });
-                
-                if (response.ok) {
-                    const agents = await response.json();
-                    agent = agents[0];
-                    
-                    if (agent) {
-                        document.getElementById('agent-name').textContent = agent.name;
-                        document.getElementById('suggestion-agent-name').textContent = agent.name;
-                        
-                        // Set theme colors if available
-                        if (agent.message_bubble_color) {
-                            document.documentElement.style.setProperty('--primary-color', agent.message_bubble_color);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading agent:', error);
-            }
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+    }
+  }
+
+  function showProactiveSuggestion(analysis) {
+    suggestionShown = true;
+    suggestion = analysis;
+
+    const suggestionBubble = document.createElement('div');
+    suggestionBubble.style.cssText = \`
+      position: fixed;
+      \${position.includes('right') ? 'right: 100px;' : 'left: 100px;'}
+      \${position.includes('bottom') ? 'bottom: 30px;' : 'top: 100px;'}
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(132, 204, 22, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 320px;
+      box-shadow: 
+        0 16px 48px rgba(0, 0, 0, 0.1),
+        0 4px 16px rgba(132, 204, 22, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      z-index: 9998;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      animation: slideInSuggestion 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    \`;
+
+    suggestionBubble.innerHTML = \`
+      <div style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #84cc16 0%, #65a30d 100%);
+        border-radius: 16px 16px 0 0;
+      "></div>
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-top: 4px;
+      ">
+        <div style="
+          width: 32px;
+          height: 32px;
+          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
+        ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M9 12l2 2 4-4"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+        </div>
+        <div style="
+          font-weight: 600;
+          color: #111827;
+          font-size: 14px;
+        ">AI Assistant</div>
+      </div>
+      <div style="
+        margin-bottom: 20px; 
+        color: #374151;
+        font-weight: 500;
+      ">
+        \${analysis.suggestedMessage}
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          padding: 10px 16px; 
+          background: rgba(107, 114, 128, 0.1); 
+          border: 1px solid rgba(107, 114, 128, 0.2); 
+          border-radius: 10px; 
+          font-size: 13px; 
+          cursor: pointer;
+          color: #6b7280;
+          font-weight: 500;
+          transition: all 0.2s ease;
+        " onmouseover="this.style.background='rgba(107, 114, 128, 0.15)'" onmouseout="this.style.background='rgba(107, 114, 128, 0.1)'">
+          Maybe Later
+        </button>
+        <button onclick="acceptSuggestion()" style="
+          padding: 10px 20px; 
+          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); 
+          color: white; 
+          border: none; 
+          border-radius: 10px; 
+          font-size: 13px; 
+          cursor: pointer;
+          font-weight: 600;
+          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
+          transition: all 0.2s ease;
+        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(132, 204, 22, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(132, 204, 22, 0.3)'">
+          Start Chat
+        </button>
+      </div>
+    \`;
+
+    const style = document.createElement('style');
+    style.textContent = \`
+      @keyframes slideInSuggestion {
+        0% { 
+          opacity: 0; 
+          transform: translateY(20px) scale(0.95); 
         }
-        
-        function addMessage(sender, content, actions = null) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = \`message \${sender}\`;
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = sender === 'bot' ? 'AI' : 'U';
-            
-            const messageContent = document.createElement('div');
-            messageContent.className = 'message-content';
-            messageContent.innerHTML = content.replace(/\\n/g, '<br>');
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(messageContent);
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        100% { 
+          opacity: 1; 
+          transform: translateY(0) scale(1); 
         }
+      }
+    \`;
+    document.head.appendChild(style);
+
+    document.body.appendChild(suggestionBubble);
+
+    setTimeout(() => {
+      if (suggestionBubble.parentNode) {
+        suggestionBubble.remove();
+      }
+    }, 15000);
+  }
+
+  window.acceptSuggestion = function() {
+    const bubbles = document.querySelectorAll('[style*="z-index: 9998"]');
+    bubbles.forEach(bubble => bubble.remove());
+    
+    if (suggestion && suggestion.suggestedMessage) {
+      if (iframe) {
+        const chatUrlWithMessage = chatUrl + '&sessionId=' + encodeURIComponent(sessionId) + 
+          '&proactiveMessage=' + encodeURIComponent(suggestion.suggestedMessage);
         
-        function showTypingIndicator() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message bot';
-            typingDiv.id = 'typing-indicator';
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = 'AI';
-            
-            const typingContent = document.createElement('div');
-            typingContent.className = 'message-content';
-            
-            const typingIndicator = document.createElement('div');
-            typingIndicator.className = 'typing-indicator';
-            typingIndicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-            
-            typingContent.appendChild(typingIndicator);
-            typingDiv.appendChild(avatar);
-            typingDiv.appendChild(typingContent);
-            
-            messagesContainer.appendChild(typingDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        fetch(chatUrlWithMessage)
+          .then(response => response.text())
+          .then(html => {
+            iframe.srcdoc = html;
+          })
+          .catch(error => {
+            console.error('Failed to reload chat with proactive message:', error);
+            iframe.src = chatUrlWithMessage;
+          });
+      }
+    }
+    
+    if (!isOpen) toggleChat();
+  };
+
+  function initTracking() {
+    trackPageView();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        trackTimeOnPage();
+      }
+    });
+
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(trackScroll, 200);
+    });
+
+    document.addEventListener('click', (e) => {
+      const element = e.target;
+      if (element.tagName === 'A' || element.tagName === 'BUTTON' || element.closest('a') || element.closest('button')) {
+        let selector = element.tagName.toLowerCase();
+        if (element.id) selector += '#' + element.id;
+        if (element.className) selector += '.' + element.className.split(' ').join('.');
+        
+        trackBehavior('click', { elementSelector: selector });
+      }
+    });
+
+    // Check for proactive suggestions every 5 seconds
+    setInterval(() => analyzeAndSuggest(), 5000);
+  }
+
+  window.addEventListener('message', (event) => {
+    if (event && event.data === 'ECCOCHAT_READY') {
+      iframeReady = true;
+      console.log('EccoChat iframe ready');
+    }
+  });
+
+  function createWidget() {
+    widget = document.createElement('div');
+    widget.style.cssText = \`
+      position: fixed !important;
+      \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
+      \${position.includes('bottom') ? 'bottom: 20px !important;' : 'top: 20px !important;'}
+      width: 60px !important;
+      height: 60px !important;
+      background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%) !important;
+      border: none !important;
+      border-radius: 50% !important;
+      box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+      cursor: pointer !important;
+      z-index: 999999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      animation: pulseGlow 3s ease-in-out infinite !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    \`;
+
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = \`
+      @keyframes pulseGlow {
+        0%, 100% { 
+          box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1);
+          transform: scale(1);
         }
-        
-        function removeTypingIndicator() {
-            const typing = document.getElementById('typing-indicator');
-            if (typing) typing.remove();
+        50% { 
+          box-shadow: 0 12px 40px rgba(132, 204, 22, 0.6), 0 6px 20px rgba(0, 0, 0, 0.15);
+          transform: scale(1.02);
         }
-        
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message || isLoading) return;
-            
-            addMessage('user', message);
-            messageInput.value = '';
-            autoResize();
-            
-            isLoading = true;
-            sendButton.disabled = true;
-            showTypingIndicator();
-            
-            try {
-                const response = await fetch(\`\${SUPABASE_URL}/functions/v1/public-chat\`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message,
-                        agentId: AGENT_ID,
-                        sessionId,
-                        conversationId
-                    })
-                });
-                
-                const data = await response.json();
-                removeTypingIndicator();
-                
-                if (data.response) {
-                    addMessage('bot', data.response, data.actions);
-                    conversationId = data.conversationId;
-                } else {
-                    addMessage('bot', 'I apologize, but I encountered an error. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                removeTypingIndicator();
-                addMessage('bot', 'I apologize, but I encountered an error. Please try again.');
-            } finally {
-                isLoading = false;
-                sendButton.disabled = false;
-                messageInput.focus();
-            }
+      }
+      
+      @keyframes sparkle {
+        0%, 100% { opacity: 0; transform: rotate(0deg) scale(0); }
+        50% { opacity: 1; transform: rotate(180deg) scale(1); }
+      }
+      
+      .chat-widget-button:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 16px 48px rgba(132, 204, 22, 0.6), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+        animation: none !important;
+      }
+      
+      .chat-widget-sparkle {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 12px;
+        height: 12px;
+        background: radial-gradient(circle, #fbbf24 0%, #f59e0b 100%);
+        border-radius: 50%;
+        animation: sparkle 2s ease-in-out infinite;
+        animation-delay: 1s;
+      }
+    \`;
+    document.head.appendChild(styleSheet);
+
+    widget.className = 'chat-widget-button';
+
+    widget.innerHTML = \`
+      <div class="chat-widget-sparkle"></div>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+        <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
+        <circle cx="12" cy="11" r="1" fill="white" opacity="0.8"/>
+        <circle cx="8" cy="11" r="1" fill="white" opacity="0.6"/>
+        <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
+      </svg>
+    \`;
+
+    widget.addEventListener('click', toggleChat);
+    widget.addEventListener('mouseenter', () => {
+      widget.style.animation = 'none';
+    });
+    widget.addEventListener('mouseleave', () => {
+      widget.style.animation = 'pulseGlow 3s ease-in-out infinite';
+    });
+    
+    document.body.appendChild(widget);
+  }
+
+  function createOverlay() {
+    overlay = document.createElement('div');
+    overlay.style.cssText = \`
+      position: fixed !important;
+      \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
+      \${position.includes('bottom') ? 'bottom: 90px !important;' : 'top: 90px !important;'}
+      width: 360px !important;
+      height: 500px !important;
+      background: rgba(255, 255, 255, 0.98) !important;
+      backdrop-filter: blur(20px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 16px !important;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.15),
+        0 8px 32px rgba(132, 204, 22, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+      z-index: 999998 !important;
+      display: none !important;
+      overflow: hidden !important;
+      animation: slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      transform-origin: \${position.includes('right') ? 'bottom right' : 'bottom left'} !important;
+    \`;
+
+    const overlayStyles = document.createElement('style');
+    overlayStyles.textContent = \`
+      @keyframes slideInChat {
+        0% {
+          opacity: 0;
+          transform: scale(0.8) translateY(20px);
         }
-        
-        function handleKeyDown(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
         }
-        
-        function autoResize() {
-            messageInput.style.height = 'auto';
-            messageInput.style.height = messageInput.scrollHeight + 'px';
+      }
+      
+      @keyframes slideOutChat {
+        0% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
         }
-        
-        // Behavior tracking
-        function setupBehaviorTracking() {
-            // Track time on page
-            let startTime = Date.now();
-            
-            // Track scroll depth
-            let maxScrollDepth = 0;
-            window.addEventListener('scroll', () => {
-                const scrollDepth = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
-                if (scrollDepth > maxScrollDepth) {
-                    maxScrollDepth = scrollDepth;
-                    trackBehavior('scroll', window.location.href, null, scrollDepth);
-                }
-            });
-            
-            // Track when user leaves
-            window.addEventListener('beforeunload', () => {
-                const timeSpent = Math.round((Date.now() - startTime) / 1000);
-                trackBehavior('time_spent', window.location.href, null, null, timeSpent);
-            });
+        100% {
+          opacity: 0;
+          transform: scale(0.8) translateY(20px);
         }
-        
-        async function trackBehavior(eventType, pageUrl, elementSelector = null, scrollDepth = null, timeOnPage = null) {
-            try {
-                await fetch(\`\${SUPABASE_URL}/functions/v1/track-visitor-behavior\`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sessionId,
-                        agentId: AGENT_ID,
-                        eventType,
-                        pageUrl,
-                        elementSelector,
-                        scrollDepth,
-                        timeOnPage,
-                        sessionData: {
-                            userAgent: navigator.userAgent,
-                            referrer: document.referrer,
-                            firstPageUrl: window.location.href,
-                            totalPageViews: 1,
-                            totalTimeSpent: 0
-                        }
-                    })
-                });
-            } catch (error) {
-                console.error('Error tracking behavior:', error);
-            }
-        }
-        
-        async function checkProactiveSuggestions() {
-            if (hasShownSuggestion) return;
-            
-            console.log('Checking proactive suggestions...', { 
-                sessionId, 
-                agentId: AGENT_ID, 
-                currentUrl: window.location.href,
-                timeOnPage: Date.now() - window.startTime || 0
-            });
-            
-            try {
-                const response = await fetch(\`\${SUPABASE_URL}/functions/v1/analyze-visitor-behavior\`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sessionId,
-                        agentId: AGENT_ID,
-                        currentUrl: window.location.href,
-                        currentPath: window.location.pathname,
-                        timeOnPage: Date.now() - (window.startTime || Date.now())
-                    })
-                });
-                
-                const data = await response.json();
-                console.log('Proactive suggestion analysis result:', data);
-                
-                if (data.success && data.analysis) {
-                    // Lower confidence threshold for time-based custom triggers
-                    const requiredConfidence = data.analysis.triggerType === 'time_based' ? 0.3 : 0.7;
-                    console.log('Confidence check:', { 
-                        actualConfidence: data.analysis.confidence, 
-                        requiredConfidence,
-                        triggerType: data.analysis.triggerType 
-                    });
-                    
-                    if (data.analysis.confidence > requiredConfidence) {
-                        console.log('Showing proactive suggestion:', data.analysis.suggestedMessage);
-                        showProactiveSuggestion(data.analysis.suggestedMessage);
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking proactive suggestions:', error);
-            }
-        }
-        
-        function showProactiveSuggestion(message) {
-            hasShownSuggestion = true;
-            document.getElementById('suggestionMessage').textContent = message;
-            suggestionPopup.style.display = 'block';
-            
-            // Trigger animation
-            setTimeout(() => {
-                suggestionPopup.classList.add('visible');
-            }, 100);
-        }
-        
-        function closeSuggestion() {
-            suggestionPopup.classList.remove('visible');
-            setTimeout(() => {
-                suggestionPopup.style.display = 'none';
-            }, 300);
-        }
-        
-        function acceptSuggestion() {
-            closeSuggestion();
-            messageInput.focus();
-            // Optionally add a predefined message
-            messageInput.value = "Hi! I saw your suggestion and I'm interested.";
-            autoResize();
-        }
-        
-        // Initialize the chat
-        init();
-    </script>
-</body>
-</html>
+      }
+    \`;
+    document.head.appendChild(overlayStyles);
+
+    iframe = document.createElement('iframe');
+    iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin';
+    iframe.allow = 'fullscreen';
+    iframe.style.cssText = \`
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 20px;
+      background: transparent;
+    \`;
+
+    console.log('Fetching chat HTML content...');
+    const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
+    fetch(chatUrlWithSession)
+      .then(response => {
+        console.log('Chat fetch response status:', response.status);
+        return response.text();
+      })
+      .then(html => {
+        console.log('Chat HTML fetched successfully, length:', html.length);
+        iframe.srcdoc = html;
+      })
+      .catch(error => {
+        console.error('Failed to fetch chat HTML:', error);
+        iframe.src = chatUrlWithSession;
+      });
+
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+  }
+
+  function toggleChat() {
+    if (!overlay) {
+      createOverlay();
+    }
+    
+    isOpen = !isOpen;
+    
+    if (isOpen) {
+      overlay.style.display = 'block';
+      overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      widget.style.background = 'linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%)';
+      
+      trackBehavior('chat_opened');
+      
+      widget.innerHTML = \`
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      \`;
+    } else {
+      overlay.style.animation = 'slideOutChat 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 300);
+      
+      widget.style.background = 'linear-gradient(135deg, #84cc16 0%, #65a30d 100%)';
+      
+      widget.innerHTML = \`
+        <div class="chat-widget-sparkle"></div>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+          <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
+          <circle cx="12" cy="11" r="1" fill="white" opacity="0.8"/>
+          <circle cx="8" cy="11" r="1" fill="white" opacity="0.6"/>
+          <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
+        </svg>
+      \`;
+    }
+  }
+
+  // Initialize everything
+  function init() {
+    console.log('Initializing Enhanced Chat Widget for agent:', agentId);
+    createWidget();
+    initTracking();
+    
+    // Mark widget as loaded
+    window.EccoChatWidget = {
+      agentId: agentId,
+      toggleChat: toggleChat,
+      isOpen: () => isOpen
+    };
+  }
+
+  // Start initialization when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
     `;
 
-    return new Response(widgetHtml, {
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      },
+    return new Response(widgetScript, {
+      headers: corsHeaders
     });
 
   } catch (error) {
-    console.error('Error in chat-widget-enhanced function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    );
+    console.error('Error serving enhanced chat widget:', error);
+    return new Response('Internal server error', {
+      status: 500,
+      headers: corsHeaders
+    });
   }
 });
