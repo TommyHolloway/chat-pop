@@ -955,6 +955,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      automated_security_maintenance_enhanced: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_user_plan_limits: {
         Args: {
           p_agent_id?: string
@@ -984,6 +988,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      comprehensive_security_scan: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       detect_suspicious_pii_access: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -992,7 +1000,15 @@ export type Database = {
         Args: { data_text: string }
         Returns: string
       }
+      encrypt_pii_field: {
+        Args: { data_text: string; field_type: string }
+        Returns: string
+      }
       enforce_data_retention: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      enhanced_privacy_data_cleanup: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
