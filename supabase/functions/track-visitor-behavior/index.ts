@@ -31,16 +31,21 @@ serve(async (req) => {
       sessionData 
     } = requestBody;
 
-    // Get client IP for security validation
-    const clientIP = req.headers.get('x-forwarded-for') || 
-                     req.headers.get('x-real-ip') || 
-                     'unknown';
+    // Get client IP for security validation - use new secure parsing function
+    const rawClientIP = req.headers.get('x-forwarded-for') || 
+                        req.headers.get('x-real-ip') || 
+                        'unknown';
 
-    // Validate the request using our new security function
+    // Parse IP address safely using our new database function
+    const { data: parsedIP } = await supabase.rpc('parse_client_ip', {
+      ip_header: rawClientIP
+    });
+
+    // Validate the request using our security function
     const { error: validationError } = await supabase.rpc('validate_edge_function_request', {
       function_name: 'track-visitor-behavior',
       request_data: requestBody,
-      client_ip: clientIP
+      client_ip: parsedIP // Use the safely parsed IP
     });
 
     if (validationError) {
@@ -79,7 +84,7 @@ serve(async (req) => {
 
     console.log('Tracking visitor behavior:', { sessionId, eventType, pageUrl });
 
-    // First, upsert the visitor session
+    // First, upsert the visitor session with safely parsed IP
     if (sessionData) {
       const { error: sessionError } = await supabase
         .from('visitor_sessions')
@@ -88,7 +93,7 @@ serve(async (req) => {
           agent_id: agentId,
           user_agent: sessionData.userAgent,
           referrer: sessionData.referrer,
-          ip_address: sessionData.ipAddress,
+          ip_address: parsedIP, // Use the safely parsed IP
           first_page_url: sessionData.firstPageUrl,
           current_page_url: pageUrl,
           total_page_views: sessionData.totalPageViews || 1,
