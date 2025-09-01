@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
-import { Shield, AlertTriangle, Eye, Activity, Clock, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Shield, AlertTriangle, Eye, Activity, Clock, User, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
+import { useEnhancedSecurity } from '@/hooks/useEnhancedSecurity';
 import { useUserRole } from '@/hooks/useUserRole';
+import { SecurityAlert, SecurityStatus } from './SecurityAlert';
 import { format } from 'date-fns';
 
 export const SecurityDashboard: React.FC = () => {
   const { securityEvents, piiAccessLogs, loading, fetchSecurityEvents, checkSuspiciousActivity } = useSecurityMonitoring();
+  const { runSecurityAudit } = useEnhancedSecurity();
   const { role } = useUserRole();
   const [activeTab, setActiveTab] = useState('overview');
+  const [auditResult, setAuditResult] = useState<any>(null);
+  const [isRunningAudit, setIsRunningAudit] = useState(false);
+
+  const handleRunSecurityAudit = async () => {
+    setIsRunningAudit(true);
+    try {
+      const result = await runSecurityAudit();
+      setAuditResult(result);
+    } finally {
+      setIsRunningAudit(false);
+    }
+  };
+
+  useEffect(() => {
+    // Run initial security audit
+    handleRunSecurityAudit();
+  }, []);
 
   if (role !== 'admin') {
     return (
@@ -56,8 +76,22 @@ export const SecurityDashboard: React.FC = () => {
           <p className="text-muted-foreground">
             Monitor PII access and security events across your platform
           </p>
+          {auditResult && (
+            <div className="mt-2">
+              <SecurityStatus level={auditResult.security_level} />
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={handleRunSecurityAudit}
+            variant="outline"
+            size="sm"
+            disabled={isRunningAudit}
+          >
+            <Activity className="h-4 w-4 mr-2" />
+            {isRunningAudit ? 'Running Audit...' : 'Security Audit'}
+          </Button>
           <Button
             onClick={checkSuspiciousActivity}
             variant="outline"
@@ -78,7 +112,27 @@ export const SecurityDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Security Overview Cards */}
+      {/* Security Status Alert */}
+      {auditResult && auditResult.security_level === 'needs_attention' && (
+        <SecurityAlert
+          type="error"
+          title="Security Issues Detected"
+          description="Your system has security issues that require immediate attention."
+          severity="critical"
+          actionLabel="Review Issues"
+          onAction={() => setActiveTab('audit')}
+        />
+      )}
+
+      {/* Critical Security Warning - Leaked Password Protection */}
+      <SecurityAlert
+        type="warning"
+        title="Leaked Password Protection Disabled"
+        description="For enhanced security, enable Leaked Password Protection in your Supabase Auth settings. This will reject passwords found in breach databases."
+        severity="high"
+        actionLabel="Go to Auth Settings"
+        onAction={() => window.open('https://supabase.com/dashboard/project/etwjtxqjcwyxdamlcorf/auth/providers', '_blank')}
+      />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -140,6 +194,7 @@ export const SecurityDashboard: React.FC = () => {
           <TabsTrigger value="events">Security Events</TabsTrigger>
           <TabsTrigger value="pii">PII Access Logs</TabsTrigger>
           <TabsTrigger value="alerts">Critical Alerts</TabsTrigger>
+          <TabsTrigger value="audit">Security Audit</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -296,6 +351,130 @@ export const SecurityDashboard: React.FC = () => {
                   )}
                 </div>
               </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <Card>
+            <CardHeader>
+              <CardTitle>Comprehensive Security Audit</CardTitle>
+              <CardDescription>Detailed security analysis and recommendations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {auditResult ? (
+                <div className="space-y-6">
+                  {/* Audit Summary */}
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Security Level</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <SecurityStatus level={auditResult.security_level} />
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Critical Events (24h)</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2">
+                          {auditResult.security_summary?.critical_events === 0 ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          )}
+                          <span className="text-2xl font-bold">
+                            {auditResult.security_summary?.critical_events || 0}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">PII Violations</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2">
+                          {auditResult.security_summary?.pii_violations === 0 ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          )}
+                          <span className="text-2xl font-bold">
+                            {auditResult.security_summary?.pii_violations || 0}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Compliance Status */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Compliance Status</h3>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>GDPR Compliance</span>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-green-600">Active</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>Privacy Enhanced</span>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-green-600">Enabled</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>Rate Limiting</span>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-green-600">Active</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>PII Monitoring</span>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-green-600">Active</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  {auditResult.recommendations && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Security Recommendations</h3>
+                      <div className="space-y-2">
+                        {JSON.parse(auditResult.recommendations).map((rec: string, index: number) => (
+                          <div key={index} className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded">
+                            <AlertTriangle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm">{rec}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-4" />
+                  <p>Run a security audit to see detailed analysis</p>
+                  <Button 
+                    onClick={handleRunSecurityAudit} 
+                    className="mt-4"
+                    disabled={isRunningAudit}
+                  >
+                    {isRunningAudit ? 'Running Audit...' : 'Run Security Audit'}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

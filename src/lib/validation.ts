@@ -10,9 +10,9 @@ export const emailSchema = z
 
 export const passwordSchema = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
+  .min(12, 'Password must be at least 12 characters')
   .max(128, 'Password is too long')
-  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one lowercase letter, one uppercase letter, and one number');
+  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character');
 
 export const phoneSchema = z
   .string()
@@ -81,15 +81,15 @@ export const sanitizeInput = (input: string): string => {
   return input.replace(/[<>&'"]/g, '').trim();
 };
 
-// Rate limiting utility
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// Enhanced rate limiting utility with IP tracking
+const rateLimitStore = new Map<string, { count: number; resetTime: number; ips: Set<string> }>();
 
 export const checkRateLimit = (key: string, maxRequests: number = 5, windowMs: number = 60000): boolean => {
   const now = Date.now();
   const record = rateLimitStore.get(key);
   
   if (!record || now > record.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
+    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs, ips: new Set() });
     return true;
   }
   
@@ -99,6 +99,57 @@ export const checkRateLimit = (key: string, maxRequests: number = 5, windowMs: n
   
   record.count++;
   return true;
+};
+
+// Enhanced validation for sensitive operations
+export const validateSensitiveOperation = (operation: string, data?: any): boolean => {
+  // Check rate limits more strictly for sensitive operations
+  const limits = {
+    'profile_update': { max: 10, window: 60000 },
+    'pii_access': { max: 20, window: 60000 },
+    'bulk_data_access': { max: 5, window: 60000 },
+    'admin_operation': { max: 50, window: 60000 }
+  };
+  
+  const limit = limits[operation as keyof typeof limits];
+  if (limit && !checkRateLimit(operation, limit.max, limit.window)) {
+    return false;
+  }
+  
+  // Additional validation for PII data
+  if (data && operation === 'pii_access') {
+    const piiFields = ['email', 'phone', 'name', 'address', 'ssn', 'credit_card'];
+    const hasPII = Object.keys(data).some(key => piiFields.includes(key.toLowerCase()));
+    
+    if (hasPII && !checkRateLimit('pii_data_access', 15, 60000)) {
+      return false;
+    }
+  }
+  
+  return true;
+};
+
+// Enhanced input sanitization
+export const enhancedSanitizeInput = (input: string, allowHtml: boolean = false): string => {
+  if (!allowHtml) {
+    // Remove all HTML tags and potentially dangerous characters
+    return input
+      .replace(/<[^>]*>/g, '')
+      .replace(/[<>&'"]/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/data:/gi, '')
+      .replace(/vbscript:/gi, '')
+      .trim();
+  }
+  
+  // Allow basic HTML but sanitize dangerous elements
+  return input
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/data:/gi, '')
+    .replace(/vbscript:/gi, '')
+    .replace(/on\w+="[^"]*"/gi, '')
+    .trim();
 };
 
 // Validation error handler

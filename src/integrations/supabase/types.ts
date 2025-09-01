@@ -1008,9 +1008,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      enhanced_pii_protection_check: {
+        Args: { data_fields: Json; operation_type?: string }
+        Returns: boolean
+      }
       enhanced_privacy_data_cleanup: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      enhanced_rate_limit_check: {
+        Args: {
+          max_operations?: number
+          operation_key: string
+          track_ip?: boolean
+          window_minutes?: number
+        }
+        Returns: boolean
       }
       get_public_agent_data: {
         Args: { agent_uuid: string }
@@ -1129,6 +1142,14 @@ export type Database = {
       }
       validate_phone: {
         Args: { phone_input: string }
+        Returns: boolean
+      }
+      validate_sensitive_data_access: {
+        Args: {
+          operation_type: string
+          table_name: string
+          user_role?: Database["public"]["Enums"]["app_role"]
+        }
         Returns: boolean
       }
     }
