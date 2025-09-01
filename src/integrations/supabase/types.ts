@@ -917,6 +917,10 @@ export type Database = {
         Args: { ip_addr: unknown }
         Returns: unknown
       }
+      anonymize_pii_for_analytics: {
+        Args: { email_input?: string; phone_input?: string }
+        Returns: Json
+      }
       check_user_plan_limits: {
         Args: {
           p_agent_id?: string
@@ -941,6 +945,14 @@ export type Database = {
       cleanup_visitor_privacy_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      detect_suspicious_pii_access: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      encrypt_pii_data: {
+        Args: { data_text: string }
+        Returns: string
       }
       enforce_data_retention: {
         Args: Record<PropertyKey, never>
@@ -971,6 +983,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_pii_access: {
+        Args: {
+          access_reason?: string
+          operation_type: string
+          pii_fields?: Json
+          record_id?: string
+          table_name: string
+        }
+        Returns: undefined
       }
       log_security_event: {
         Args: {
