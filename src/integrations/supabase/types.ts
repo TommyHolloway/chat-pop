@@ -951,6 +951,10 @@ export type Database = {
         Args: { email_input?: string; phone_input?: string }
         Returns: Json
       }
+      automated_security_maintenance: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_user_plan_limits: {
         Args: {
           p_agent_id?: string
@@ -1053,6 +1057,14 @@ export type Database = {
       parse_client_ip: {
         Args: { ip_header: string }
         Returns: unknown
+      }
+      rate_limit_check: {
+        Args: {
+          max_operations?: number
+          operation_key: string
+          window_minutes?: number
+        }
+        Returns: boolean
       }
       sanitize_text_input: {
         Args: { input_text: string }
