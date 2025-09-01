@@ -980,6 +980,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      comprehensive_security_maintenance: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       detect_suspicious_pii_access: {
         Args: Record<PropertyKey, never>
         Returns: undefined
