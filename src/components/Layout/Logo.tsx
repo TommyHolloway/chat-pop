@@ -19,10 +19,11 @@ export const Logo = ({ to = "/", className = "flex items-center space-x-2 font-b
           className="h-52 w-auto"
         />
       ) : (
-        <>
-          <Bot className="h-9 w-9 text-primary" />
-          <span className="text-gradient-primary">EccoChat</span>
-        </>
+        <img 
+          src="/lovable-uploads/7325eedb-a870-42e1-bfdd-a79d7bb5aaf0.png" 
+          alt="EccoChat" 
+          className="h-52 w-auto"
+        />
       )}
     </Link>
   );
