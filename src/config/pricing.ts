@@ -68,7 +68,7 @@ export const faqItems = [
     answer: "A simple setup to automate inquiries with OpenAI—upload MLS data, property details, and market insights to create intelligent responses for buyer qualification and lead nurturing."
   },
   {
-    question: "How does EccoChat automate real estate inquiries?",
+    question: "How does ChatPop automate real estate inquiries?",
     answer: "Upload your property data and market information for 24/7 lead qualification and automated scheduling. The AI handles initial buyer questions, qualifies prospects, and books viewings automatically."
   },
   {

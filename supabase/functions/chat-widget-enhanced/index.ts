@@ -27,7 +27,7 @@ serve(async (req) => {
     const widgetScript = `
 (function() {
   // Check if widget is already loaded
-  if (window.EccoChatWidget) return;
+  if (window.ChatPopWidget) return;
 
   const agentId = '${agentId}';
   const position = '${position}';
@@ -312,9 +312,9 @@ serve(async (req) => {
   }
 
   window.addEventListener('message', (event) => {
-    if (event && event.data === 'ECCOCHAT_READY') {
+    if (event && event.data === 'CHATPOP_READY') {
       iframeReady = true;
-      console.log('EccoChat iframe ready');
+      console.log('ChatPop iframe ready');
     }
   });
 
@@ -547,7 +547,7 @@ serve(async (req) => {
     console.log('- Current suggestionShown state:', suggestionShown);
     
     // Mark widget as loaded
-    window.EccoChatWidget = {
+    window.ChatPopWidget = {
       agentId: agentId,
       toggleChat: toggleChat,
       isOpen: () => isOpen,

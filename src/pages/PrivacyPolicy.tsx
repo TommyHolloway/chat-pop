@@ -107,7 +107,7 @@ const privacySections = [
       "Access, correct, or delete your data.",
       "Opt out of data processing or marketing.",
       "Request data portability.",
-      "To exercise rights, email privacy@eccochat.com. We respond within 30 days (or 45 for CCPA)."
+      "To exercise rights, email privacy@chatpop.ai. We respond within 30 days (or 45 for CCPA)."
     ]
   },
   {
@@ -137,7 +137,7 @@ const privacySections = [
   {
     title: "10. Contact Us",
     content: [
-      "For questions, contact privacy@eccochat.com."
+      "For questions, contact privacy@chatpop.ai."
     ]
   }
 ];

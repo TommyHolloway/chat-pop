@@ -6,7 +6,7 @@ const securitySections = [
   {
     title: "Our Commitment to Security",
     content: [
-      "We employ industry-leading practices to safeguard your information throughout the agent creation, testing, and deployment process. Security is built into every layer of EccoChat, from data ingestion to AI-powered responses via OpenAI.",
+      "We employ industry-leading practices to safeguard your information throughout the agent creation, testing, and deployment process. Security is built into every layer of ChatPop, from data ingestion to AI-powered responses via OpenAI.",
       "We regularly audit our systems and update protocols to address emerging risks, ensuring your chat agents operate securely without compromising speed or usability."
     ]
   },
@@ -23,7 +23,7 @@ const securitySections = [
   {
     title: "Compliance and Standards",
     content: [
-      "EccoChat complies with key regulations to protect your business:",
+      "ChatPop complies with key regulations to protect your business:",
       "GDPR and CCPA: We support data subject rights (access, deletion, portability) and maintain data processing agreements for EU/US users.",
       "AI-Specific Safeguards: Following emerging guidelines (e.g., EU AI Act principles), our agents include escalation for complex queries and transparency in AI-generated responses.",
       "Payment Security: Billing via Stripe is PCI DSS compliant—we never store credit card details.",
@@ -41,8 +41,8 @@ const securitySections = [
   {
     title: "Questions or Concerns?",
     content: [
-      "If you have security questions or need to report an issue, contact us at security@eccochat.com. We're committed to transparency—view our Privacy Policy for more on data handling.",
-      "EccoChat: Secure AI chat agents for real estate pros—protect your data while automating efficiently."
+      "If you have security questions or need to report an issue, contact us at security@chatpop.ai. We're committed to transparency—view our Privacy Policy for more on data handling.",
+      "ChatPop: Secure AI chat agents for real estate pros—protect your data while automating efficiently."
     ]
   }
 ];
@@ -58,10 +58,10 @@ export default function Security() {
             Security & Protection
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            EccoChat Security
+            ChatPop Security
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            At EccoChat, we prioritize the security and privacy of your data above all else. 
+            At ChatPop, we prioritize the security and privacy of your data above all else. 
             As a SaaS platform empowering real estate professionals to build AI chat agents, 
             we understand the sensitivity of client information, property details, and business 
             knowledge you entrust to us.

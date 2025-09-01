@@ -27,7 +27,7 @@ serve(async (req) => {
     const widgetScript = `
 (function() {
   // Check if widget is already loaded
-  if (window.EccoChatWidget) return;
+  if (window.ChatPopWidget) return;
 
   const agentId = '${agentId}';
   const position = '${position}';
@@ -328,9 +328,9 @@ serve(async (req) => {
 
   // Listen for readiness from iframe
   window.addEventListener('message', (event) => {
-    if (event && event.data === 'ECCOCHAT_READY') {
+    if (event && event.data === 'CHATPOP_READY') {
       iframeReady = true;
-      console.log('EccoChat iframe ready');
+      console.log('ChatPop iframe ready');
     }
   });
 
@@ -504,11 +504,11 @@ serve(async (req) => {
       });
 
     iframe.addEventListener('load', function() {
-      console.log('EccoChat iframe loaded successfully');
+      console.log('ChatPop iframe loaded successfully');
     });
 
     iframe.addEventListener('error', function() {
-      console.error('EccoChat iframe failed to load');
+      console.error('ChatPop iframe failed to load');
       showErrorFallback();
     });
 
@@ -628,7 +628,7 @@ serve(async (req) => {
   }
 
   // Expose widget globally
-  window.EccoChatWidget = {
+  window.ChatPopWidget = {
     open: () => {
       if (!isOpen) toggleChat();
     },
@@ -644,7 +644,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in chat-widget function:', error);
     return new Response(
-      'console.error("Failed to load EccoChat widget");',
+      'console.error("Failed to load ChatPop widget");',
       { 
         status: 500,
         headers: corsHeaders

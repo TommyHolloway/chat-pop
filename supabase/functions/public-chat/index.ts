@@ -689,7 +689,7 @@ serve(async (req) => {
         
         try {
           if (window.parent) {
-            window.parent.postMessage('ECCOCHAT_READY', '*');
+            window.parent.postMessage('CHATPOP_READY', '*');
           }
         } catch (_) {}
     </script>

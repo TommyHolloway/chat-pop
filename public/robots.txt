@@ -6,7 +6,7 @@ Disallow: /billing/
 Disallow: /agents/*/edit
 Disallow: /agents/*/playground
 
-Sitemap: https://eccochat.com/sitemap.xml
+Sitemap: https://chatpop.ai/sitemap.xml
 
 # Allow important pages for SEO
 Allow: /

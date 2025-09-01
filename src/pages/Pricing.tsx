@@ -154,7 +154,7 @@ export const Pricing = () => {
                 Ready to get started?
               </h2>
               <p className="text-xl text-muted-foreground mb-8">
-                Join thousands of businesses using EccoChat to provide instant, intelligent customer support.
+                Join thousands of businesses using ChatPop to provide instant, intelligent customer support.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/auth/signup">

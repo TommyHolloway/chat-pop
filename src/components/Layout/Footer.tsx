@@ -30,7 +30,7 @@ export const Footer = () => {
               <li><Link to="/about" className="hover:text-foreground transition-colors">About</Link></li>
               <li><Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link></li>
               <li>
-                <span className="text-muted-foreground">Contact: support@eccochat.com</span>
+                <span className="text-muted-foreground">Contact: support@chatpop.ai</span>
               </li>
             </ul>
           </div>
@@ -48,7 +48,7 @@ export const Footer = () => {
 
         <div className="border-t mt-8 pt-8 flex justify-center">
           <p className="text-sm text-muted-foreground">
-            © 2024 EccoChat. All rights reserved.
+            © 2024 ChatPop. All rights reserved.
           </p>
         </div>
       </div>

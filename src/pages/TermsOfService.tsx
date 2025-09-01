@@ -21,7 +21,7 @@ export const TermsOfService = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in">
-              Please read these terms carefully before using EccoChat services.
+              Please read these terms carefully before using ChatPop services.
             </p>
             
             <p className="text-sm text-muted-foreground">
@@ -150,7 +150,7 @@ const termsSection = [
     content: [
       "Severability: Invalid provisions don't affect others.",
       "Entire Agreement: These Terms supersede prior agreements.",
-      "For questions, contact support@eccochat.com."
+      "For questions, contact support@chatpop.ai."
     ]
   }
 ];

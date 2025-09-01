@@ -43,7 +43,7 @@ export const Deploy = () => {
   width="400"
   height="600"
   frameborder="0"
-  title="EccoChat Agent">
+  title="ChatPop Agent">
 </iframe>`;
 
   const scriptCode = `<script>

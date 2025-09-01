@@ -75,7 +75,7 @@ export const Contact = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in">
-              Have questions about EccoChat? Want a custom demo? Our team is here to help you succeed with AI chatbots.
+              Have questions about ChatPop? Want a custom demo? Our team is here to help you succeed with AI chatbots.
             </p>
           </div>
         </div>
@@ -247,7 +247,7 @@ export const Contact = () => {
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Quick answers to common questions about EccoChat.
+              Quick answers to common questions about ChatPop.
             </p>
           </div>
 
@@ -274,7 +274,7 @@ const contactMethods = [
     icon: Mail,
     title: 'Email Support',
     description: 'Send us a detailed message and we\'ll get back to you soon.',
-    contact: 'support@eccochat.com',
+    contact: 'support@chatpop.ai',
     hours: 'Response within 24 hours'
   },
   {

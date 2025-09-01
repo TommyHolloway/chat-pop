@@ -102,7 +102,7 @@ export const Signup = () => {
 
       if (data.user) {
         toast({
-          title: "Welcome to EccoChat!",
+          title: "Welcome to ChatPop!",
           description: "Your account has been created successfully.",
         });
         
