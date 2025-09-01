@@ -31,21 +31,23 @@ serve(async (req) => {
       sessionData 
     } = requestBody;
 
-    // Get client IP for security validation - use new secure parsing function
-    const rawClientIP = req.headers.get('x-forwarded-for') || 
-                        req.headers.get('x-real-ip') || 
-                        'unknown';
+    // Get client IP for security validation using safe parsing
+    const clientIPHeader = req.headers.get('x-forwarded-for') || 
+                           req.headers.get('x-real-ip') || 
+                           'unknown';
 
-    // Parse IP address safely using our new database function
-    const { data: parsedIP } = await supabase.rpc('parse_client_ip', {
-      ip_header: rawClientIP
+    // Use the new safe IP parsing function
+    const { data: parsedIP, error: ipError } = await supabase.rpc('parse_client_ip', {
+      ip_header: clientIPHeader
     });
 
-    // Validate the request using our security function
+    const clientIP = parsedIP || null;
+
+    // Validate the request using our enhanced security function
     const { error: validationError } = await supabase.rpc('validate_edge_function_request', {
       function_name: 'track-visitor-behavior',
       request_data: requestBody,
-      client_ip: parsedIP // Use the safely parsed IP
+      client_ip: clientIP
     });
 
     if (validationError) {
@@ -84,7 +86,7 @@ serve(async (req) => {
 
     console.log('Tracking visitor behavior:', { sessionId, eventType, pageUrl });
 
-    // First, upsert the visitor session with safely parsed IP
+    // First, upsert the visitor session with safe IP handling
     if (sessionData) {
       const { error: sessionError } = await supabase
         .from('visitor_sessions')
@@ -93,7 +95,7 @@ serve(async (req) => {
           agent_id: agentId,
           user_agent: sessionData.userAgent,
           referrer: sessionData.referrer,
-          ip_address: parsedIP, // Use the safely parsed IP
+          ip_address: clientIP, // Use safely parsed IP
           first_page_url: sessionData.firstPageUrl,
           current_page_url: pageUrl,
           total_page_views: sessionData.totalPageViews || 1,

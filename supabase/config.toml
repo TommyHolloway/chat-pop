@@ -1,5 +1,11 @@
 project_id = "etwjtxqjcwyxdamlcorf"
 
+[functions.secure-encrypt-api-key]
+verify_jwt = true
+
+[functions.secure-decrypt-api-key]
+verify_jwt = true
+
 [functions.chat-widget-enhanced]
 verify_jwt = false
 

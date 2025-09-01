@@ -271,6 +271,36 @@ export type Database = {
         }
         Relationships: []
       }
+      api_key_storage: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          encrypted_key: string
+          id: string
+          key_hash: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          encrypted_key: string
+          id?: string
+          key_hash: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          encrypted_key?: string
+          id?: string
+          key_hash?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       calendar_integrations: {
         Row: {
           agent_id: string
@@ -1019,6 +1049,10 @@ export type Database = {
           table_name: string
         }
         Returns: undefined
+      }
+      parse_client_ip: {
+        Args: { ip_header: string }
+        Returns: unknown
       }
       sanitize_text_input: {
         Args: { input_text: string }
