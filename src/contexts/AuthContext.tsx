@@ -40,17 +40,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Only set loading to false after we've processed the auth state
-        if (initializing) {
-          setInitializing(false);
-          setLoading(false);
-        }
+        // Set loading to false for all events
+        setLoading(false);
+        setInitializing(false);
         
         // Handle post-authentication actions
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('AuthProvider: User signed in successfully');
-          // Remove problematic subscription check that was causing issues
-          // The subscription status can be checked elsewhere if needed
         }
         
         if (event === 'SIGNED_OUT') {
@@ -64,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!mounted) return;
       
-      console.log('AuthProvider: Initial session check', { hasSession: !!session, error });
+      console.log('AuthProvider: Initial session check', { hasSession: !!session, error, userId: session?.user?.id });
       
       if (error) {
         console.error('AuthProvider: Error getting session:', error);
