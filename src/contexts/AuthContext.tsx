@@ -57,29 +57,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     
     try {
-      // Clean up auth state
-      const cleanupAuthState = () => {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      };
-
-      cleanupAuthState();
-      
       await supabase.auth.signOut({ scope: 'global' });
       
-      // Use React Router navigation instead of window.location for smoother transition
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
+      // Use window.location for navigation in context
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
-      // Force redirect even on error
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
+      // Still navigate to home on error
+      window.location.href = '/';
+    } finally {
+      setLoading(false);
     }
   };
 

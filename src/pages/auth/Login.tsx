@@ -31,43 +31,34 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
-      // Clean up existing state
-      const cleanupAuthState = () => {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      };
-
-      cleanupAuthState();
-      
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific auth errors
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
+        }
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please check your email and click the confirmation link before signing in.');
+        }
+        throw error;
+      }
 
-      if (data.user) {
+      if (data.user && data.session) {
         toast({
-          title: "Success!",
-          description: "You have been logged in successfully.",
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
         });
-        // Force page reload for clean state
-        window.location.href = '/dashboard';
+        // Let AuthContext handle the navigation automatically
       }
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Invalid email or password.",
+        title: "Sign in failed",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

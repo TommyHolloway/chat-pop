@@ -66,24 +66,6 @@ export const Signup = () => {
     setIsLoading(true);
 
     try {
-      // Clean up existing state
-      const cleanupAuthState = () => {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      };
-
-      cleanupAuthState();
-
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-
       const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { data, error } = await supabase.auth.signUp({
@@ -98,7 +80,16 @@ export const Signup = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific signup errors
+        if (error.message.includes('User already registered')) {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
+        if (error.message.includes('Password should be at least')) {
+          throw new Error('Password must be at least 6 characters long.');
+        }
+        throw error;
+      }
 
       if (data.user) {
         toast({
@@ -119,13 +110,12 @@ export const Signup = () => {
                 title: "Redirecting to checkout",
                 description: "Complete your subscription to get started.",
               });
-            } catch (error) {
-              // If checkout fails, still redirect to dashboard
-              window.location.href = '/dashboard';
+            } catch (checkoutError) {
+              console.error('Checkout error:', checkoutError);
+              // If checkout fails, let AuthContext handle navigation
             }
-          } else {
-            window.location.href = '/dashboard';
           }
+          // Let AuthContext handle navigation for immediate confirmation
         } else {
           // If email confirmation is required, show email verification dialog
           setSignupEmail(formData.email);
@@ -133,9 +123,10 @@ export const Signup = () => {
         }
       }
     } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Something went wrong. Please try again.",
+        title: "Sign up failed",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
