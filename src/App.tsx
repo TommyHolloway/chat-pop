@@ -24,6 +24,8 @@ import Security from "./pages/Security";
 import { Pricing } from "./pages/Pricing";
 import { SecureLogin } from "./pages/auth/SecureLogin";
 import { SecureSignup } from "./pages/auth/SecureSignup";
+import { ForgotPassword } from "./pages/auth/ForgotPassword";
+import { ResetPassword } from "./pages/auth/ResetPassword";
 import { WorkspaceOverview } from "./pages/WorkspaceOverview";
 import { Agents } from "./pages/Agents";
 import { Billing } from "./pages/Billing";
@@ -106,6 +108,8 @@ const App = () => (
               {/* Auth Routes */}
               <Route path="/auth/login" element={<SecureLogin />} />
               <Route path="/auth/signup" element={<SecureSignup />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={
