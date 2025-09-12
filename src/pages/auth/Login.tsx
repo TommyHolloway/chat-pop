@@ -48,11 +48,14 @@ export const Login = () => {
       }
 
       if (data.user && data.session) {
+        console.log('Login: Success, navigating to dashboard');
         toast({
           title: "Welcome back!",
           description: "You have been signed in successfully.",
         });
-        // Let AuthContext handle the navigation automatically
+        
+        // Navigate immediately after successful login
+        navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
       console.error('Login error:', error);

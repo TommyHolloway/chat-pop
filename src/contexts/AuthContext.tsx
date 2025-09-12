@@ -23,34 +23,69 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
+    console.log('AuthProvider: Setting up auth state listener');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('AuthProvider: Auth state changed', { event, hasSession: !!session, hasUser: !!session?.user });
+        
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
         
-        // Check subscription status when user signs in using setTimeout to prevent deadlock
+        // Only set loading to false after we've processed the auth state
+        if (initializing) {
+          setInitializing(false);
+          setLoading(false);
+        }
+        
+        // Handle post-authentication actions
         if (event === 'SIGNED_IN' && session?.user) {
-          setTimeout(() => {
-            supabase.functions.invoke('check-subscription').catch((error) => {
-              console.error('Error checking subscription on sign in:', error);
-            });
-          }, 0);
+          console.log('AuthProvider: User signed in successfully');
+          // Remove problematic subscription check that was causing issues
+          // The subscription status can be checked elsewhere if needed
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          console.log('AuthProvider: User signed out');
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('AuthProvider: Checking for existing session');
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return;
+      
+      console.log('AuthProvider: Initial session check', { hasSession: !!session, error });
+      
+      if (error) {
+        console.error('AuthProvider: Error getting session:', error);
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      setInitializing(false);
+    }).catch((error) => {
+      if (!mounted) return;
+      
+      console.error('AuthProvider: Failed to get session:', error);
+      setLoading(false);
+      setInitializing(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
