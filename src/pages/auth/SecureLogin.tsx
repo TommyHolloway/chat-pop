@@ -25,40 +25,37 @@ export const SecureLogin = () => {
 
   const handleSubmit = async (data: LoginFormData) => {
     try {
-      // Clean up existing state
-      const cleanupAuthState = () => {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      };
-
-      cleanupAuthState();
+      console.log('SecureLogin: Starting authentication process');
       
-      // Attempt global sign out first
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('SecureLogin: Authentication error:', error);
+        throw error;
+      }
 
-      if (authData.user) {
+      if (authData.user && authData.session) {
+        console.log('SecureLogin: Authentication successful', { 
+          userId: authData.user.id, 
+          hasSession: !!authData.session 
+        });
+        
         toast({
           title: "Success!",
           description: "You have been logged in successfully.",
         });
-        // Force page reload for clean state
-        window.location.href = '/dashboard';
+        
+        // Use React Router navigation instead of window.location
+        // Add a small delay to ensure auth state is properly set
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 100);
       }
     } catch (error: any) {
+      console.error('SecureLogin: Login failed:', error);
       toast({
         title: "Error",
         description: error.message || "Invalid email or password.",
