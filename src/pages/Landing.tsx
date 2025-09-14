@@ -198,7 +198,7 @@ export const Landing = () => {
               Coming Soon Integrations
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              We're building integrations with popular platforms to make deployment even easier. Custom integrations are available via our API.
+              We're building integrations with popular platforms to make deployment even easier.
             </p>
           </div>
 
@@ -215,11 +215,6 @@ export const Landing = () => {
             ))}
           </div>
 
-          <div className="text-center">
-            <Badge variant="secondary" className="text-sm px-3 py-1">
-              Custom integrations available via API
-            </Badge>
-          </div>
         </div>
       </section>
 
