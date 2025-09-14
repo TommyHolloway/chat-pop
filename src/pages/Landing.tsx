@@ -197,23 +197,17 @@ export const Landing = () => {
             <h2 className="text-3xl md:text-5xl font-bold">
               Works on Every Platform
             </h2>
-            <p className="text-lg text-primary font-semibold">
-              Native integrations coming soon
-            </p>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our widget works on any website today through simple embedding. We're also building native integrations to make setup even faster.
+              Our widget works on any website through simple embedding. Deploy in minutes on any platform.
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center max-w-4xl mx-auto mb-12">
             {['Shopify', 'WordPress', 'Webflow', 'Squarespace', 'HubSpot', 'Salesforce'].map((platform) => (
-              <div key={platform} className="text-center relative">
-                <div className="h-16 bg-muted/50 rounded-lg flex items-center justify-center border border-primary/10 hover:border-primary/30 transition-colors opacity-60">
+              <div key={platform} className="text-center">
+                <div className="h-16 bg-muted/50 rounded-lg flex items-center justify-center border border-primary/10 hover:border-primary/30 transition-colors">
                   <span className="font-semibold text-muted-foreground">{platform}</span>
                 </div>
-                <Badge variant="outline" className="text-xs px-2 py-1 absolute -top-2 -right-2 bg-primary text-primary-foreground">
-                  Native Integration Coming Soon
-                </Badge>
               </div>
             ))}
           </div>
