@@ -195,10 +195,13 @@ export const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
-              Coming Soon Integrations
+              Works on Every Platform
             </h2>
+            <p className="text-lg text-primary font-semibold">
+              Native integrations coming soon
+            </p>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              We're building integrations with popular platforms to make deployment even easier.
+              Our widget works on any website today through simple embedding. We're also building native integrations to make setup even faster.
             </p>
           </div>
 
@@ -209,7 +212,7 @@ export const Landing = () => {
                   <span className="font-semibold text-muted-foreground">{platform}</span>
                 </div>
                 <Badge variant="outline" className="text-xs px-2 py-1 absolute -top-2 -right-2 bg-primary text-primary-foreground">
-                  Coming Soon
+                  Native Integration Coming Soon
                 </Badge>
               </div>
             ))}
