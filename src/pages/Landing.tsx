@@ -79,7 +79,7 @@ export const Landing = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Most website visitors leave without converting. Our AI chat agents analyze real-time behavior and start personalized conversations before visitors slip away, turning browsers into buyers.
+              97% of website visitors leave without converting. Our AI chat agents analyze real-time behavior and start personalized conversations before visitors slip away, turning browsers into buyers.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
