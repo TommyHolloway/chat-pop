@@ -20,7 +20,10 @@ export const useEnhancedSecurity = () => {
     data?: any,
     options?: { skipRateLimit?: boolean }
   ): Promise<SecurityValidationResult> => {
-    if (!user) {
+    // Allow certain operations without authentication
+    const unauthenticatedOperations = ['login', 'signup', 'forgot-password', 'reset-password'];
+    
+    if (!user && !unauthenticatedOperations.includes(operation)) {
       return { allowed: false, reason: 'User not authenticated' };
     }
 
