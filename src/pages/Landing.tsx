@@ -70,7 +70,7 @@ export const Landing = () => {
           <div className="max-w-5xl mx-auto text-center space-y-8">
             <Badge variant="secondary" className="mb-6 text-base px-4 py-2 bg-primary/10 text-primary border-primary/20">
               <MessageSquare className="h-4 w-4 mr-2" />
-              Stop Losing 97% of Your Website Visitors
+              Turn More Browsers Into Buyers
             </Badge>
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight text-foreground">
@@ -79,7 +79,7 @@ export const Landing = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              97% of website visitors leave without converting. Our AI chat agents analyze real-time behavior and start personalized conversations before visitors slip away, turning browsers into buyers.
+              Most website visitors leave without converting. Our AI chat agents analyze real-time behavior and start personalized conversations before visitors slip away, turning browsers into buyers.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
@@ -109,12 +109,12 @@ export const Landing = () => {
             <div className="pt-12">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">97%</div>
-                  <div className="text-sm text-muted-foreground">Visitor recovery rate</div>
+                  <div className="text-4xl font-bold text-primary mb-2"><Sparkles className="h-10 w-10 mx-auto" /></div>
+                  <div className="text-sm text-muted-foreground">AI-Powered Intelligence</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">+316%</div>
-                  <div className="text-sm text-muted-foreground">Conversion rate increase</div>
+                  <div className="text-4xl font-bold text-primary mb-2"><TrendingUp className="h-10 w-10 mx-auto" /></div>
+                  <div className="text-sm text-muted-foreground">Significantly Better Engagement</div>
                 </div>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-primary mb-2">24/7</div>
@@ -195,26 +195,29 @@ export const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
-              Integrates With Everything You Use
+              Coming Soon Integrations
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Don't lose another visitor while competitors still use reactive chatbots. Deploy intelligent chat agents anywhere in minutes with our API-first approach and pre-built integrations.
+              We're building integrations with popular platforms to make deployment even easier. Custom integrations are available via our API.
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center max-w-4xl mx-auto mb-12">
             {['Shopify', 'WordPress', 'Webflow', 'Squarespace', 'HubSpot', 'Salesforce'].map((platform) => (
-              <div key={platform} className="text-center">
-                <div className="h-16 bg-muted/50 rounded-lg flex items-center justify-center border border-primary/10 hover:border-primary/30 transition-colors">
+              <div key={platform} className="text-center relative">
+                <div className="h-16 bg-muted/50 rounded-lg flex items-center justify-center border border-primary/10 hover:border-primary/30 transition-colors opacity-60">
                   <span className="font-semibold text-muted-foreground">{platform}</span>
                 </div>
+                <Badge variant="outline" className="text-xs px-2 py-1 absolute -top-2 -right-2 bg-primary text-primary-foreground">
+                  Coming Soon
+                </Badge>
               </div>
             ))}
           </div>
 
           <div className="text-center">
             <Badge variant="secondary" className="text-sm px-3 py-1">
-              + 50+ more integrations via API
+              Custom integrations available via API
             </Badge>
           </div>
         </div>
@@ -270,12 +273,12 @@ export const Landing = () => {
                     <TrendingUp className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-primary">+316%</div>
-                    <div className="text-sm text-muted-foreground">Conversion Rate Increase</div>
+                    <div className="text-3xl font-bold text-primary">300%+</div>
+                    <div className="text-sm text-muted-foreground">Conversion Rate Improvement</div>
                   </div>
                 </div>
-                <p className="text-lg italic">"Our visitor-to-lead conversion jumped from 2.1% to 8.7% in just two months. The AI chat agents start conversations we never would have had."</p>
-                <p className="text-sm text-muted-foreground">– Sarah Chen, E-commerce Director at TechFlow</p>
+                <p className="text-lg italic">"Our visitor-to-lead conversion improved dramatically in just two months. The AI chat agents start conversations we never would have had."</p>
+                <p className="text-sm text-muted-foreground">– E-commerce Director</p>
               </div>
             </Card>
 
@@ -286,12 +289,12 @@ export const Landing = () => {
                     <DollarSign className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-primary">$2.4M</div>
-                    <div className="text-sm text-muted-foreground">Additional Revenue Generated</div>
+                    <div className="text-3xl font-bold text-primary">Significant</div>
+                    <div className="text-sm text-muted-foreground">Revenue Growth</div>
                   </div>
                 </div>
                 <p className="text-lg italic">"The AI chat agents know exactly when to engage visitors and what to say. It's like having a perfect salesperson on every page."</p>
-                <p className="text-sm text-muted-foreground">– Michael Rodriguez, VP Sales at Growth Labs</p>
+                <p className="text-sm text-muted-foreground">– VP of Sales</p>
               </div>
             </Card>
           </div>
@@ -307,21 +310,14 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* Brand Showcase */}
+      {/* Growing Customer Base */}
       <section className="py-16 bg-muted/10">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8">
-            <h3 className="text-2xl font-semibold text-muted-foreground">Trusted by 1,000+ Businesses Recovering Lost Visitors</h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center opacity-60 max-w-4xl mx-auto">
-              {['TechCorp', 'StartupLab', 'BusinessPro', 'InnovateInc', 'GrowthCo', 'ScaleUp'].map((company) => (
-                <div key={company} className="text-center">
-                  <div className="h-12 bg-muted/30 rounded-lg flex items-center justify-center">
-                    <span className="font-semibold text-muted-foreground">{company}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h3 className="text-2xl font-semibold text-muted-foreground">Join Our Growing Community of Early Adopters</h3>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Be among the first businesses to use proactive AI chat agents and gain a competitive advantage in visitor engagement.
+            </p>
           </div>
         </div>
       </section>
@@ -367,7 +363,7 @@ export const Landing = () => {
               Ready to Transform Visitors Into Customers?
             </h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Join the 3% of businesses using proactive AI to stop visitor loss and recover revenue from departing visitors.
+              Be among the first to use proactive AI technology to engage visitors before they leave and turn browsers into buyers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth/signup">
@@ -446,8 +442,8 @@ const proactiveSteps = [
 const metrics = [
   { value: '99.9%', label: 'Uptime' },
   { value: '<50ms', label: 'Response Time' },
-  { value: '1M+', label: 'Conversations' },
-  { value: '24/7', label: 'Intelligence' }
+  { value: 'AI-Powered', label: 'Intelligence' },
+  { value: '24/7', label: 'Availability' }
 ];
 
 const faqItems = [
