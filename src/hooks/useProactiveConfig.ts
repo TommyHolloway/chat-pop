@@ -40,20 +40,20 @@ const defaultConfig: ProactiveConfig = {
   message_display_duration: 15000,
   triggers: {
     pricing_concern: {
-      enabled: true,
+      enabled: false,
       time_threshold: 30,
       message: "Hi! I noticed you're looking at our pricing. I'd be happy to help you find the perfect plan for your needs!",
       url_patterns: ['pricing', 'plans', 'cost', '#pricing']
     },
     high_engagement: {
-      enabled: true,
+      enabled: false,
       time_threshold: 120,
       page_views_threshold: 5,
       message: "You seem really interested in what we offer! Would you like to chat about how we can help you?",
       url_patterns: []
     },
     feature_exploration: {
-      enabled: true,
+      enabled: false,
       page_threshold: 3,
       message: "I see you're exploring our features. Want to learn more about how they can benefit you?",
       url_patterns: ['features', 'product', 'demo', '#features']
@@ -150,15 +150,10 @@ export const useProactiveConfig = (agent: any) => {
     }));
   };
 
-  const addCustomTrigger = () => {
+  const addCustomTrigger = (newTriggerData: Omit<CustomTrigger, 'id'>) => {
     const newTrigger: CustomTrigger = {
       id: `custom_${Date.now()}`,
-      name: 'New Custom Trigger',
-      enabled: true,
-      trigger_type: 'time_based',
-      time_threshold: 30,
-      message: 'Hi! Can I help you with anything?',
-      url_patterns: []
+      ...newTriggerData
     };
     
     console.log('useProactiveConfig: Adding custom trigger', newTrigger);

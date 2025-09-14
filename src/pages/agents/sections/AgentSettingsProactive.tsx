@@ -4,22 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Zap, Save, Clock, TrendingUp, Map } from 'lucide-react';
-import { ProactiveTriggerCard } from '@/components/agent/ProactiveTriggerCard';
+import { Zap, Save, Plus, MessageSquare } from 'lucide-react';
 import { ProactiveGlobalSettings } from '@/components/agent/ProactiveGlobalSettings';
-import { CustomTriggerManager } from '@/components/agent/CustomTriggerManager';
+import { TriggerCreationWizard } from '@/components/agent/TriggerCreationWizard';
+import { TriggerListCard } from '@/components/agent/TriggerListCard';
 import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
+import { useState } from 'react';
 
 export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
+  const [showWizard, setShowWizard] = useState(false);
   const { 
     config, 
     loading, 
     configLoading,
     updateConfig, 
-    updateTrigger, 
+    updateCustomTrigger,
     addCustomTrigger, 
     removeCustomTrigger, 
-    updateCustomTrigger, 
     saveConfig 
   } = useProactiveConfig(agent);
 
@@ -52,7 +53,7 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
       <div>
         <h2 className="text-2xl font-bold">Proactive Engagement</h2>
         <p className="text-muted-foreground">
-          Configure intelligent visitor behavior analysis and proactive suggestions
+          Create intelligent triggers that reach out to visitors based on their behavior
         </p>
       </div>
 
@@ -85,69 +86,52 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
         <ProactiveGlobalSettings config={config} onUpdate={updateConfig} />
       )}
 
-      {/* Trigger Configuration */}
+      {/* Triggers Section */}
       {config.enabled && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Trigger Configuration
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Triggers
+              </CardTitle>
+              <Button onClick={() => setShowWizard(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create New Trigger
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Pricing Concern */}
-            <ProactiveTriggerCard
-              title="Pricing Concern"
-              icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-              trigger={config.triggers.pricing_concern}
-              onUpdate={(updates) => updateTrigger('pricing_concern', updates)}
-              config={{
-                timeThreshold: { min: 10, max: 120, step: 5 },
-                showUrlPatterns: true
-              }}
-            />
-
-            <Separator />
-
-            {/* High Engagement */}
-            <ProactiveTriggerCard
-              title="High Engagement"
-              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-              trigger={config.triggers.high_engagement}
-              onUpdate={(updates) => updateTrigger('high_engagement', updates)}
-              config={{
-                timeThreshold: { min: 60, max: 300, step: 10 },
-                pageViews: { min: 3, max: 15, step: 1 },
-                showUrlPatterns: false
-              }}
-            />
-
-            <Separator />
-
-            {/* Feature Exploration */}
-            <ProactiveTriggerCard
-              title="Feature Exploration"
-              icon={<Map className="h-4 w-4 text-muted-foreground" />}
-              trigger={config.triggers.feature_exploration}
-              onUpdate={(updates) => updateTrigger('feature_exploration', updates)}
-              config={{
-                pageThreshold: { min: 2, max: 10, step: 1 },
-                showUrlPatterns: true
-              }}
-            />
+          <CardContent>
+            {!config.custom_triggers?.length ? (
+              <div className="text-center py-12">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No triggers created yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create your first trigger to start engaging with visitors proactively
+                </p>
+                <Button onClick={() => setShowWizard(true)} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Your First Trigger
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {config.custom_triggers.map((trigger) => (
+                  <TriggerListCard
+                    key={trigger.id}
+                    trigger={trigger}
+                    onToggle={(enabled) => updateCustomTrigger(trigger.id, { enabled })}
+                    onEdit={() => {
+                      // TODO: Implement edit functionality
+                      console.log('Edit trigger:', trigger.id);
+                    }}
+                    onDelete={() => removeCustomTrigger(trigger.id)}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
-
-      {/* Custom Triggers */}
-      {config.enabled && (
-        <CustomTriggerManager
-          key={`custom-triggers-${agent?.id}-${config.custom_triggers?.length || 0}`}
-          triggers={config.custom_triggers || []}
-          onAdd={addCustomTrigger}
-          onRemove={removeCustomTrigger}
-          onUpdate={updateCustomTrigger}
-        />
       )}
 
       {/* Save Button */}
@@ -157,6 +141,13 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
           {loading ? 'Saving...' : 'Save Settings'}
         </Button>
       </div>
+
+      {/* Trigger Creation Wizard */}
+      <TriggerCreationWizard
+        open={showWizard}
+        onOpenChange={setShowWizard}
+        onCreateTrigger={addCustomTrigger}
+      />
     </div>
   );
 
