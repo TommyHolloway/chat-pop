@@ -640,7 +640,7 @@ serve(async (req) => {
             
             // Process content to make URLs clickable and sanitize
             const processedContent = content
-              .replace(/https?:\/\/[^\s<>"{}|\\^`[\]]+/g, '<a href="$&" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">$&</a>')
+              .replace(/https?:\/\/[^\s<>"{}|^`\[\]]+/g, '<a href="$&" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">$&</a>')
               .replace(/</g, '&lt;')
               .replace(/>/g, '&gt;')
               .replace(/&lt;a href="([^"]+)" target="_blank" rel="noopener noreferrer" style="([^"]+)"&gt;([^&]+)&lt;\/a&gt;/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="$2">$3</a>');
