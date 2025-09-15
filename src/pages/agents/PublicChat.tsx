@@ -229,6 +229,17 @@ export const PublicChat = () => {
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
+              
+              <div className="text-center pt-2">
+                <a 
+                  href="https://chatpop.ai" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Powered by Chatpop
+                </a>
+              </div>
             </CardContent>
           </Card>
         </div>

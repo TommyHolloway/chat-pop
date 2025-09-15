@@ -18,12 +18,12 @@ export const PublicNavbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
-            </Link>
-            <Link to="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            </a>
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
-            </Link>
+            </a>
           </div>
 
           {/* Right side - Auth & Theme */}
@@ -66,12 +66,12 @@ export const PublicNavbar = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <div className="flex flex-col space-y-4">
-              <Link to="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
-              </Link>
-              <Link to="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              </a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
-              </Link>
+              </a>
               <div className="flex flex-col space-y-2 pt-4 border-t">
                 <Link to="/auth/login">
                   <Button variant="ghost" className="w-full justify-start">Sign In</Button>

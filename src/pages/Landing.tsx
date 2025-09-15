@@ -162,7 +162,7 @@ export const Landing = () => {
       </section>
 
       {/* Proactive Intelligence Features */}
-      <section className="py-20 bg-muted/10">
+      <section id="features" className="py-20 bg-muted/10">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
