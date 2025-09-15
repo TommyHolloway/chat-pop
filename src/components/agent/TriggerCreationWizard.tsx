@@ -216,7 +216,7 @@ export const TriggerCreationWizard = ({
                 if (value === 'all') {
                   setTriggerData({ ...triggerData, url_patterns: [] });
                 } else {
-                  setTriggerData({ ...triggerData, url_patterns: ['pricing'] });
+                  setTriggerData({ ...triggerData, url_patterns: [] });
                 }
               }}
             >
