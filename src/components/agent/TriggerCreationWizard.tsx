@@ -53,6 +53,7 @@ export const TriggerCreationWizard = ({
   onUpdateTrigger
 }: TriggerCreationWizardProps) => {
   const [currentStep, setCurrentStep] = useState<Step>('Type');
+  const [pageMode, setPageMode] = useState<'all' | 'specific'>('all');
   const [triggerData, setTriggerData] = useState<Partial<CustomTrigger>>({
     name: '',
     trigger_type: 'time_based',
@@ -75,6 +76,8 @@ export const TriggerCreationWizard = ({
         url_patterns: editingTrigger.url_patterns || [],
         message: editingTrigger.message
       });
+      // Set page mode based on whether there are URL patterns
+      setPageMode((editingTrigger.url_patterns || []).length > 0 ? 'specific' : 'all');
     } else if (open && !editingTrigger) {
       // Reset form for new trigger
       setTriggerData({
@@ -86,6 +89,7 @@ export const TriggerCreationWizard = ({
         url_patterns: [],
         message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
       });
+      setPageMode('all');
       setCurrentStep('Type');
     }
   }, [editingTrigger, open]);
@@ -144,6 +148,7 @@ export const TriggerCreationWizard = ({
       url_patterns: [],
       message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
     });
+    setPageMode('all');
     setCurrentStep('Type');
     onOpenChange(false);
   };
@@ -211,13 +216,13 @@ export const TriggerCreationWizard = ({
             </div>
 
             <RadioGroup
-              value={triggerData.url_patterns?.length ? 'specific' : 'all'}
-              onValueChange={(value) => {
+              value={pageMode}
+              onValueChange={(value: 'all' | 'specific') => {
+                setPageMode(value);
                 if (value === 'all') {
                   setTriggerData({ ...triggerData, url_patterns: [] });
-                } else {
-                  setTriggerData({ ...triggerData, url_patterns: [] });
                 }
+                // Don't modify url_patterns when selecting 'specific' - let user fill it
               }}
             >
               <div className="space-y-4">
@@ -247,23 +252,36 @@ export const TriggerCreationWizard = ({
               </div>
             </RadioGroup>
 
-            {triggerData.url_patterns?.length ? (
+            {pageMode === 'specific' && (
               <div className="space-y-4 mt-6">
                 <Label htmlFor="url-patterns">Page Names or Sections</Label>
                 <Input
                   id="url-patterns"
                   placeholder="pricing, contact, about-us, product-demo"
                   value={triggerData.url_patterns?.join(', ') || ''}
-                  onChange={(e) => setTriggerData({ 
-                    ...triggerData, 
-                    url_patterns: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                  })}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    const patterns = inputValue ? inputValue.split(',').map(s => s.trim()).filter(Boolean) : [];
+                    setTriggerData({ 
+                      ...triggerData, 
+                      url_patterns: patterns
+                    });
+                  }}
                 />
                 <p className="text-xs text-muted-foreground">
                   Enter page names or sections separated by commas. Examples: "pricing" matches pages like "/pricing" or "/pricing-plans"
                 </p>
+                {triggerData.url_patterns && triggerData.url_patterns.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {triggerData.url_patterns.map((pattern, index) => (
+                      <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
+                        {pattern}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : null}
+            )}
           </div>
         );
 
