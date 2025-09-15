@@ -462,6 +462,26 @@ serve(async (req) => {
             transform: translateY(-6px); 
           }
         }
+        
+        .powered-by {
+          text-align: center;
+          padding: 0.75rem 1.5rem;
+          background: rgba(255, 255, 255, 0.03);
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .powered-by a {
+          color: rgba(241, 245, 249, 0.6);
+          text-decoration: none;
+          font-size: 0.75rem;
+          font-weight: 500;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .powered-by a:hover {
+          color: #84cc16;
+          text-shadow: 0 0 8px rgba(132, 204, 22, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -499,6 +519,12 @@ serve(async (req) => {
         <div class="input-area">
             <input type="text" id="messageInput" placeholder="Type your message..." />
             <button onclick="sendMessage()" id="sendButton">Send</button>
+        </div>
+        
+        <div class="powered-by">
+            <a href="https://chatpop.ai" target="_blank" rel="noopener noreferrer">
+                Powered by Chatpop
+            </a>
         </div>
     </div>
 
