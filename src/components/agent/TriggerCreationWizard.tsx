@@ -54,6 +54,7 @@ export const TriggerCreationWizard = ({
 }: TriggerCreationWizardProps) => {
   const [currentStep, setCurrentStep] = useState<Step>('Type');
   const [pageMode, setPageMode] = useState<'all' | 'specific'>('all');
+  const [urlPatternsInput, setUrlPatternsInput] = useState('');
   const [triggerData, setTriggerData] = useState<Partial<CustomTrigger>>({
     name: '',
     trigger_type: 'time_based',
@@ -76,8 +77,10 @@ export const TriggerCreationWizard = ({
         url_patterns: editingTrigger.url_patterns || [],
         message: editingTrigger.message
       });
-      // Set page mode based on whether there are URL patterns
-      setPageMode((editingTrigger.url_patterns || []).length > 0 ? 'specific' : 'all');
+      // Set page mode and input value based on whether there are URL patterns
+      const hasPatterns = (editingTrigger.url_patterns || []).length > 0;
+      setPageMode(hasPatterns ? 'specific' : 'all');
+      setUrlPatternsInput(hasPatterns ? editingTrigger.url_patterns!.join(', ') : '');
     } else if (open && !editingTrigger) {
       // Reset form for new trigger
       setTriggerData({
@@ -90,6 +93,7 @@ export const TriggerCreationWizard = ({
         message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
       });
       setPageMode('all');
+      setUrlPatternsInput('');
       setCurrentStep('Type');
     }
   }, [editingTrigger, open]);
@@ -99,6 +103,14 @@ export const TriggerCreationWizard = ({
   const isFirstStep = currentStepIndex === 0;
 
   const handleNext = () => {
+    // Parse URL patterns when leaving the Pages step
+    if (currentStep === 'Pages' && pageMode === 'specific' && urlPatternsInput) {
+      const patterns = urlPatternsInput.split(',').map(s => s.trim()).filter(Boolean);
+      setTriggerData({ ...triggerData, url_patterns: patterns });
+    } else if (currentStep === 'Pages' && pageMode === 'all') {
+      setTriggerData({ ...triggerData, url_patterns: [] });
+    }
+    
     if (!isLastStep) {
       setCurrentStep(STEPS[currentStepIndex + 1]);
     } else {
@@ -115,6 +127,14 @@ export const TriggerCreationWizard = ({
   const handleCreate = () => {
     if (!triggerData.name || !triggerData.message) return;
     
+    // Parse URL patterns one final time before saving
+    let finalUrlPatterns = triggerData.url_patterns || [];
+    if (pageMode === 'specific' && urlPatternsInput) {
+      finalUrlPatterns = urlPatternsInput.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (pageMode === 'all') {
+      finalUrlPatterns = [];
+    }
+    
     if (editingTrigger && onUpdateTrigger) {
       // Update existing trigger
       onUpdateTrigger(editingTrigger.id, {
@@ -122,7 +142,7 @@ export const TriggerCreationWizard = ({
         trigger_type: triggerData.trigger_type!,
         time_threshold: triggerData.time_threshold || 30,
         scroll_depth: triggerData.scroll_depth || 50,
-        url_patterns: triggerData.url_patterns || [],
+        url_patterns: finalUrlPatterns,
         message: triggerData.message
       });
     } else {
@@ -133,7 +153,7 @@ export const TriggerCreationWizard = ({
         enabled: true,
         time_threshold: triggerData.time_threshold || 30,
         scroll_depth: triggerData.scroll_depth || 50,
-        url_patterns: triggerData.url_patterns || [],
+        url_patterns: finalUrlPatterns,
         message: triggerData.message
       });
     }
@@ -149,6 +169,7 @@ export const TriggerCreationWizard = ({
       message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
     });
     setPageMode('all');
+    setUrlPatternsInput('');
     setCurrentStep('Type');
     onOpenChange(false);
   };
@@ -258,22 +279,24 @@ export const TriggerCreationWizard = ({
                 <Input
                   id="url-patterns"
                   placeholder="pricing, contact, about-us, product-demo"
-                  value={triggerData.url_patterns?.join(', ') || ''}
-                  onChange={(e) => {
-                    const inputValue = e.target.value;
-                    const patterns = inputValue ? inputValue.split(',').map(s => s.trim()).filter(Boolean) : [];
-                    setTriggerData({ 
-                      ...triggerData, 
-                      url_patterns: patterns
-                    });
+                  value={urlPatternsInput}
+                  onChange={(e) => setUrlPatternsInput(e.target.value)}
+                  onBlur={() => {
+                    // Parse patterns on blur for real-time preview
+                    if (urlPatternsInput) {
+                      const patterns = urlPatternsInput.split(',').map(s => s.trim()).filter(Boolean);
+                      setTriggerData({ ...triggerData, url_patterns: patterns });
+                    } else {
+                      setTriggerData({ ...triggerData, url_patterns: [] });
+                    }
                   }}
                 />
                 <p className="text-xs text-muted-foreground">
                   Enter page names or sections separated by commas. Examples: "pricing" matches pages like "/pricing" or "/pricing-plans"
                 </p>
-                {triggerData.url_patterns && triggerData.url_patterns.length > 0 && (
+                {urlPatternsInput && (
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {triggerData.url_patterns.map((pattern, index) => (
+                    {urlPatternsInput.split(',').map(s => s.trim()).filter(Boolean).map((pattern, index) => (
                       <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
                         {pattern}
                       </span>
