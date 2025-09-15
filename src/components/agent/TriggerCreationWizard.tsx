@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,13 +7,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Clock, MousePointer, Eye, ArrowLeft, ChevronRight } from 'lucide-react';
+import { Clock, MousePointer, Plus, Save, ChevronRight } from 'lucide-react';
 import { CustomTrigger } from '@/hooks/useProactiveConfig';
 
 interface TriggerCreationWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateTrigger: (trigger: Omit<CustomTrigger, 'id'>) => void;
+  editingTrigger?: CustomTrigger;
+  onUpdateTrigger?: (triggerId: string, updates: Partial<CustomTrigger>) => void;
 }
 
 type TriggerType = 'time_based' | 'scroll_based';
@@ -43,7 +45,13 @@ const triggerTypes: TriggerTypeOption[] = [
 const STEPS = ['Type', 'Pages', 'Settings', 'Message'] as const;
 type Step = typeof STEPS[number];
 
-export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: TriggerCreationWizardProps) => {
+export const TriggerCreationWizard = ({ 
+  open, 
+  onOpenChange, 
+  onCreateTrigger,
+  editingTrigger,
+  onUpdateTrigger
+}: TriggerCreationWizardProps) => {
   const [currentStep, setCurrentStep] = useState<Step>('Type');
   const [triggerData, setTriggerData] = useState<Partial<CustomTrigger>>({
     name: '',
@@ -54,6 +62,33 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
     url_patterns: [],
     message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
   });
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingTrigger && open) {
+      setTriggerData({
+        name: editingTrigger.name,
+        trigger_type: editingTrigger.trigger_type,
+        enabled: editingTrigger.enabled,
+        time_threshold: editingTrigger.time_threshold || 30,
+        scroll_depth: editingTrigger.scroll_depth || 50,
+        url_patterns: editingTrigger.url_patterns || [],
+        message: editingTrigger.message
+      });
+    } else if (open && !editingTrigger) {
+      // Reset form for new trigger
+      setTriggerData({
+        name: '',
+        trigger_type: 'time_based',
+        enabled: true,
+        time_threshold: 30,
+        scroll_depth: 50,
+        url_patterns: [],
+        message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
+      });
+      setCurrentStep('Type');
+    }
+  }, [editingTrigger, open]);
 
   const currentStepIndex = STEPS.indexOf(currentStep);
   const isLastStep = currentStepIndex === STEPS.length - 1;
@@ -76,15 +111,28 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
   const handleCreate = () => {
     if (!triggerData.name || !triggerData.message) return;
     
-    onCreateTrigger({
-      name: triggerData.name,
-      trigger_type: triggerData.trigger_type!,
-      enabled: true,
-      time_threshold: triggerData.time_threshold || 30,
-      scroll_depth: triggerData.scroll_depth || 50,
-      url_patterns: triggerData.url_patterns || [],
-      message: triggerData.message
-    });
+    if (editingTrigger && onUpdateTrigger) {
+      // Update existing trigger
+      onUpdateTrigger(editingTrigger.id, {
+        name: triggerData.name,
+        trigger_type: triggerData.trigger_type!,
+        time_threshold: triggerData.time_threshold || 30,
+        scroll_depth: triggerData.scroll_depth || 50,
+        url_patterns: triggerData.url_patterns || [],
+        message: triggerData.message
+      });
+    } else {
+      // Create new trigger
+      onCreateTrigger({
+        name: triggerData.name,
+        trigger_type: triggerData.trigger_type!,
+        enabled: true,
+        time_threshold: triggerData.time_threshold || 30,
+        scroll_depth: triggerData.scroll_depth || 50,
+        url_patterns: triggerData.url_patterns || [],
+        message: triggerData.message
+      });
+    }
     
     // Reset form
     setTriggerData({
@@ -323,7 +371,9 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Trigger</DialogTitle>
+          <DialogTitle>
+            {editingTrigger ? 'Edit Trigger' : 'Create New Trigger'}
+          </DialogTitle>
         </DialogHeader>
 
         {/* Progress Steps */}
@@ -367,8 +417,16 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
           <Button
             onClick={handleNext}
             disabled={!canProceed()}
+            className="flex items-center gap-2"
           >
-            {isLastStep ? 'Create Trigger' : 'Next'}
+            {isLastStep ? (
+              <>
+                {editingTrigger ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {editingTrigger ? 'Update Trigger' : 'Create Trigger'}
+              </>
+            ) : (
+              'Next'
+            )}
           </Button>
         </div>
       </DialogContent>

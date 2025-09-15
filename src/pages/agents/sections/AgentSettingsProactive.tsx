@@ -13,6 +13,7 @@ import { useState } from 'react';
 
 export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
   const [showWizard, setShowWizard] = useState(false);
+  const [editingTrigger, setEditingTrigger] = useState<any>(null);
   const { 
     config, 
     loading, 
@@ -122,8 +123,8 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
                     trigger={trigger}
                     onToggle={(enabled) => updateCustomTrigger(trigger.id, { enabled })}
                     onEdit={() => {
-                      // TODO: Implement edit functionality
-                      console.log('Edit trigger:', trigger.id);
+                      setEditingTrigger(trigger);
+                      setShowWizard(true);
                     }}
                     onDelete={() => removeCustomTrigger(trigger.id)}
                   />
@@ -145,8 +146,13 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
       {/* Trigger Creation Wizard */}
       <TriggerCreationWizard
         open={showWizard}
-        onOpenChange={setShowWizard}
+        onOpenChange={(open) => {
+          setShowWizard(open);
+          if (!open) setEditingTrigger(null);
+        }}
         onCreateTrigger={addCustomTrigger}
+        editingTrigger={editingTrigger}
+        onUpdateTrigger={updateCustomTrigger}
       />
     </div>
   );
