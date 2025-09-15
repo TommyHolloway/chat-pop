@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAgents } from '@/hooks/useAgents';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +15,8 @@ import { toast } from '@/hooks/use-toast';
 
 export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
   const { id } = useParams();
-  const { updateAgent } = useAgents();
+  const navigate = useNavigate();
+  const { updateAgent, deleteAgent } = useAgents();
   const [formData, setFormData] = useState({
     name: agent?.name || '',
     description: agent?.description || '',
@@ -62,6 +64,31 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
       toast({
         title: "Error",
         description: "Failed to update agent settings",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAgent = async () => {
+    if (!id) return;
+    
+    setLoading(true);
+    try {
+      await deleteAgent(id);
+      
+      toast({
+        title: "Success",
+        description: "Agent deleted successfully",
+      });
+      
+      // Navigate back to agents list
+      navigate('/agents');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete agent",
         variant: "destructive",
       });
     } finally {
@@ -223,9 +250,29 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
             <p className="text-sm text-muted-foreground">
               Permanently delete this agent and all associated data. This action cannot be undone.
             </p>
-            <Button variant="destructive" size="sm">
-              Delete Agent
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={loading}>
+                  Delete Agent
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your agent 
+                    "{agent?.name}" and remove all associated data including conversations, 
+                    knowledge files, and settings.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteAgent} className="bg-destructive hover:bg-destructive/90">
+                    Delete Agent
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardContent>
       </Card>
