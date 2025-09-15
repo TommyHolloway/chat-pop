@@ -19,11 +19,6 @@ interface CustomTriggerManagerProps {
 }
 
 export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: CustomTriggerManagerProps) => {
-  console.log('CustomTriggerManager: Rendering', { 
-    triggersCount: triggers.length,
-    triggers: triggers.map(t => ({ id: t.id, name: t.name, enabled: t.enabled }))
-  });
-
   const getTriggerIcon = (type: string) => {
     switch (type) {
       case 'time_based':
@@ -40,17 +35,14 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
   };
 
   const handleAdd = () => {
-    console.log('CustomTriggerManager: Add button clicked');
     onAdd();
   };
 
   const handleRemove = (triggerId: string) => {
-    console.log('CustomTriggerManager: Remove button clicked', triggerId);
     onRemove(triggerId);
   };
 
   const handleUpdate = (triggerId: string, updates: Partial<CustomTrigger>) => {
-    console.log('CustomTriggerManager: Update called', { triggerId, updates });
     onUpdate(triggerId, updates);
   };
 

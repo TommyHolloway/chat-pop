@@ -73,13 +73,6 @@ export const useProactiveConfig = (agent: any) => {
   useEffect(() => {
     let mounted = true;
     
-    console.log('useProactiveConfig: Effect triggered', { 
-      hasAgent: !!agent, 
-      hasProactiveConfig: !!agent?.proactive_config,
-      agentId: agent?.id,
-      customTriggersCount: agent?.proactive_config?.custom_triggers?.length || 0
-    });
-    
     // Only process if agent is available and component is still mounted
     if (agent && mounted) {
       setConfigLoading(true);
@@ -103,16 +96,9 @@ export const useProactiveConfig = (agent: any) => {
             custom_triggers: Array.isArray(loadedConfig.custom_triggers) ? loadedConfig.custom_triggers : []
           };
           
-          console.log('useProactiveConfig: Loading config', { 
-            loadedConfig, 
-            mergedConfig,
-            customTriggersLoaded: mergedConfig.custom_triggers?.length || 0
-          });
-          
           setConfig(mergedConfig);
         } else {
           // Agent loaded but no proactive config - use default
-          console.log('useProactiveConfig: No proactive config found, using default');
           setConfig(defaultConfig);
         }
         
@@ -124,7 +110,6 @@ export const useProactiveConfig = (agent: any) => {
       };
     } else if (!agent) {
       // Agent not loaded yet
-      console.log('useProactiveConfig: Agent not loaded yet');
       setConfigLoading(true);
     }
     
@@ -156,42 +141,26 @@ export const useProactiveConfig = (agent: any) => {
       ...newTriggerData
     };
     
-    console.log('useProactiveConfig: Adding custom trigger', newTrigger);
-    
     setConfig(prev => {
       const newConfig = {
         ...prev,
         custom_triggers: [...(prev.custom_triggers || []), newTrigger]
       };
-      console.log('useProactiveConfig: Config after adding trigger', { 
-        previousCount: prev.custom_triggers?.length || 0,
-        newCount: newConfig.custom_triggers?.length || 0,
-        newConfig 
-      });
       return newConfig;
     });
   };
 
   const removeCustomTrigger = (triggerId: string) => {
-    console.log('useProactiveConfig: Removing custom trigger', triggerId);
-    
     setConfig(prev => {
       const newConfig = {
         ...prev,
         custom_triggers: (prev.custom_triggers || []).filter(t => t.id !== triggerId)
       };
-      console.log('useProactiveConfig: Config after removing trigger', { 
-        removedId: triggerId,
-        previousCount: prev.custom_triggers?.length || 0,
-        newCount: newConfig.custom_triggers?.length || 0
-      });
       return newConfig;
     });
   };
 
   const updateCustomTrigger = (triggerId: string, updates: Partial<CustomTrigger>) => {
-    console.log('useProactiveConfig: Updating custom trigger', { triggerId, updates });
-    
     setConfig(prev => {
       const newConfig = {
         ...prev,
@@ -199,18 +168,12 @@ export const useProactiveConfig = (agent: any) => {
           trigger.id === triggerId ? { ...trigger, ...updates } : trigger
         )
       };
-      console.log('useProactiveConfig: Config after updating trigger', newConfig);
       return newConfig;
     });
   };
 
   const saveConfig = async () => {
     setLoading(true);
-    console.log('useProactiveConfig: Saving config', { 
-      config, 
-      customTriggersCount: config.custom_triggers?.length || 0,
-      agentId: id 
-    });
     
     try {
       await updateAgent(id!, {
@@ -221,13 +184,11 @@ export const useProactiveConfig = (agent: any) => {
         proactive_config: config,
       });
 
-      console.log('useProactiveConfig: Config saved successfully');
       toast({
         title: "Success",
         description: "Proactive engagement settings saved successfully",
       });
     } catch (error) {
-      console.error('useProactiveConfig: Save failed', error);
       toast({
         title: "Error",
         description: "Failed to save proactive engagement settings",
