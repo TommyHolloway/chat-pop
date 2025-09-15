@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, X } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
 export const AgentSettingsLeads = ({ agent }: { agent: any }) => {
   const { id } = useParams();
-  const { updateAgent } = useAgents();
+  const { user } = useAuth();
   
   const [leadSettings, setLeadSettings] = useState({
     enable_lead_capture: agent?.lead_capture_enabled !== false,
@@ -56,12 +58,24 @@ export const AgentSettingsLeads = ({ agent }: { agent: any }) => {
 
     setLoading(true);
     try {
-      // Only update description field for now as lead capture fields may not exist in schema
-      await updateAgent(id, {
-        name: agent.name, // Required field
-        instructions: agent.instructions, // Required field
-        description: `Lead capture: ${leadSettings.enable_lead_capture ? 'enabled' : 'disabled'}`,
-      });
+      // Update agent using direct Supabase call to include lead capture fields
+      const { error } = await supabase
+        .from('agents')
+        .update({
+          enable_lead_capture: leadSettings.enable_lead_capture,
+          lead_capture_config: {
+            lead_prompt: leadSettings.lead_prompt,
+            required_fields: leadSettings.required_fields,
+            optional_fields: leadSettings.optional_fields,
+            trigger_after_messages: leadSettings.trigger_after_messages,
+            webhook_url: leadSettings.webhook_url,
+            notification_email: leadSettings.notification_email,
+          }
+        })
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
       
       toast({
         title: "Success",

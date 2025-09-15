@@ -45,15 +45,14 @@ serve(async (req) => {
       .eq('id', agentId)
       .single();
 
-    if (agentError || !agent || !agent.enable_proactive_engagement) {
-      console.log('Agent not found or proactive engagement disabled:', { agentError, agent });
-      return new Response(JSON.stringify({ 
-        success: false, 
-        reason: 'Proactive engagement not enabled' 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Disable automatic proactive suggestions - only user-created triggers should work
+    console.log('Automatic proactive suggestions disabled');
+    return new Response(JSON.stringify({ 
+      success: false, 
+      reason: 'Automatic suggestions disabled - only user-created triggers work' 
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
     const config = agent.proactive_config || {};
     console.log('Agent proactive config:', config);

@@ -275,7 +275,7 @@ serve(async (req) => {
         }
         
         .input-area {
-          padding: 1.5rem;
+          padding: 1rem;
           background: rgba(255, 255, 255, 0.05);
           backdrop-filter: blur(20px);
           border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -287,7 +287,7 @@ serve(async (req) => {
         
         .input-area input {
           flex: 1;
-          padding: 1rem 1.25rem;
+          padding: 0.75rem 1rem;
           border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 16px;
           outline: none;
@@ -310,7 +310,7 @@ serve(async (req) => {
         }
         
         .input-area button {
-          padding: 1rem 1.5rem;
+          padding: 0.75rem 1.25rem;
           background: #84cc16;
           color: white;
           border: none;
@@ -637,7 +637,15 @@ serve(async (req) => {
             
             const messageContent = document.createElement('div');
             messageContent.className = 'message-content';
-            messageContent.textContent = content;
+            
+            // Process content to make URLs clickable and sanitize
+            const processedContent = content
+              .replace(/https?:\\/\\/[^\\s<>"{}|\\\\^`[\\]]+/g, '<a href="$&" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">$&</a>')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/&lt;a href="([^"]+)" target="_blank" rel="noopener noreferrer" style="([^"]+)"&gt;([^&]+)&lt;\/a&gt;/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="$2">$3</a>');
+            
+            messageContent.innerHTML = processedContent;
             
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(messageContent);
@@ -692,17 +700,7 @@ serve(async (req) => {
         initConversation();
         
         // Show initial message if available
-        ${proactiveMessage ? `
-        // Show proactive message if provided (takes priority over initial message)
-        setTimeout(() => {
-          // Remove empty state first
-          const emptyState = document.querySelector('.empty-state');
-          if (emptyState) emptyState.remove();
-          
-          // Add proactive message
-          addMessage('assistant', \`${proactiveMessage.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`);
-        }, 100);
-        ` : agent?.initial_message ? `
+        ${agent?.initial_message ? `
         setTimeout(() => {
           // Remove empty state first
           const emptyState = document.querySelector('.empty-state');
