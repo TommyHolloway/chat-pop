@@ -16,7 +16,7 @@ interface TriggerCreationWizardProps {
   onCreateTrigger: (trigger: Omit<CustomTrigger, 'id'>) => void;
 }
 
-type TriggerType = 'time_based' | 'scroll_based' | 'element_interaction' | 'exit_intent';
+type TriggerType = 'time_based' | 'scroll_based';
 
 interface TriggerTypeOption {
   value: TriggerType;
@@ -37,18 +37,6 @@ const triggerTypes: TriggerTypeOption[] = [
     label: 'Scroll Based',
     description: 'Show message when visitor scrolls down the page',
     icon: <MousePointer className="h-6 w-6" />
-  },
-  {
-    value: 'element_interaction',
-    label: 'Element Interaction',
-    description: 'Show message when visitor interacts with specific elements',
-    icon: <Eye className="h-6 w-6" />
-  },
-  {
-    value: 'exit_intent',
-    label: 'Exit Intent',
-    description: 'Show message when visitor is about to leave the page',
-    icon: <ArrowLeft className="h-6 w-6" />
   }
 ];
 
@@ -94,7 +82,6 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
       enabled: true,
       time_threshold: triggerData.time_threshold || 30,
       scroll_depth: triggerData.scroll_depth || 50,
-      element_selector: triggerData.element_selector || '',
       url_patterns: triggerData.url_patterns || [],
       message: triggerData.message
     });
@@ -141,10 +128,14 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
             >
               <div className="grid grid-cols-1 gap-4">
                 {triggerTypes.map((type) => (
-                  <div key={type.value}>
+                  <div key={type.value} className="relative">
                     <RadioGroupItem value={type.value} id={type.value} className="sr-only" />
                     <Label htmlFor={type.value} className="cursor-pointer">
-                      <Card className="hover:bg-muted/50 transition-colors border-2 data-[state=checked]:border-primary">
+                      <Card className={`hover:bg-muted/50 transition-colors border-2 ${
+                        triggerData.trigger_type === type.value 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border'
+                      }`}>
                         <CardContent className="flex items-center gap-4 p-4">
                           <div className="text-primary">{type.icon}</div>
                           <div className="flex-1">
@@ -208,7 +199,7 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
               </div>
             </RadioGroup>
 
-            {triggerData.url_patterns?.length && (
+            {triggerData.url_patterns?.length ? (
               <div className="space-y-4 mt-6">
                 <Label htmlFor="url-patterns">Page Names or Sections</Label>
                 <Input
@@ -221,10 +212,10 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
                   })}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Enter page names or sections separated by commas. For example: "pricing" will match any page with "pricing" in the URL.
+                  Enter page names or sections separated by commas. Examples: "pricing" matches pages like "/pricing" or "/pricing-plans"
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         );
 
@@ -274,28 +265,6 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
               </div>
             )}
 
-            {triggerData.trigger_type === 'element_interaction' && (
-              <div className="space-y-4">
-                <Label htmlFor="element-selector">Element Selector (CSS)</Label>
-                <Input
-                  id="element-selector"
-                  placeholder=".button, #signup, [data-pricing]"
-                  value={triggerData.element_selector || ''}
-                  onChange={(e) => setTriggerData({ ...triggerData, element_selector: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  CSS selector for the element to watch. Examples: ".button", "#signup", "[data-pricing]"
-                </p>
-              </div>
-            )}
-
-            {triggerData.trigger_type === 'exit_intent' && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  Exit intent triggers activate when the visitor moves their mouse toward the browser's close button or address bar, indicating they're about to leave.
-                </p>
-              </div>
-            )}
           </div>
         );
 
@@ -342,9 +311,6 @@ export const TriggerCreationWizard = ({ open, onOpenChange, onCreateTrigger }: T
       case 'Pages':
         return true; // Always can proceed from pages
       case 'Settings':
-        if (triggerData.trigger_type === 'element_interaction') {
-          return triggerData.element_selector;
-        }
         return true;
       case 'Message':
         return triggerData.message;
