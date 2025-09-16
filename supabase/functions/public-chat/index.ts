@@ -622,16 +622,17 @@ serve(async (req) => {
             }
 
             const messageDiv = document.createElement('div');
-            messageDiv.className = \`message \${role}\`;
+            messageDiv.className = 'message ' + role;
             
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
             if (role === 'user') {
               avatar.textContent = 'U';
             } else {
-              ${agent?.profile_image_url 
-                ? `avatar.innerHTML = '<img src="${agent.profile_image_url}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';`
-                : `avatar.textContent = '${safeName.charAt(0).toUpperCase()}';`
+              if (${agent?.profile_image_url ? 'true' : 'false'}) {
+                avatar.innerHTML = '<img src="${agent?.profile_image_url || ''}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+              } else {
+                avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
               }
             }
             
