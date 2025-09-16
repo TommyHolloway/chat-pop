@@ -41,11 +41,18 @@ export const SecurityAutomation: React.FC = () => {
     blockedThreats: 0
   });
   const [loading, setLoading] = useState(false);
-  const [newRule, setNewRule] = useState({
+  const [newRule, setNewRule] = useState<{
+    name: string;
+    trigger: string;
+    action: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    threshold: number;
+    cooldown: number;
+  }>({
     name: '',
     trigger: '',
     action: '',
-    severity: 'medium' as const,
+    severity: 'medium',
     threshold: 5,
     cooldown: 300
   });

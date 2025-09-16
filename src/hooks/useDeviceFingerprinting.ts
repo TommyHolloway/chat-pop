@@ -131,6 +131,8 @@ export const useDeviceFingerprinting = () => {
           description: 'A new device has been registered to your account. Please verify this was you.',
           duration: 10000
         });
+      } catch (deviceError) {
+        console.error('Failed to register device:', deviceError);
       }
 
       // Load all trusted devices
