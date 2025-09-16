@@ -959,6 +959,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      automated_security_maintenance_v2: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_user_plan_limits: {
         Args: {
           p_agent_id?: string
@@ -1024,6 +1028,10 @@ export type Database = {
           window_minutes?: number
         }
         Returns: boolean
+      }
+      enhanced_security_scan: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_public_agent_data: {
         Args: { agent_uuid: string }
