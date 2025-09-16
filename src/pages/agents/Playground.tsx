@@ -25,13 +25,16 @@ import {
   Zap,
   Database,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Save,
+  AlertCircle
 } from 'lucide-react';
 import { useChat } from '@/hooks/useChat';
 import { useAgents, useKnowledgeFiles } from '@/hooks/useAgents';
 import { useAgentActions } from '@/hooks/useAgentActions';
 import { ActionButtons } from '@/components/chat/ActionButtons';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
+import { toast } from '@/hooks/use-toast';
 
 
 export const Playground = () => {
@@ -41,8 +44,11 @@ export const Playground = () => {
   const [instructionsOpen, setInstructionsOpen] = useState(true);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [instructions, setInstructions] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [savingInstructions, setSavingInstructions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { getAgent } = useAgents();
+  const { getAgent, updateAgent } = useAgents();
   const { files } = useKnowledgeFiles(id || '');
   const { actions } = useAgentActions(id);
   const [agent, setAgent] = useState<any>(null);
@@ -63,6 +69,7 @@ export const Playground = () => {
         try {
           const agentData = await getAgent(id);
           setAgent(agentData);
+          setInstructions(agentData?.instructions || '');
         } catch (error) {
           console.error('Error loading agent:', error);
         }
@@ -72,6 +79,29 @@ export const Playground = () => {
     loadAgent();
     initializeChat();
   }, [id]);
+
+  // Update instructions when agent changes (from external updates)
+  useEffect(() => {
+    if (agent?.instructions !== undefined && agent.instructions !== instructions) {
+      setInstructions(agent.instructions);
+      setHasUnsavedChanges(false);
+    }
+  }, [agent?.instructions]);
+
+  // Keyboard shortcut for saving
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (hasUnsavedChanges) {
+          handleSaveInstructions();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasUnsavedChanges]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -83,6 +113,41 @@ export const Playground = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleInstructionsChange = (value: string) => {
+    setInstructions(value);
+    setHasUnsavedChanges(value !== (agent?.instructions || ''));
+  };
+
+  const handleSaveInstructions = async () => {
+    if (!id || !hasUnsavedChanges) return;
+
+    setSavingInstructions(true);
+    try {
+      await updateAgent(id, {
+        name: agent.name, // Required field
+        instructions,
+      });
+
+      // Update local agent state
+      setAgent((prev: any) => prev ? { ...prev, instructions } : null);
+      setHasUnsavedChanges(false);
+
+      toast({
+        title: "Instructions saved",
+        description: "Your AI instructions have been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving instructions:', error);
+      toast({
+        title: "Error saving instructions",
+        description: "Failed to update AI instructions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingInstructions(false);
     }
   };
 
@@ -155,15 +220,42 @@ export const Playground = () => {
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   <span className="font-medium">Instructions</span>
+                  {hasUnsavedChanges && (
+                    <div className="flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3 text-amber-500" />
+                      <span className="text-xs text-amber-600">Unsaved</span>
+                    </div>
+                  )}
                 </div>
                 {instructionsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
+              <CollapsibleContent className="mt-2 space-y-2">
                 <Textarea 
-                  value={agent?.instructions || 'Loading instructions...'}
-                  readOnly
-                  className="min-h-[100px] resize-none bg-muted/30"
+                  value={instructions}
+                  onChange={(e) => handleInstructionsChange(e.target.value)}
+                  placeholder="Enter your AI instructions here..."
+                  className="min-h-[100px] resize-none"
                 />
+                {hasUnsavedChanges && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      Press Ctrl+S to save or click the save button
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveInstructions}
+                      disabled={savingInstructions}
+                      className="h-7"
+                    >
+                      {savingInstructions ? (
+                        <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                      ) : (
+                        <Save className="h-3 w-3 mr-1" />
+                      )}
+                      {savingInstructions ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                )}
               </CollapsibleContent>
             </Collapsible>
 
