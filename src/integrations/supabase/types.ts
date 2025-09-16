@@ -943,6 +943,16 @@ export type Database = {
       }
     }
     Functions: {
+      admin_emergency_profile_access: {
+        Args: { access_reason: string; target_user_id: string }
+        Returns: {
+          access_warning: string
+          created_at: string
+          display_name: string
+          email: string
+          user_id: string
+        }[]
+      }
       anonymize_ip_address: {
         Args: { ip_addr: unknown }
         Returns: unknown
@@ -1140,6 +1150,10 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
+      validate_authenticated_user: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       validate_edge_function_request: {
         Args: { client_ip?: unknown; function_name: string; request_data: Json }
         Returns: boolean
@@ -1150,6 +1164,18 @@ export type Database = {
       }
       validate_phone: {
         Args: { phone_input: string }
+        Returns: boolean
+      }
+      validate_profile_input: {
+        Args: {
+          display_name_input?: string
+          email_input: string
+          phone_input?: string
+        }
+        Returns: boolean
+      }
+      validate_secure_profile_access: {
+        Args: { operation_type?: string; target_user_id: string }
         Returns: boolean
       }
       validate_sensitive_data_access: {
