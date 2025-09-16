@@ -639,11 +639,19 @@ serve(async (req) => {
             messageContent.className = 'message-content';
             
             // Process content to make URLs clickable and sanitize
-            const processedContent = content
-              .replace(/https?:\/\/[^\s<>"{}|^`\[\]]+/g, '<a href="$&" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">$&</a>')
-              .replace(/&lt;/g, '&amp;lt;')
-              .replace(/&gt;/g, '&amp;gt;')
-              .replace(/&amp;lt;a href="([^"]+)" target="_blank" rel="noopener noreferrer" style="([^"]+)"&amp;gt;([^&]+)&amp;lt;\/a&amp;gt;/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="$2">$3</a>');
+            // First escape HTML characters to prevent XSS
+            let processedContent = content
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
+            
+            // Then make URLs clickable (they are now safely escaped)
+            processedContent = processedContent
+              .replace(/https?:\/\/[^\s&<>"{}|^`\[\]]+/g, (url) => {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">${url}</a>`;
+              });
             
             messageContent.innerHTML = processedContent;
             
