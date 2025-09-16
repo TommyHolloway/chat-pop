@@ -488,7 +488,7 @@ serve(async (req) => {
     <div class="header">
         <div class="avatar">
           ${agent?.profile_image_url 
-            ? `<img src="${agent.profile_image_url}" alt="Agent Avatar" />`
+            ? '<img src="' + '${agent.profile_image_url}' + '" alt="Agent Avatar" />'
             : safeName.charAt(0).toUpperCase()
           }
         </div>
@@ -629,8 +629,9 @@ serve(async (req) => {
             if (role === 'user') {
               avatar.textContent = 'U';
             } else {
-              if (${agent?.profile_image_url ? 'true' : 'false'}) {
-                avatar.innerHTML = '<img src="${agent?.profile_image_url || ''}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+              const hasProfileImage = ${agent?.profile_image_url ? 'true' : 'false'};
+              if (hasProfileImage) {
+                avatar.innerHTML = '<img src="' + '${agent?.profile_image_url || ''}' + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
               } else {
                 avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
               }
@@ -650,8 +651,8 @@ serve(async (req) => {
             
             // Then make URLs clickable (they are now safely escaped)
             processedContent = processedContent
-              .replace(/https?:\/\/[^\s&<>"{}|^`\[\]]+/g, (url) => {
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">${url}</a>`;
+              .replace(/https?:\/\/[^\s&<>"{}|^`\[\]]+/g, function(url) {
+                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">' + url + '</a>';
               });
             
             messageContent.innerHTML = processedContent;
@@ -676,9 +677,11 @@ serve(async (req) => {
                 
                 const avatar = document.createElement('div');
                 avatar.className = 'message-avatar';
-                ${agent?.profile_image_url 
-                  ? `avatar.innerHTML = '<img src="${agent.profile_image_url}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';`
-                  : `avatar.textContent = '${safeName.charAt(0).toUpperCase()}';`
+                const hasProfileImage = ${agent?.profile_image_url ? 'true' : 'false'};
+                if (hasProfileImage) {
+                  avatar.innerHTML = '<img src="' + '${agent?.profile_image_url || ''}' + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                } else {
+                  avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
                 }
                 
                 const loadingContent = document.createElement('div');
@@ -709,16 +712,13 @@ serve(async (req) => {
         initConversation();
         
         // Show initial message if available
-        ${agent?.initial_message ? `
-        setTimeout(() => {
-          // Remove empty state first
-          const emptyState = document.querySelector('.empty-state');
-          if (emptyState) emptyState.remove();
-          
-          // Add initial message
-          addMessage('assistant', \`${agent.initial_message.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`);
-        }, 100);
-        ` : ''}
+        ${agent?.initial_message ? 
+        'setTimeout(() => {' +
+          'const emptyState = document.querySelector(".empty-state");' +
+          'if (emptyState) emptyState.remove();' +
+          'addMessage("assistant", "' + agent.initial_message.replace(/"/g, '\\"').replace(/'/g, "\\'") + '");' +
+        '}, 100);'
+        : ''}
         
         try {
           if (window.parent) {
