@@ -100,7 +100,47 @@ serve(async (req) => {
     }
   }
 
+  // Check if proactive engagement should be enabled for this agent
+  let proactiveEnabled = false;
+  let allowedPages = [];
+  
+  // Fetch agent configuration to check proactive engagement settings
+  async function checkProactiveSettings() {
+    try {
+      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/rest/v1/agents?id=eq.' + agentId + '&select=enable_proactive_engagement,proactive_config', {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQwNTIzMjcsImV4cCI6MjA0OTYyODMyN30.qOJ0eKMlCmwz26sUSzYoJM6Bb2l9VdECGUNL8i7vKnE',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const [agent] = await response.json();
+        if (agent) {
+          proactiveEnabled = agent.enable_proactive_engagement && agent.proactive_config?.enabled;
+          allowedPages = agent.proactive_config?.allowed_pages || [];
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching agent config:', error);
+    }
+  }
+
   async function analyzeAndSuggest() {
+    if (!proactiveEnabled) return;
+    
+    // Check if current page is allowed
+    if (allowedPages.length > 0) {
+      const currentPath = window.location.pathname;
+      const currentUrl = window.location.href;
+      
+      const isAllowed = allowedPages.some(pattern => {
+        return currentUrl.includes(pattern) || currentPath.includes(pattern);
+      });
+      
+      if (!isAllowed) return;
+    }
+    
     try {
       const timeOnPage = Math.floor((Date.now() - currentPageStartTime) / 1000);
       
@@ -281,7 +321,10 @@ serve(async (req) => {
     if (!isOpen) toggleChat();
   };
 
-  function initTracking() {
+  async function initTracking() {
+    // Check proactive settings first
+    await checkProactiveSettings();
+    
     trackPageView();
 
     document.addEventListener('visibilitychange', () => {
@@ -307,8 +350,10 @@ serve(async (req) => {
       }
     });
 
-    // Check for proactive suggestions every 5 seconds
-    setInterval(() => analyzeAndSuggest(), 5000);
+    // Only start proactive analysis if enabled
+    if (proactiveEnabled) {
+      setInterval(() => analyzeAndSuggest(), 5000);
+    }
   }
 
   window.addEventListener('message', (event) => {

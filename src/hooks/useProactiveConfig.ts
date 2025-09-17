@@ -25,6 +25,7 @@ export interface ProactiveConfig {
   timing_delay: number;
   frequency_limit: number;
   message_display_duration: number;
+  allowed_pages?: string[];
   triggers: {
     pricing_concern: ProactiveTrigger;
     high_engagement: ProactiveTrigger;
@@ -38,6 +39,7 @@ const defaultConfig: ProactiveConfig = {
   timing_delay: 5000,
   frequency_limit: 3,
   message_display_duration: 15000,
+  allowed_pages: [],
   triggers: {
     pricing_concern: {
       enabled: false,
@@ -119,7 +121,24 @@ export const useProactiveConfig = (agent: any) => {
   }, [agent?.id, agent?.proactive_config, agent?.updated_at]);
 
   const updateConfig = (updates: Partial<ProactiveConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
+    setConfig(prev => {
+      const newConfig = { ...prev, ...updates };
+      
+      // If disabling proactive engagement globally, disable all individual triggers
+      if ('enabled' in updates && !updates.enabled) {
+        newConfig.triggers = {
+          pricing_concern: { ...newConfig.triggers.pricing_concern, enabled: false },
+          high_engagement: { ...newConfig.triggers.high_engagement, enabled: false },
+          feature_exploration: { ...newConfig.triggers.feature_exploration, enabled: false }
+        };
+        newConfig.custom_triggers = (newConfig.custom_triggers || []).map(trigger => ({
+          ...trigger,
+          enabled: false
+        }));
+      }
+      
+      return newConfig;
+    });
   };
 
   const updateTrigger = (triggerName: keyof ProactiveConfig['triggers'], updates: Partial<ProactiveTrigger>) => {

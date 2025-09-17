@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   ArrowLeft, 
   Copy, 
@@ -15,7 +17,8 @@ import {
   Smartphone,
   Check,
   Eye,
-  Settings
+  Settings,
+  Palette
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -29,6 +32,10 @@ export const Deploy = () => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [customDomain, setCustomDomain] = useState('');
   const [agent, setAgent] = useState<any>(null);
+  const [widgetPosition, setWidgetPosition] = useState('bottom-right');
+  const [widgetTheme, setWidgetTheme] = useState('light');
+  const [widgetColor, setWidgetColor] = useState('#84cc16');
+  const [allowedPages, setAllowedPages] = useState('');
 
   useEffect(() => {
     if (agents && id) {
@@ -49,7 +56,7 @@ export const Deploy = () => {
   const scriptCode = `<script>
 (function() {
   var script = document.createElement('script');
-  script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=${id}&position=bottom-right&theme=light&color=%233b82f6';
+  script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget-enhanced?agentId=${id}&position=${widgetPosition}&theme=${widgetTheme}&color=${encodeURIComponent(widgetColor)}';
   document.head.appendChild(script);
 })();
 </script>`;
@@ -199,6 +206,74 @@ export const Deploy = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Widget Customization */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Position</Label>
+                      <Select value={widgetPosition} onValueChange={setWidgetPosition}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                          <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                          <SelectItem value="top-right">Top Right</SelectItem>
+                          <SelectItem value="top-left">Top Left</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Theme</Label>
+                      <Select value={widgetTheme} onValueChange={setWidgetTheme}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                          <SelectItem value="auto">Auto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Primary Color</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={widgetColor}
+                          onChange={(e) => setWidgetColor(e.target.value)}
+                          placeholder="#84cc16"
+                        />
+                        <div 
+                          className="w-10 h-10 rounded border cursor-pointer"
+                          style={{ backgroundColor: widgetColor }}
+                          onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'color';
+                            input.value = widgetColor;
+                            input.onchange = (e) => setWidgetColor((e.target as HTMLInputElement).value);
+                            input.click();
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Page Restrictions */}
+                  <div className="space-y-2">
+                    <Label>Page Restrictions (Optional)</Label>
+                    <Textarea
+                      placeholder="Leave empty for all pages, or specify URL patterns (one per line):&#10;/landing&#10;/home&#10;pricing&#10;/product/*"
+                      value={allowedPages}
+                      onChange={(e) => setAllowedPages(e.target.value)}
+                      rows={3}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Specify URL patterns where the widget should appear. Leave empty to show on all pages.
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>JavaScript Code</Label>
                     <div className="relative">
@@ -224,19 +299,21 @@ export const Deploy = () => {
                     <div className="space-y-2">
                       <h4 className="font-semibold">Widget Features:</h4>
                       <ul className="space-y-1 text-muted-foreground">
-                        <li>• Floating button</li>
-                        <li>• Expandable chat</li>
-                        <li>• Position options</li>
-                        <li>• Custom colors</li>
+                        <li>• Floating button with animations</li>
+                        <li>• Expandable chat overlay</li>
+                        <li>• Visitor behavior tracking</li>
+                        <li>• Proactive engagement (if enabled)</li>
+                        <li>• Mobile optimized</li>
                       </ul>
                     </div>
                     <div className="space-y-2">
-                      <h4 className="font-semibold">Configuration:</h4>
+                      <h4 className="font-semibold">Customization:</h4>
                       <ul className="space-y-1 text-muted-foreground">
-                        <li>• data-position: bottom-right, bottom-left</li>
-                        <li>• data-theme: light, dark, auto</li>
-                        <li>• data-color: custom hex color</li>
-                        <li>• data-title: custom greeting</li>
+                        <li>• 4 position options</li>
+                        <li>• Light/dark/auto themes</li>
+                        <li>• Custom brand colors</li>
+                        <li>• Page-specific loading</li>
+                        <li>• Responsive design</li>
                       </ul>
                     </div>
                   </div>
