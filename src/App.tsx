@@ -13,6 +13,7 @@ import { AuthenticatedNavbar } from "@/components/Layout/AuthenticatedNavbar";
 import { AppSidebar } from "@/components/Layout/AppSidebar";
 import { WorkspaceLayout } from "@/components/Layout/WorkspaceLayout";
 import { Footer } from "@/components/Layout/Footer";
+import { BetaBanner } from "@/components/BetaBanner";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 // Pages
@@ -55,6 +56,7 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
     <PublicNavbar />
+    <BetaBanner />
     <main className="flex-1">{children}</main>
     <Footer />
   </div>
