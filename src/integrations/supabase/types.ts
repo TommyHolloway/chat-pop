@@ -227,6 +227,7 @@ export type Database = {
           status: string | null
           updated_at: string
           user_id: string
+          widget_page_restrictions: string[] | null
           workspace_id: string | null
         }
         Insert: {
@@ -247,6 +248,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id: string
+          widget_page_restrictions?: string[] | null
           workspace_id?: string | null
         }
         Update: {
@@ -267,6 +269,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+          widget_page_restrictions?: string[] | null
           workspace_id?: string | null
         }
         Relationships: []

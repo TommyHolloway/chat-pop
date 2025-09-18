@@ -24,7 +24,7 @@ serve(async (req) => {
       return new Response('Agent ID is required', { status: 400 });
     }
 
-const widgetScript = `
+    const widgetScript = `
 (function() {
   // Check if widget is already loaded
   if (window.ChatPopWidget) return;
@@ -539,33 +539,57 @@ const widgetScript = `
     document.head.appendChild(overlayStyles);
 
     iframe = document.createElement('iframe');
-    iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin';
-    iframe.allow = 'fullscreen';
     iframe.style.cssText = \`
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 20px;
-      background: transparent;
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      border-radius: 16px !important;
+      background: white !important;
+      overflow: hidden !important;
     \`;
 
-    console.log('Fetching chat HTML content...');
-    const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
-    fetch(chatUrlWithSession)
-      .then(response => {
-        console.log('Chat fetch response status:', response.status);
-        return response.text();
-      })
-      .then(html => {
-        console.log('Chat HTML fetched successfully, length:', html.length);
-        iframe.srcdoc = html;
-      })
-      .catch(error => {
-        console.error('Failed to fetch chat HTML:', error);
-        iframe.src = chatUrlWithSession;
-      });
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.style.cssText = \`
+      position: absolute !important;
+      top: 16px !important;
+      right: 16px !important;
+      background: rgba(156, 163, 175, 0.1) !important;
+      border: 1px solid rgba(156, 163, 175, 0.2) !important;
+      border-radius: 50% !important;
+      width: 32px !important;
+      height: 32px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      z-index: 1000001 !important;
+      backdrop-filter: blur(10px) !important;
+      transition: all 0.2s ease !important;
+    \`;
+
+    closeButton.innerHTML = \`
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    \`;
+
+    closeButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleChat();
+    });
+
+    closeButton.addEventListener('mouseenter', () => {
+      closeButton.style.background = 'rgba(156, 163, 175, 0.2)';
+    });
+
+    closeButton.addEventListener('mouseleave', () => {
+      closeButton.style.background = 'rgba(156, 163, 175, 0.1)';
+    });
 
     overlay.appendChild(iframe);
+    overlay.appendChild(closeButton);
     document.body.appendChild(overlay);
   }
 
@@ -573,30 +597,15 @@ const widgetScript = `
     if (!overlay) {
       createOverlay();
     }
-    
-    isOpen = !isOpen;
-    
+
+    const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
+
     if (isOpen) {
-      overlay.style.display = 'block';
-      overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-      widget.style.background = 'linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%)';
-      
-      trackBehavior('chat_opened');
-      
-      widget.innerHTML = \`
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      \`;
-    } else {
       overlay.style.animation = 'slideOutChat 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
       setTimeout(() => {
         overlay.style.display = 'none';
       }, 300);
-      
-      widget.style.background = 'linear-gradient(135deg, #84cc16 0%, #65a30d 100%)';
-      
+      widget.style.transform = 'scale(1)';
       widget.innerHTML = \`
         <div class="chat-widget-sparkle"></div>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
@@ -606,15 +615,44 @@ const widgetScript = `
           <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
         </svg>
       \`;
+    } else {
+      if (!iframe.src && !iframe.srcdoc) {
+        fetch(chatUrlWithSession)
+          .then(response => response.text())
+          .then(html => {
+            iframe.srcdoc = html;
+          })
+          .catch(error => {
+            console.error('Failed to fetch chat HTML:', error);
+            iframe.src = chatUrlWithSession;
+          });
+      }
+      
+      overlay.style.display = 'block';
+      overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      widget.style.transform = 'scale(0.9)';
+      widget.innerHTML = \`
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      \`;
     }
+    
+    isOpen = !isOpen;
   }
 
   // Initialize everything
-  function init() {
+  async function init() {
     console.log('🚀 Initializing Enhanced Chat Widget for agent:', agentId);
     console.log('🎯 Position:', position, 'Theme:', theme, 'Color:', primaryColor);
+    
+    // Check widget page restrictions first
+    const canLoadWidget = await checkWidgetPageRestrictions();
+    if (!canLoadWidget) return;
+    
     createWidget();
-    initTracking();
+    await initTracking();
     
     // Add manual test function for debugging
     window.testProactiveMessage = function() {
