@@ -1039,6 +1039,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      enhanced_rate_limit_check_readonly: {
+        Args: {
+          max_operations?: number
+          operation_key: string
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       enhanced_security_scan: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1174,8 +1182,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_profile_input_readonly: {
+        Args: { p_display_name?: string; p_email: string; p_phone?: string }
+        Returns: boolean
+      }
       validate_secure_profile_access: {
         Args: { operation_type?: string; target_user_id: string }
+        Returns: boolean
+      }
+      validate_secure_profile_access_readonly: {
+        Args: { operation_type: string; p_user_id: string }
         Returns: boolean
       }
       validate_sensitive_data_access: {
