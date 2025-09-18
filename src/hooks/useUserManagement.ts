@@ -23,38 +23,78 @@ export const useUserManagement = () => {
     try {
       setLoading(true);
       
-      // Get users from profiles with their roles using the new structure
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select(`
-          user_id,
-          email,
-          display_name,
-          plan,
-          created_at,
-          updated_at,
-          user_roles (
-            role
-          )
-        `);
+      // Try the normal query first
+      let profiles = null;
+      let profilesError = null;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(`
+            user_id,
+            email,
+            display_name,
+            plan,
+            created_at,
+            updated_at,
+            user_roles (
+              role
+            )
+          `);
+        profiles = data;
+        profilesError = error;
+      } catch (rlsError) {
+        console.warn('RLS policy error, trying fallback query:', rlsError);
+        
+        // Fallback: Try a simpler query without complex RLS functions
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select(`
+              user_id,
+              email,
+              display_name,
+              plan,
+              created_at,
+              updated_at
+            `);
+          
+          // Get roles separately
+          const { data: rolesData } = await supabase
+            .from('user_roles')
+            .select('user_id, role');
+          
+          profiles = data?.map(profile => ({
+            ...profile,
+            user_roles: rolesData?.filter(role => role.user_id === profile.user_id) || []
+          }));
+          profilesError = error;
+        } catch (fallbackError) {
+          console.error('Fallback query also failed:', fallbackError);
+          profilesError = fallbackError;
+        }
+      }
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         throw profilesError;
       }
 
-      // Get auth data for additional info
+      // Get auth data for additional info (with better error handling)
       let authData = null;
       try {
-        const { data, error } = await supabase.functions.invoke('get-users-admin', {
-          headers: {
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-        });
-        if (error) {
-          console.error('Auth function error:', error);
-        } else {
-          authData = data;
+        const session = await supabase.auth.getSession();
+        if (session.data.session?.access_token) {
+          const { data, error } = await supabase.functions.invoke('get-users-admin', {
+            headers: {
+              Authorization: `Bearer ${session.data.session.access_token}`,
+            },
+          });
+          if (error) {
+            console.error('Auth function error:', error);
+          } else {
+            authData = data;
+          }
         }
       } catch (authError) {
         console.warn('Could not fetch auth data:', authError);
@@ -64,13 +104,14 @@ export const useUserManagement = () => {
       // Combine the data
       const combinedUsers = profiles?.map(profile => {
         const authUser = authData?.users?.find((u: any) => u.id === profile.user_id);
+        const userRoles = Array.isArray(profile.user_roles) ? profile.user_roles : [];
         
         return {
           id: profile.user_id,
           email: profile.email,
           display_name: profile.display_name,
           plan: profile.plan || 'free',
-          role: (profile.user_roles as any)?.[0]?.role || 'user',
+          role: userRoles?.[0]?.role || 'user',
           created_at: profile.created_at || '',
           last_sign_in_at: authUser?.last_sign_in_at || null,
           email_confirmed_at: authUser?.email_confirmed_at || null
@@ -82,9 +123,12 @@ export const useUserManagement = () => {
       console.error('Error fetching users:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch users. Please try again.",
+        description: "Failed to fetch users. Please try again later.",
         variant: "destructive",
       });
+      
+      // Set empty array on complete failure to show the UI
+      setUsers([]);
     } finally {
       setLoading(false);
     }
