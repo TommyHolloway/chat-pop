@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface VisitorSession {
   id: string;
@@ -43,7 +44,7 @@ interface ProactiveSuggestion {
   created_at: string;
 }
 
-export const useVisitorBehavior = (agentId: string) => {
+export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to: Date }) => {
   const [visitorSessions, setVisitorSessions] = useState<VisitorSession[]>([]);
   const [behaviorEvents, setBehaviorEvents] = useState<BehaviorEvent[]>([]);
   const [proactiveSuggestions, setProactiveSuggestions] = useState<ProactiveSuggestion[]>([]);
@@ -58,13 +59,21 @@ export const useVisitorBehavior = (agentId: string) => {
         setLoading(true);
         setError(null);
 
-        // Fetch visitor sessions for the agent
-        const { data: sessions, error: sessionsError } = await supabase
+        // Apply date filtering
+        let query = supabase
           .from('visitor_sessions')
           .select('*')
-          .eq('agent_id', agentId)
+          .eq('agent_id', agentId);
+
+        if (dateRange?.from && dateRange?.to) {
+          query = query
+            .gte('created_at', startOfDay(dateRange.from).toISOString())
+            .lte('created_at', endOfDay(dateRange.to).toISOString());
+        }
+
+        const { data: sessions, error: sessionsError } = await query
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(200);
 
         if (sessionsError) throw sessionsError;
 
@@ -74,28 +83,44 @@ export const useVisitorBehavior = (agentId: string) => {
         const sessionIds = sessions?.map(s => s.session_id) || [];
 
         if (sessionIds.length > 0) {
-          // Fetch behavior events
-          const { data: events, error: eventsError } = await supabase
+          // Fetch behavior events with date filtering
+          let eventsQuery = supabase
             .from('visitor_behavior_events')
             .select('*')
-            .in('session_id', sessionIds)
+            .in('session_id', sessionIds);
+
+          if (dateRange?.from && dateRange?.to) {
+            eventsQuery = eventsQuery
+              .gte('created_at', startOfDay(dateRange.from).toISOString())
+              .lte('created_at', endOfDay(dateRange.to).toISOString());
+          }
+
+          const { data: events, error: eventsError } = await eventsQuery
             .order('created_at', { ascending: false })
-            .limit(200);
+            .limit(500);
 
           if (eventsError) throw eventsError;
           setBehaviorEvents(events || []);
-
-          // Fetch proactive suggestions
-          const { data: suggestions, error: suggestionsError } = await supabase
-            .from('proactive_suggestions')
-            .select('*')
-            .eq('agent_id', agentId)
-            .order('created_at', { ascending: false })
-            .limit(100);
-
-          if (suggestionsError) throw suggestionsError;
-          setProactiveSuggestions(suggestions || []);
         }
+
+        // Fetch proactive suggestions with date filtering
+        let suggestionsQuery = supabase
+          .from('proactive_suggestions')
+          .select('*')
+          .eq('agent_id', agentId);
+
+        if (dateRange?.from && dateRange?.to) {
+          suggestionsQuery = suggestionsQuery
+            .gte('created_at', startOfDay(dateRange.from).toISOString())
+            .lte('created_at', endOfDay(dateRange.to).toISOString());
+        }
+
+        const { data: suggestions, error: suggestionsError } = await suggestionsQuery
+          .order('created_at', { ascending: false })
+          .limit(200);
+
+        if (suggestionsError) throw suggestionsError;
+        setProactiveSuggestions(suggestions || []);
 
       } catch (err) {
         console.error('Error fetching visitor behavior data:', err);
@@ -106,7 +131,7 @@ export const useVisitorBehavior = (agentId: string) => {
     };
 
     fetchVisitorData();
-  }, [agentId]);
+  }, [agentId, dateRange]);
 
   const refreshData = () => {
     if (agentId) {

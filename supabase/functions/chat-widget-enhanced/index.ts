@@ -24,7 +24,7 @@ serve(async (req) => {
       return new Response('Agent ID is required', { status: 400 });
     }
 
-    const widgetScript = `
+const widgetScript = `
 (function() {
   // Check if widget is already loaded
   if (window.ChatPopWidget) return;
@@ -34,6 +34,47 @@ serve(async (req) => {
   const theme = '${theme}';
   const primaryColor = '${color}';
   const chatUrl = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/public-chat?agentId=' + agentId;
+
+  // Widget-level page restrictions - check before loading widget
+  let widgetAllowedPages = [];
+  
+  // Fetch agent configuration to check widget page restrictions
+  async function checkWidgetPageRestrictions() {
+    try {
+      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/rest/v1/agents?id=eq.' + agentId + '&select=widget_page_restrictions', {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQwNTIzMjcsImV4cCI6MjA0OTYyODMyN30.qOJ0eKMlCmwz26sUSzYoJM6Bb2l9VdECGUNL8i7vKnE',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const [agent] = await response.json();
+        if (agent && agent.widget_page_restrictions) {
+          widgetAllowedPages = agent.widget_page_restrictions;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching widget page restrictions:', error);
+    }
+    
+    // Check if current page is allowed for widget loading
+    if (widgetAllowedPages.length > 0) {
+      const currentPath = window.location.pathname;
+      const currentUrl = window.location.href;
+      
+      const isAllowed = widgetAllowedPages.some(pattern => {
+        return currentUrl.includes(pattern) || currentPath.includes(pattern);
+      });
+      
+      if (!isAllowed) {
+        console.log('ChatPop Widget: Page not allowed for widget loading');
+        return false;
+      }
+    }
+    
+    return true;
+  }
 
   // Widget state
   let isOpen = false;

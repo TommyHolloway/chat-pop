@@ -35,7 +35,8 @@ export const Deploy = () => {
   const [widgetPosition, setWidgetPosition] = useState('bottom-right');
   const [widgetTheme, setWidgetTheme] = useState('light');
   const [widgetColor, setWidgetColor] = useState('#84cc16');
-  const [allowedPages, setAllowedPages] = useState('');
+  const [widgetPages, setWidgetPages] = useState('');
+  const [proactivePages, setProactivePages] = useState('');
 
   useEffect(() => {
     if (agents && id) {
@@ -260,17 +261,31 @@ export const Deploy = () => {
                     </div>
                   </div>
 
-                  {/* Page Restrictions */}
+                  {/* Widget Loading Restrictions */}
                   <div className="space-y-2">
-                    <Label>Page Restrictions (Optional)</Label>
+                    <Label>Widget Loading Pages (Optional)</Label>
                     <Textarea
-                      placeholder="Leave empty for all pages, or specify URL patterns (one per line):&#10;/landing&#10;/home&#10;pricing&#10;/product/*"
-                      value={allowedPages}
-                      onChange={(e) => setAllowedPages(e.target.value)}
+                      placeholder="Leave empty for all pages, or specify URL patterns (one per line):&#10;/&#10;/landing&#10;/home&#10;/product/*"
+                      value={widgetPages}
+                      onChange={(e) => setWidgetPages(e.target.value)}
                       rows={3}
                     />
                     <p className="text-sm text-muted-foreground">
-                      Specify URL patterns where the widget should appear. Leave empty to show on all pages.
+                      Control which pages the widget loads on. Leave empty to load on all pages.
+                    </p>
+                  </div>
+
+                  {/* Proactive Engagement Restrictions */}
+                  <div className="space-y-2">
+                    <Label>Proactive Triggers Pages (Optional)</Label>
+                    <Textarea
+                      placeholder="Leave empty for all pages where widget loads, or specify URL patterns:&#10;/pricing&#10;/contact&#10;/features/*"
+                      value={proactivePages}
+                      onChange={(e) => setProactivePages(e.target.value)}
+                      rows={3}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Control which pages show proactive suggestions. Separate from widget loading.
                     </p>
                   </div>
 

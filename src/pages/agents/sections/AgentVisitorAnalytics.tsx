@@ -1,17 +1,27 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { useVisitorBehavior } from '@/hooks/useVisitorBehavior';
-import { RefreshCw, Users, Eye, Clock, Target, MousePointer, TrendingUp } from 'lucide-react';
-import { format } from 'date-fns';
+import { RefreshCw, Users, Eye, Clock, Target, MousePointer, TrendingUp, Calendar } from 'lucide-react';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 interface AgentVisitorAnalyticsProps {
   agent: any;
 }
 
 export const AgentVisitorAnalytics = ({ agent }: AgentVisitorAnalyticsProps) => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  const [quickRange, setQuickRange] = useState('30d');
+
   const { 
     visitorSessions, 
     behaviorEvents, 
@@ -20,7 +30,26 @@ export const AgentVisitorAnalytics = ({ agent }: AgentVisitorAnalyticsProps) => 
     loading, 
     error, 
     refreshData 
-  } = useVisitorBehavior(agent.id);
+  } = useVisitorBehavior(agent.id, dateRange?.from && dateRange?.to ? { from: dateRange.from, to: dateRange.to } : undefined);
+
+  const handleQuickRangeChange = (range: string) => {
+    setQuickRange(range);
+    const now = new Date();
+    switch (range) {
+      case '7d':
+        setDateRange({ from: subDays(now, 7), to: now });
+        break;
+      case '30d':
+        setDateRange({ from: subDays(now, 30), to: now });
+        break;
+      case '90d':
+        setDateRange({ from: subDays(now, 90), to: now });
+        break;
+      case 'all':
+        setDateRange(undefined);
+        break;
+    }
+  };
 
   if (loading) {
     return (
@@ -68,17 +97,36 @@ export const AgentVisitorAnalytics = ({ agent }: AgentVisitorAnalyticsProps) => 
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Visitor Analytics</h2>
-          <p className="text-muted-foreground">Track visitor behavior and proactive engagement</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Visitor Analytics</h2>
+            <p className="text-muted-foreground">Track visitor behavior and proactive engagement</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Select value={quickRange} onValueChange={handleQuickRangeChange}>
+              <SelectTrigger className="w-[140px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+              </SelectContent>
+            </Select>
+            <DatePickerWithRange
+              date={dateRange}
+              onDateChange={setDateRange}
+              className="w-auto"
+            />
+            <Button onClick={refreshData} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
-        <Button onClick={refreshData} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
 
       {/* Analytics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
