@@ -71,6 +71,11 @@ export const TriggerListCard = ({ trigger, onToggle, onEdit, onDelete }: Trigger
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="font-medium truncate">{trigger.name}</h4>
+                {trigger.isQuickTrigger && (
+                  <Badge variant="default" className="text-xs bg-primary/10 text-primary hover:bg-primary/20">
+                    Quick Trigger
+                  </Badge>
+                )}
                 <Badge variant="secondary" className="text-xs">
                   {getTriggerTypeLabel(trigger.trigger_type)}
                 </Badge>
@@ -98,14 +103,16 @@ export const TriggerListCard = ({ trigger, onToggle, onEdit, onDelete }: Trigger
               <Edit className="h-4 w-4" />
             </Button>
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!trigger.isQuickTrigger && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDelete}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
             
             <Switch
               checked={trigger.enabled}

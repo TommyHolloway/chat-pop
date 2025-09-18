@@ -91,37 +91,71 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
         </>
       )}
 
-      {/* Triggers Section */}
+      {/* Quick Triggers Section */}
+      {config.enabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              Quick Triggers
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Ready-to-use trigger templates for common scenarios
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {config.custom_triggers?.filter(trigger => trigger.isQuickTrigger).map((trigger) => (
+                <TriggerListCard
+                  key={trigger.id}
+                  trigger={trigger}
+                  onToggle={(enabled) => updateCustomTrigger(trigger.id, { enabled })}
+                  onEdit={() => {
+                    setEditingTrigger(trigger);
+                    setShowWizard(true);
+                  }}
+                  onDelete={() => removeCustomTrigger(trigger.id)}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Custom Triggers Section */}
       {config.enabled && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Triggers
+                Custom Triggers
               </CardTitle>
               <Button onClick={() => setShowWizard(true)} className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                Create New Trigger
+                Create Custom Trigger
               </Button>
             </div>
+            <p className="text-sm text-muted-foreground">
+              Build your own triggers with specific conditions and messages
+            </p>
           </CardHeader>
           <CardContent>
-            {!config.custom_triggers?.length ? (
+            {!config.custom_triggers?.filter(trigger => !trigger.isQuickTrigger).length ? (
               <div className="text-center py-12">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No triggers created yet</h3>
+                <h3 className="text-lg font-medium mb-2">No custom triggers created yet</h3>
                 <p className="text-muted-foreground mb-4">
-                  Create your first trigger to start engaging with visitors proactively
+                  Create a custom trigger tailored to your specific needs
                 </p>
                 <Button onClick={() => setShowWizard(true)} className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
-                  Create Your First Trigger
+                  Create Your First Custom Trigger
                 </Button>
               </div>
             ) : (
               <div className="space-y-4">
-                {config.custom_triggers.map((trigger) => (
+                {config.custom_triggers?.filter(trigger => !trigger.isQuickTrigger).map((trigger) => (
                   <TriggerListCard
                     key={trigger.id}
                     trigger={trigger}

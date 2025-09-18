@@ -18,6 +18,7 @@ export interface CustomTrigger extends ProactiveTrigger {
   trigger_type: 'time_based' | 'scroll_based' | 'element_interaction' | 'exit_intent';
   scroll_depth?: number;
   element_selector?: string;
+  isQuickTrigger?: boolean;
 }
 
 export interface ProactiveConfig {
@@ -33,6 +34,40 @@ export interface ProactiveConfig {
   };
   custom_triggers?: CustomTrigger[];
 }
+
+const quickTriggerTemplates: CustomTrigger[] = [
+  {
+    id: 'quick_pricing_helper',
+    name: 'Pricing Page Helper',
+    trigger_type: 'time_based',
+    enabled: false,
+    time_threshold: 30,
+    message: "Hi! I noticed you're looking at our pricing. I'd be happy to help you find the perfect plan for your needs!",
+    url_patterns: ['pricing', 'plans', 'cost', '#pricing'],
+    isQuickTrigger: true
+  },
+  {
+    id: 'quick_engagement_booster',
+    name: 'Engagement Booster',
+    trigger_type: 'time_based',
+    enabled: false,
+    time_threshold: 120,
+    page_views_threshold: 5,
+    message: "You seem really interested in what we offer! Would you like to chat about how we can help you?",
+    url_patterns: [],
+    isQuickTrigger: true
+  },
+  {
+    id: 'quick_feature_guide',
+    name: 'Feature Guide',
+    trigger_type: 'time_based',
+    enabled: false,
+    page_threshold: 3,
+    message: "I see you're exploring our features. Want to learn more about how they can benefit you?",
+    url_patterns: ['features', 'product', 'demo', '#features'],
+    isQuickTrigger: true
+  }
+];
 
 const defaultConfig: ProactiveConfig = {
   enabled: false,
@@ -72,6 +107,57 @@ export const useProactiveConfig = (agent: any) => {
   const [configLoading, setConfigLoading] = useState(true);
   const [config, setConfig] = useState<ProactiveConfig>(defaultConfig);
 
+  // Migration function to convert old predefined triggers to Quick Triggers
+  const migrateToQuickTriggers = (config: ProactiveConfig): ProactiveConfig => {
+    const existingCustomTriggers = config.custom_triggers || [];
+    const migratedTriggers = [...existingCustomTriggers];
+    
+    // Check if Quick Triggers already exist
+    const hasQuickTriggers = existingCustomTriggers.some(t => t.isQuickTrigger);
+    
+    if (!hasQuickTriggers && config.triggers) {
+      // Convert old predefined triggers to Quick Triggers
+      if (config.triggers.pricing_concern) {
+        migratedTriggers.push({
+          ...quickTriggerTemplates[0],
+          enabled: config.triggers.pricing_concern.enabled,
+          message: config.triggers.pricing_concern.message,
+          time_threshold: config.triggers.pricing_concern.time_threshold,
+          url_patterns: config.triggers.pricing_concern.url_patterns
+        });
+      }
+      
+      if (config.triggers.high_engagement) {
+        migratedTriggers.push({
+          ...quickTriggerTemplates[1],
+          enabled: config.triggers.high_engagement.enabled,
+          message: config.triggers.high_engagement.message,
+          time_threshold: config.triggers.high_engagement.time_threshold,
+          page_views_threshold: config.triggers.high_engagement.page_views_threshold,
+          url_patterns: config.triggers.high_engagement.url_patterns
+        });
+      }
+      
+      if (config.triggers.feature_exploration) {
+        migratedTriggers.push({
+          ...quickTriggerTemplates[2],
+          enabled: config.triggers.feature_exploration.enabled,
+          message: config.triggers.feature_exploration.message,
+          page_threshold: config.triggers.feature_exploration.page_threshold,
+          url_patterns: config.triggers.feature_exploration.url_patterns
+        });
+      }
+    } else if (!hasQuickTriggers) {
+      // Add default Quick Triggers if none exist
+      migratedTriggers.push(...quickTriggerTemplates);
+    }
+    
+    return {
+      ...config,
+      custom_triggers: migratedTriggers
+    };
+  };
+
   useEffect(() => {
     let mounted = true;
     
@@ -87,7 +173,7 @@ export const useProactiveConfig = (agent: any) => {
           const loadedConfig = agent.proactive_config;
           
           // Ensure custom_triggers is properly preserved and loaded
-          const mergedConfig = {
+          let mergedConfig = {
             ...defaultConfig,
             ...loadedConfig,
             triggers: {
@@ -98,10 +184,14 @@ export const useProactiveConfig = (agent: any) => {
             custom_triggers: Array.isArray(loadedConfig.custom_triggers) ? loadedConfig.custom_triggers : []
           };
           
+          // Apply migration to convert old predefined triggers to Quick Triggers
+          mergedConfig = migrateToQuickTriggers(mergedConfig);
+          
           setConfig(mergedConfig);
         } else {
-          // Agent loaded but no proactive config - use default
-          setConfig(defaultConfig);
+          // Agent loaded but no proactive config - use default with Quick Triggers
+          const configWithQuickTriggers = migrateToQuickTriggers(defaultConfig);
+          setConfig(configWithQuickTriggers);
         }
         
         setConfigLoading(false);
