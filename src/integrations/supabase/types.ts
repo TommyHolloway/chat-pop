@@ -1058,6 +1058,7 @@ export type Database = {
         Args: { agent_uuid: string }
         Returns: {
           chat_interface_theme: string
+          description: string
           id: string
           initial_message: string
           message_bubble_color: string
