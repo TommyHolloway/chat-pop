@@ -10,6 +10,7 @@ import { ColorPicker } from '@/components/agent/ColorPicker';
 import { ImageUpload } from '@/components/agent/ImageUpload';
 import { useAgents } from '@/hooks/useAgents';
 import { toast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 export const AgentSettingsChat = ({ agent }: { agent: any }) => {
   const { id } = useParams();
@@ -50,13 +51,14 @@ export const AgentSettingsChat = ({ agent }: { agent: any }) => {
 
     setLoading(true);
     try {
-      // Only update existing fields in the agent schema
+      // Update chat settings fields that exist in the agent schema
       await updateAgent(id, {
         name: agent.name, // Required field
         instructions: agent.instructions, // Required field
         initial_message: chatSettings.welcome_message,
         message_bubble_color: chatSettings.primary_color,
         chat_interface_theme: chatSettings.theme,
+        // Note: show_branding is always required and cannot be changed
       });
       
       toast({
@@ -173,13 +175,12 @@ export const AgentSettingsChat = ({ agent }: { agent: any }) => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Show Branding</Label>
-                <p className="text-sm text-muted-foreground">Display "Powered by" branding</p>
+                <Label>Branding</Label>
+                <p className="text-sm text-muted-foreground">
+                  "Powered by ChatPop" branding is required for all chat widgets
+                </p>
               </div>
-              <Switch
-                checked={chatSettings.show_branding}
-                onCheckedChange={(checked) => updateSetting('show_branding', checked)}
-              />
+              <Badge variant="secondary">Required</Badge>
             </div>
 
             <div className="flex items-center justify-between">

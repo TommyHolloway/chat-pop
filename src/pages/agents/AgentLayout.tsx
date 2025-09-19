@@ -20,7 +20,6 @@ import { AgentSettingsAI } from './sections/AgentSettingsAI';
 import { AgentSettingsChat } from './sections/AgentSettingsChat';
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
 import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
-import { AgentVisitorAnalyticsWrapper } from './sections/AgentVisitorAnalyticsWrapper';
 import { AgentCompletionProgress } from '@/components/agent/AgentCompletionProgress';
 
 export const AgentLayout = () => {
@@ -71,7 +70,6 @@ export const AgentLayout = () => {
           {/* Main sections */}
           <Route path="playground" element={<AgentPlayground agent={agent} />} />
           <Route path="analytics" element={<AgentAnalytics agent={agent} />} />
-          <Route path="analytics/visitor" element={<AgentVisitorAnalyticsWrapper agent={agent} />} />
           
           {/* Activity */}
           <Route path="activity/conversations" element={<AgentConversations agent={agent} />} />
