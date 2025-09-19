@@ -169,7 +169,7 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [agentId, dateRange, user, session]);
+  }, [agentId, dateRange, user?.id, session?.access_token]);
 
   const refreshData = () => {
     if (agentId) {
