@@ -651,7 +651,7 @@ serve(async (req) => {
             
             // Then make URLs clickable (they are now safely escaped)
             processedContent = processedContent
-              .replace(/https?:\/\/[^\s&<>"{}|^`\[\]]+/g, function(url) {
+              .replace(/https?:\/\/[^\s&<>"{}|^\\`\[\]]+/g, function(url) {
                 return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">' + url + '</a>';
               });
             
