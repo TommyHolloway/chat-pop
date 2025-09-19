@@ -1037,7 +1037,7 @@ export type Database = {
         Args: {
           max_operations?: number
           operation_key: string
-          track_ip?: boolean
+          should_log?: boolean
           window_minutes?: number
         }
         Returns: boolean
