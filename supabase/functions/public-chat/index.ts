@@ -488,7 +488,7 @@ serve(async (req) => {
     <div class="header">
         <div class="avatar">
           ${agent?.profile_image_url 
-            ? '<img src="' + '${agent.profile_image_url}' + '" alt="Agent Avatar" />'
+            ? `<img src="${agent.profile_image_url}" alt="Agent Avatar" />`
             : safeName.charAt(0).toUpperCase()
           }
         </div>
@@ -631,7 +631,7 @@ serve(async (req) => {
             } else {
               const hasProfileImage = ${agent?.profile_image_url ? 'true' : 'false'};
               if (hasProfileImage) {
-                avatar.innerHTML = '<img src="' + '${agent?.profile_image_url || ''}' + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                avatar.innerHTML = '<img src="${agent?.profile_image_url || ''}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
               } else {
                 avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
               }
@@ -679,7 +679,7 @@ serve(async (req) => {
                 avatar.className = 'message-avatar';
                 const hasProfileImage = ${agent?.profile_image_url ? 'true' : 'false'};
                 if (hasProfileImage) {
-                  avatar.innerHTML = '<img src="' + '${agent?.profile_image_url || ''}' + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                  avatar.innerHTML = '<img src="${agent?.profile_image_url || ''}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
                 } else {
                   avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
                 }
@@ -713,11 +713,11 @@ serve(async (req) => {
         
         // Show initial message if available
         ${agent?.initial_message ? 
-        'setTimeout(() => {' +
-          'const emptyState = document.querySelector(".empty-state");' +
-          'if (emptyState) emptyState.remove();' +
-          'addMessage("assistant", "' + agent.initial_message.replace(/"/g, '\\"').replace(/'/g, "\\'") + '");' +
-        '}, 100);'
+        `setTimeout(() => {
+          const emptyState = document.querySelector(".empty-state");
+          if (emptyState) emptyState.remove();
+          addMessage("assistant", "${agent.initial_message.replace(/"/g, '\\"').replace(/'/g, "\\'")}");
+        }, 100);`
         : ''}
         
         try {
