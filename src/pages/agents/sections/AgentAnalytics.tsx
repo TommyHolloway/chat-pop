@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,13 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
     to: new Date(),
   });
   
+  const memoizedDateRange = useMemo(() => {
+    return dateRange && dateRange.from && dateRange.to ? {
+      from: dateRange.from,
+      to: dateRange.to
+    } : undefined;
+  }, [dateRange?.from, dateRange?.to]);
+
   const { 
     visitorSessions, 
     behaviorEvents, 
@@ -30,10 +37,7 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
     loading: visitorLoading, 
     error: visitorError,
     refreshData 
-  } = useVisitorBehavior(id!, dateRange && dateRange.from && dateRange.to ? {
-    from: dateRange.from,
-    to: dateRange.to
-  } : undefined);
+  } = useVisitorBehavior(id!, memoizedDateRange);
 
   if (visitorError) {
     return (
