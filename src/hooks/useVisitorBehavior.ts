@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface VisitorSession {
@@ -45,6 +46,7 @@ interface ProactiveSuggestion {
 }
 
 export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to: Date }) => {
+  const { user, session } = useAuth();
   const [visitorSessions, setVisitorSessions] = useState<VisitorSession[]>([]);
   const [behaviorEvents, setBehaviorEvents] = useState<BehaviorEvent[]>([]);
   const [proactiveSuggestions, setProactiveSuggestions] = useState<ProactiveSuggestion[]>([]);
@@ -53,11 +55,20 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
 
   useEffect(() => {
     if (!agentId) return;
+    
+    // Don't fetch if user is not authenticated
+    if (!user || !session) {
+      setLoading(false);
+      setError('Please log in to view analytics data');
+      return;
+    }
 
     const fetchVisitorData = async () => {
       try {
         setLoading(true);
         setError(null);
+
+        console.log('Fetching visitor data for agent:', agentId, 'User:', user.id);
 
         // Apply date filtering
         let query = supabase
@@ -75,7 +86,10 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
           .order('created_at', { ascending: false })
           .limit(200);
 
-        if (sessionsError) throw sessionsError;
+        if (sessionsError) {
+          console.error('Sessions error:', sessionsError);
+          throw sessionsError;
+        }
 
         setVisitorSessions(sessions || []);
 
@@ -99,7 +113,10 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
             .order('created_at', { ascending: false })
             .limit(500);
 
-          if (eventsError) throw eventsError;
+          if (eventsError) {
+            console.error('Events error:', eventsError);
+            throw eventsError;
+          }
           setBehaviorEvents(events || []);
         }
 
@@ -119,19 +136,40 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
           .order('created_at', { ascending: false })
           .limit(200);
 
-        if (suggestionsError) throw suggestionsError;
+        if (suggestionsError) {
+          console.error('Suggestions error:', suggestionsError);
+          throw suggestionsError;
+        }
         setProactiveSuggestions(suggestions || []);
 
       } catch (err) {
         console.error('Error fetching visitor behavior data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch visitor data');
+        
+        // Handle specific error types
+        if (err && typeof err === 'object' && 'message' in err) {
+          const errorMessage = (err as any).message;
+          if (errorMessage.includes('Failed to fetch')) {
+            setError('Unable to connect to the server. Please check your internet connection and try again.');
+          } else if (errorMessage.includes('permission denied') || errorMessage.includes('RLS')) {
+            setError('Access denied. Please ensure you have permission to view this agent\'s data.');
+          } else {
+            setError(errorMessage);
+          }
+        } else {
+          setError('Failed to fetch visitor data');
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVisitorData();
-  }, [agentId, dateRange]);
+    // Add a small delay to ensure authentication is fully established
+    const timer = setTimeout(() => {
+      fetchVisitorData();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [agentId, dateRange, user, session]);
 
   const refreshData = () => {
     if (agentId) {
