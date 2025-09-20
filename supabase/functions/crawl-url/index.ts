@@ -49,8 +49,9 @@ serve(async (req) => {
     });
 
     // Check for success based on actual content, not just the success flag
-    const content = crawlResult.data?.markdown || '';
-    const title = crawlResult.data?.metadata?.title || new URL(url).hostname;
+    // Firecrawl v2 returns content directly, not nested under 'data'
+    const content = crawlResult.markdown || crawlResult.data?.markdown || '';
+    const title = crawlResult.metadata?.title || crawlResult.data?.metadata?.title || new URL(url).hostname;
 
     // If we have no content, consider it a failure regardless of success flag
     if (!content || content.trim() === '') {
