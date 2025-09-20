@@ -14,7 +14,7 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
   const { id } = useParams();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const { links, loading: linksLoading, addLink, removeLink, fetchLinks } = useAgentLinks(id);
+  const { links, loading: linksLoading, addLink, removeLink, fetchLinks, retryCrawl } = useAgentLinks(id);
 
   const handleAddUrl = async () => {
     if (!url.trim()) return;
@@ -27,8 +27,14 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
     setLoading(false);
   };
 
-  const handleDeleteLink = async (linkId: string) => {
+const handleDeleteLink = async (linkId: string) => {
     await removeLink(linkId);
+  };
+
+  const handleRetryLink = async (linkId: string, url: string) => {
+    setLoading(true);
+    await retryCrawl(linkId, url);
+    setLoading(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -147,7 +153,8 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => fetchLinks()}
+                        onClick={() => handleRetryLink(link.id, link.url)}
+                        disabled={loading}
                       >
                         <RefreshCw className="h-4 w-4" />
                       </Button>

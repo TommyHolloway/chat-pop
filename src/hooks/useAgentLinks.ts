@@ -83,24 +83,49 @@ export const useAgentLinks = (agentId?: string) => {
 
   const crawlLink = async (linkId: string, url: string) => {
     try {
+      console.log('Starting crawl for:', { linkId, url });
+      
       // Call edge function to crawl the URL
       const { data, error } = await supabase.functions.invoke('crawl-url', {
         body: { url, linkId }
       });
 
-      if (error) throw error;
+      console.log('Crawl response:', { data, error });
+
+      // Check if there's a Supabase error
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      // Check if the crawl was successful based on the response
+      if (!data || !data.success) {
+        const errorMsg = data?.error || 'Failed to crawl URL';
+        console.error('Crawl failed:', errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      console.log('Crawl successful, updating database:', { title: data.title, content: data.content });
 
       // Update the link with crawled content
       const { error: updateError } = await supabase
         .from('agent_links')
         .update({
-          title: data.title,
-          content: data.content,
+          title: data.title || 'Untitled',
+          content: data.content || '',
           status: 'crawled'
         })
         .eq('id', linkId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw updateError;
+      }
+
+      toast({
+        title: "Success",
+        description: "Website content crawled successfully",
+      });
 
       // Refresh links
       fetchLinks();
@@ -114,8 +139,27 @@ export const useAgentLinks = (agentId?: string) => {
         .update({ status: 'failed' })
         .eq('id', linkId);
         
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to crawl website",
+        variant: "destructive",
+      });
+        
       fetchLinks();
     }
+  };
+
+  const retryCrawl = async (linkId: string, url: string) => {
+    // Update status to pending before retry
+    await supabase
+      .from('agent_links')
+      .update({ status: 'pending' })
+      .eq('id', linkId);
+    
+    fetchLinks(); // Refresh to show pending status
+    
+    // Retry the crawl
+    await crawlLink(linkId, url);
   };
 
   const removeLink = async (linkId: string) => {
@@ -185,6 +229,7 @@ export const useAgentLinks = (agentId?: string) => {
     addLink,
     removeLink,
     trainAgent,
-    fetchLinks
+    fetchLinks,
+    retryCrawl
   };
 };

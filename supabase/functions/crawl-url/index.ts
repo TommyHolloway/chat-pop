@@ -41,12 +41,25 @@ serve(async (req) => {
       onlyMainContent: true,
     });
 
-    console.log('Firecrawl response:', { success: crawlResult.success, hasData: !!crawlResult.data });
+    console.log('Firecrawl response:', { 
+      success: crawlResult.success, 
+      hasData: !!crawlResult.data,
+      error: crawlResult.error,
+      rawResult: crawlResult 
+    });
 
     if (!crawlResult.success) {
       const errorMsg = crawlResult.error || 'Failed to crawl URL - unknown error';
       console.error('Firecrawl error:', errorMsg);
-      throw new Error(`Crawl failed: ${errorMsg}`);
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: errorMsg,
+        details: 'Firecrawl API returned unsuccessful response'
+      }), {
+        status: 200, // Return 200 so client can read the error
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const content = crawlResult.data?.markdown || '';
