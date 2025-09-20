@@ -43,7 +43,7 @@ serve(async (req) => {
     try {
       const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/rest/v1/agents?id=eq.' + agentId + '&select=widget_page_restrictions', {
         headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQwNTIzMjcsImV4cCI6MjA0OTYyODMyN30.qOJ0eKMlCmwz26sUSzYoJM6Bb2l9VdECGUNL8i7vKnE',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM',
           'Content-Type': 'application/json'
         }
       });
@@ -150,7 +150,7 @@ serve(async (req) => {
     try {
       const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/rest/v1/agents?id=eq.' + agentId + '&select=enable_proactive_engagement,proactive_config', {
         headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQwNTIzMjcsImV4cCI6MjA0OTYyODMyN30.qOJ0eKMlCmwz26sUSzYoJM6Bb2l9VdECGUNL8i7vKnE',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM',
           'Content-Type': 'application/json'
         }
       });
