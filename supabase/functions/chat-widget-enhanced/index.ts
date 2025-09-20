@@ -193,6 +193,7 @@ serve(async (req) => {
           agentId: agentId, 
           currentUrl: window.location.href,
           currentPath: window.location.pathname,
+          currentHash: window.location.hash,
           timeOnPage: timeOnPage
         })
       });

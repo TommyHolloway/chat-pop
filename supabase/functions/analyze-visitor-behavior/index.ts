@@ -28,6 +28,7 @@ serve(async (req) => {
     const requestData = await req.json();
     const { sessionId, agentId, currentUrl } = requestData;
     const currentPath = requestData.currentPath || new URL(currentUrl).pathname;
+    const currentHash = requestData.currentHash || (currentUrl ? new URL(currentUrl).hash : '');
     const timeOnPage = requestData.timeOnPage || requestData.timeSpentOnPage || 0;
 
     console.log('Analyzing visitor behavior:', { 
@@ -35,6 +36,7 @@ serve(async (req) => {
       agentId, 
       currentUrl, 
       currentPath, 
+      currentHash,
       timeOnPage 
     });
 
@@ -99,7 +101,7 @@ serve(async (req) => {
     }
 
     // Analyze behavior and check triggers
-    const analysis = await analyzeAndTrigger(config, sessions, currentUrl, currentPath, timeOnPage);
+    const analysis = await analyzeAndTrigger(config, sessions, currentUrl, currentPath, currentHash, timeOnPage);
     console.log('Analysis result:', analysis);
 
     return new Response(
@@ -126,13 +128,14 @@ serve(async (req) => {
   }
 });
 
-async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, timeOnPage) {
+async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, currentHash, timeOnPage) {
   console.log('Starting analysis with:', { 
     configEnabled: config.enabled,
     customTriggersCount: config.custom_triggers?.length || 0,
     sessionsCount: sessions?.length, 
     currentUrl, 
     currentPath, 
+    currentHash,
     timeOnPage 
   });
 
@@ -160,32 +163,62 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
 
       console.log(`Evaluating trigger: ${trigger.name}`);
 
-      // Enhanced URL pattern matching
+      // Enhanced URL pattern matching with proper hash support
       let urlMatches = true; // Default to true if no URL patterns specified
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         urlMatches = trigger.url_patterns.some(pattern => {
           if (!pattern || pattern.trim() === '') return false;
           
-          const normalizedPattern = pattern.toLowerCase().trim();
+          const cleanPattern = pattern.trim();
+          const normalizedPattern = cleanPattern.toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();
           const normalizedPath = (currentPath || '').toLowerCase();
+          const normalizedHash = (currentHash || '').toLowerCase();
           
-          // Check various pattern matching scenarios
-          const matches = normalizedUrl.includes(normalizedPattern) || 
-                         normalizedPath.includes(normalizedPattern) ||
-                         (currentUrl || '').includes(pattern) ||
-                         (currentPath || '').includes(pattern) ||
-                         // Check for fragment/hash patterns (e.g., #pricing)
-                         normalizedUrl.includes(normalizedPattern.replace('#', '')) ||
-                         // Check domain patterns
-                         normalizedUrl.split('/').some(segment => segment.includes(normalizedPattern));
+          let matches = false;
           
-          console.log(`Pattern matching for "${pattern}":`, {
-            pattern: normalizedPattern,
-            url: normalizedUrl,
-            path: normalizedPath,
-            matches
-          });
+          // Hash pattern matching (e.g., #pricing, #plans)
+          if (cleanPattern.startsWith('#')) {
+            const hashWithoutSymbol = cleanPattern.substring(1);
+            // Match against hash with or without # symbol
+            matches = normalizedHash === normalizedPattern || 
+                     normalizedHash === '#' + hashWithoutSymbol ||
+                     normalizedHash.substring(1) === hashWithoutSymbol;
+            console.log(`Hash pattern matching for "${cleanPattern}":`, {
+              pattern: cleanPattern,
+              currentHash: currentHash || 'none',
+              normalizedHash,
+              hashWithoutSymbol,
+              matches
+            });
+          }
+          // Path pattern matching (e.g., /pricing, /plans, pricing)
+          else {
+            // Check path matches
+            const pathMatches = normalizedPath.includes(normalizedPattern) ||
+                               normalizedPath === '/' + normalizedPattern ||
+                               normalizedPath.endsWith('/' + normalizedPattern);
+            
+            // Check URL matches (full URL contains pattern)
+            const urlMatches = normalizedUrl.includes(normalizedPattern);
+            
+            // Check if pattern matches any URL segment
+            const segmentMatches = normalizedUrl.split('/').some(segment => 
+              segment === normalizedPattern || segment.includes(normalizedPattern)
+            );
+            
+            matches = pathMatches || urlMatches || segmentMatches;
+            
+            console.log(`Path pattern matching for "${cleanPattern}":`, {
+              pattern: cleanPattern,
+              currentPath: currentPath || 'none',
+              currentUrl: currentUrl || 'none',
+              pathMatches,
+              urlMatches,
+              segmentMatches,
+              matches
+            });
+          }
           
           return matches;
         });
@@ -194,7 +227,8 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
           console.log(`URL pattern not matched for trigger: ${trigger.name}`, {
             patterns: trigger.url_patterns,
             currentUrl,
-            currentPath
+            currentPath,
+            currentHash
           });
           continue;
         } else {
@@ -246,6 +280,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
             timeOnPage,
             currentUrl,
             currentPath,
+            currentHash,
             urlMatches,
             trigger: trigger
           }
@@ -266,12 +301,26 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
           if (!pattern) return false;
-          const normalizedPattern = pattern.toLowerCase().trim();
+          const cleanPattern = pattern.trim();
+          const normalizedPattern = cleanPattern.toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();
           const normalizedPath = (currentPath || '').toLowerCase();
+          const normalizedHash = (currentHash || '').toLowerCase();
           
-          return normalizedUrl.includes(normalizedPattern) || 
-                 normalizedPath.includes(normalizedPattern);
+          // Hash pattern matching
+          if (cleanPattern.startsWith('#')) {
+            const hashWithoutSymbol = cleanPattern.substring(1);
+            return normalizedHash === normalizedPattern || 
+                   normalizedHash === '#' + hashWithoutSymbol ||
+                   normalizedHash.substring(1) === hashWithoutSymbol;
+          }
+          // Path pattern matching
+          else {
+            return normalizedPath.includes(normalizedPattern) ||
+                   normalizedUrl.includes(normalizedPattern) ||
+                   normalizedPath === '/' + normalizedPattern ||
+                   normalizedPath.endsWith('/' + normalizedPattern);
+          }
         });
 
         if (urlMatches && timeInSeconds >= (trigger.time_threshold || 30)) {
@@ -293,12 +342,26 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
           if (!pattern) return false;
-          const normalizedPattern = pattern.toLowerCase().trim();
+          const cleanPattern = pattern.trim();
+          const normalizedPattern = cleanPattern.toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();
           const normalizedPath = (currentPath || '').toLowerCase();
+          const normalizedHash = (currentHash || '').toLowerCase();
           
-          return normalizedUrl.includes(normalizedPattern) || 
-                 normalizedPath.includes(normalizedPattern);
+          // Hash pattern matching
+          if (cleanPattern.startsWith('#')) {
+            const hashWithoutSymbol = cleanPattern.substring(1);
+            return normalizedHash === normalizedPattern || 
+                   normalizedHash === '#' + hashWithoutSymbol ||
+                   normalizedHash.substring(1) === hashWithoutSymbol;
+          }
+          // Path pattern matching
+          else {
+            return normalizedPath.includes(normalizedPattern) ||
+                   normalizedUrl.includes(normalizedPattern) ||
+                   normalizedPath === '/' + normalizedPattern ||
+                   normalizedPath.endsWith('/' + normalizedPattern);
+          }
         });
 
         if (urlMatches) {
