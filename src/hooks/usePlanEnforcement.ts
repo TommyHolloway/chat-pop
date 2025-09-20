@@ -55,6 +55,15 @@ export const usePlanEnforcement = () => {
     isLoading: true
   });
 
+  // Debug logging
+  console.log('usePlanEnforcement Debug:', {
+    user: user?.id,
+    userPlan,
+    planLoading,
+    enforcementLimits: enforcement.limits,
+    enforcementLoading: enforcement.isLoading
+  });
+
   // Define plan limits based on current billing plans
   const getPlanLimits = (plan: string): PlanLimits => {
     switch (plan) {
@@ -93,6 +102,13 @@ export const usePlanEnforcement = () => {
 
       const currentPlan = userPlan;
       const limits = getPlanLimits(currentPlan);
+      
+      console.log('Plan Enforcement Check:', {
+        userId: user.id,
+        currentPlan,
+        limits,
+        planLoading
+      });
 
       // Use database functions to check current usage and limits
       const { data: agentCheck } = await supabase.rpc('check_user_plan_limits', {

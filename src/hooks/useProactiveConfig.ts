@@ -169,27 +169,47 @@ export const useProactiveConfig = (agent: any) => {
       const timeoutId = setTimeout(() => {
         if (!mounted) return;
         
-        if (agent.proactive_config) {
-          const loadedConfig = agent.proactive_config;
-          
-          // Ensure custom_triggers is properly preserved and loaded
-          let mergedConfig = {
-            ...defaultConfig,
-            ...loadedConfig,
-            triggers: {
-              ...defaultConfig.triggers,
-              ...loadedConfig.triggers
-            },
-            // Explicitly preserve custom_triggers from the loaded config
-            custom_triggers: Array.isArray(loadedConfig.custom_triggers) ? loadedConfig.custom_triggers : []
-          };
-          
-          // Apply migration to convert old predefined triggers to Quick Triggers
-          mergedConfig = migrateToQuickTriggers(mergedConfig);
-          
-          setConfig(mergedConfig);
-        } else {
-          // Agent loaded but no proactive config - use default with Quick Triggers
+        try {
+          if (agent.proactive_config) {
+            const loadedConfig = agent.proactive_config;
+            
+            console.log('Loading proactive config:', {
+              agentId: agent.id,
+              hasProactiveConfig: !!loadedConfig,
+              customTriggersCount: loadedConfig.custom_triggers?.length || 0
+            });
+            
+            // Ensure custom_triggers is properly preserved and loaded
+            let mergedConfig = {
+              ...defaultConfig,
+              ...loadedConfig,
+              triggers: {
+                ...defaultConfig.triggers,
+                ...loadedConfig.triggers
+              },
+              // Explicitly preserve custom_triggers from the loaded config
+              custom_triggers: Array.isArray(loadedConfig.custom_triggers) ? loadedConfig.custom_triggers : []
+            };
+            
+            // Apply migration to convert old predefined triggers to Quick Triggers
+            mergedConfig = migrateToQuickTriggers(mergedConfig);
+            
+            console.log('Merged config result:', {
+              enabled: mergedConfig.enabled,
+              customTriggersCount: mergedConfig.custom_triggers?.length || 0,
+              quickTriggersCount: mergedConfig.custom_triggers?.filter(t => t.isQuickTrigger).length || 0
+            });
+            
+            setConfig(mergedConfig);
+          } else {
+            console.log('No proactive config found, using defaults with Quick Triggers');
+            // Agent loaded but no proactive config - use default with Quick Triggers
+            const configWithQuickTriggers = migrateToQuickTriggers(defaultConfig);
+            setConfig(configWithQuickTriggers);
+          }
+        } catch (error) {
+          console.error('Error loading proactive config:', error);
+          // Fallback to default config
           const configWithQuickTriggers = migrateToQuickTriggers(defaultConfig);
           setConfig(configWithQuickTriggers);
         }
@@ -270,6 +290,8 @@ export const useProactiveConfig = (agent: any) => {
   };
 
   const updateCustomTrigger = (triggerId: string, updates: Partial<CustomTrigger>) => {
+    console.log('Updating custom trigger:', { triggerId, updates });
+    
     setConfig(prev => {
       const newConfig = {
         ...prev,
@@ -277,6 +299,12 @@ export const useProactiveConfig = (agent: any) => {
           trigger.id === triggerId ? { ...trigger, ...updates } : trigger
         )
       };
+      
+      console.log('Updated config:', {
+        triggersCount: newConfig.custom_triggers?.length,
+        updatedTrigger: newConfig.custom_triggers?.find(t => t.id === triggerId)
+      });
+      
       return newConfig;
     });
   };
@@ -285,22 +313,44 @@ export const useProactiveConfig = (agent: any) => {
     setLoading(true);
     
     try {
-      await updateAgent(id!, {
+      console.log('Saving proactive config:', {
+        agentId: id,
+        enabled: config.enabled,
+        customTriggersCount: config.custom_triggers?.length || 0,
+        quickTriggersEnabled: config.custom_triggers?.filter(t => t.isQuickTrigger && t.enabled).length || 0,
+        configToSave: JSON.stringify(config, null, 2)
+      });
+
+      // Create a clean copy of the config to save
+      const configToSave = {
+        ...config,
+        custom_triggers: config.custom_triggers || []
+      };
+
+      const updateData = {
         name: agent.name,
         description: agent.description,
         instructions: agent.instructions,
         enable_proactive_engagement: config.enabled,
-        proactive_config: config,
-      });
+        proactive_config: configToSave,
+      };
+
+      console.log('Update data:', updateData);
+
+      const result = await updateAgent(id!, updateData);
+      
+      console.log('Update result:', result);
+      console.log('Proactive config saved successfully');
 
       toast({
         title: "Success",
         description: "Proactive engagement settings saved successfully",
       });
     } catch (error) {
+      console.error('Error saving proactive config:', error);
       toast({
-        title: "Error",
-        description: "Failed to save proactive engagement settings",
+        title: "Error",  
+        description: `Failed to save proactive engagement settings: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {

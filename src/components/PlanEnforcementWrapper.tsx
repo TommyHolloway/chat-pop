@@ -23,6 +23,15 @@ export const PlanEnforcementWrapper = ({
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
   const canPerformAction = async () => {
+    // Debug logging
+    console.log('PlanEnforcementWrapper Debug:', {
+      feature,
+      agentId,
+      enforcementLimits: enforcement.limits,
+      enforcementLoading: enforcement.isLoading,
+      canViewVisitorAnalytics: enforcement.canViewVisitorAnalytics
+    });
+
     switch (feature) {
       case 'agent':
         return enforcement.canCreateAgent;
@@ -31,7 +40,10 @@ export const PlanEnforcementWrapper = ({
       case 'visitor_analytics':
         return enforcement.canViewVisitorAnalytics;
       case 'link':
-        return agentId ? await enforcement.canAddLink(agentId) : false;
+        if (!agentId) return false;
+        const linkResult = await enforcement.canAddLink(agentId);
+        console.log('Link check result:', { agentId, canAdd: linkResult, limits: enforcement.limits });
+        return linkResult;
       case 'storage':
         return fileSize ? await enforcement.canUploadFile(fileSize) : false;
       default:
@@ -67,8 +79,28 @@ export const PlanEnforcementWrapper = ({
 
   // Check permission when component mounts or dependencies change
   React.useEffect(() => {
-    canPerformAction().then(setCanPerform);
-  }, [enforcement, agentId, fileSize]);
+    if (enforcement.isLoading) {
+      setCanPerform(null);
+      return;
+    }
+    
+    let mounted = true;
+    canPerformAction().then(result => {
+      if (mounted) {
+        console.log('Permission check result:', { feature, result, agentId });
+        setCanPerform(result);
+      }
+    }).catch(error => {
+      console.error('Permission check error:', error);
+      if (mounted) {
+        setCanPerform(false);
+      }
+    });
+    
+    return () => {
+      mounted = false;
+    };
+  }, [enforcement.isLoading, enforcement.limits, enforcement.canViewVisitorAnalytics, agentId, fileSize]);
 
   if (enforcement.isLoading || canPerform === null) {
     return <div>Loading...</div>;

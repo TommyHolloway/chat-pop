@@ -71,6 +71,7 @@ export const AgentSourcesWebsite = ({ agent }: { agent: any }) => {
               />
               <PlanEnforcementWrapper 
                 feature="link" 
+                agentId={id}
                 fallbackContent={
                   <Button disabled>
                     <Plus className="mr-2 h-4 w-4" />
