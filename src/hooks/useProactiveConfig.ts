@@ -317,8 +317,7 @@ export const useProactiveConfig = (agent: any) => {
         agentId: id,
         enabled: config.enabled,
         customTriggersCount: config.custom_triggers?.length || 0,
-        quickTriggersEnabled: config.custom_triggers?.filter(t => t.isQuickTrigger && t.enabled).length || 0,
-        configToSave: JSON.stringify(config, null, 2)
+        quickTriggersEnabled: config.custom_triggers?.filter(t => t.isQuickTrigger && t.enabled).length || 0
       });
 
       // Create a clean copy of the config to save
@@ -335,16 +334,25 @@ export const useProactiveConfig = (agent: any) => {
         proactive_config: configToSave,
       };
 
-      console.log('Update data:', updateData);
+      console.log('Saving config to database:', {
+        customTriggersCount: configToSave.custom_triggers.length,
+        quickTriggers: configToSave.custom_triggers.filter(t => t.isQuickTrigger).map(t => ({
+          id: t.id,
+          name: t.name,
+          enabled: t.enabled
+        }))
+      });
 
       const result = await updateAgent(id!, updateData);
       
-      console.log('Update result:', result);
-      console.log('Proactive config saved successfully');
+      console.log('Config saved successfully, result:', result);
+
+      // Force a state refresh to show the saved data
+      setTimeout(() => window.location.reload(), 1000);
 
       toast({
         title: "Success",
-        description: "Proactive engagement settings saved successfully",
+        description: "Proactive engagement settings saved successfully. Page will refresh to show saved state.",
       });
     } catch (error) {
       console.error('Error saving proactive config:', error);

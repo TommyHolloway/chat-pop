@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import FirecrawlApp from 'https://esm.sh/@mendable/firecrawl-js@latest';
+import Firecrawl from 'https://esm.sh/@mendable/firecrawl-js@latest';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,10 +30,10 @@ serve(async (req) => {
     console.log('Starting crawl for URL:', url);
 
     // Initialize Firecrawl
-    const app = new FirecrawlApp({ apiKey: firecrawlApiKey });
+    const app = new Firecrawl({ apiKey: firecrawlApiKey });
 
     // Crawl the URL
-    const crawlResult = await app.scrapeUrl(url, {
+    const crawlResult = await app.scrape(url, {
       formats: ['markdown'],
       onlyMainContent: true,
     });
