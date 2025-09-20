@@ -171,24 +171,102 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
     return () => clearTimeout(timer);
   }, [agentId, dateRange, user?.id, session?.access_token]);
 
-  const refreshData = () => {
-    if (agentId) {
-      const fetchData = async () => {
-        // Simplified refresh logic
-        try {
-          const { data: sessions } = await supabase
-            .from('visitor_sessions')
-            .select('*')
-            .eq('agent_id', agentId)
-            .order('created_at', { ascending: false })
-            .limit(50);
+  const refreshData = async () => {
+    if (!agentId || !user || !session) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
 
-          setVisitorSessions(sessions || []);
-        } catch (err) {
-          console.error('Error refreshing data:', err);
+      // Apply the same date filtering logic as main fetch
+      let query = supabase
+        .from('visitor_sessions')
+        .select('*')
+        .eq('agent_id', agentId);
+
+      if (dateRange?.from && dateRange?.to) {
+        query = query
+          .gte('created_at', startOfDay(dateRange.from).toISOString())
+          .lte('created_at', endOfDay(dateRange.to).toISOString());
+      }
+
+      const { data: sessions, error: sessionsError } = await query
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (sessionsError) {
+        console.error('Sessions error:', sessionsError);
+        throw sessionsError;
+      }
+
+      setVisitorSessions(sessions || []);
+
+      // Get session IDs to fetch related data
+      const sessionIds = sessions?.map(s => s.session_id) || [];
+
+      if (sessionIds.length > 0) {
+        // Fetch behavior events with date filtering
+        let eventsQuery = supabase
+          .from('visitor_behavior_events')
+          .select('*')
+          .in('session_id', sessionIds);
+
+        if (dateRange?.from && dateRange?.to) {
+          eventsQuery = eventsQuery
+            .gte('created_at', startOfDay(dateRange.from).toISOString())
+            .lte('created_at', endOfDay(dateRange.to).toISOString());
         }
-      };
-      fetchData();
+
+        const { data: events, error: eventsError } = await eventsQuery
+          .order('created_at', { ascending: false })
+          .limit(500);
+
+        if (eventsError) {
+          console.error('Events error:', eventsError);
+          throw eventsError;
+        }
+        setBehaviorEvents(events || []);
+      }
+
+      // Fetch proactive suggestions with date filtering
+      let suggestionsQuery = supabase
+        .from('proactive_suggestions')
+        .select('*')
+        .eq('agent_id', agentId);
+
+      if (dateRange?.from && dateRange?.to) {
+        suggestionsQuery = suggestionsQuery
+          .gte('created_at', startOfDay(dateRange.from).toISOString())
+          .lte('created_at', endOfDay(dateRange.to).toISOString());
+      }
+
+      const { data: suggestions, error: suggestionsError } = await suggestionsQuery
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (suggestionsError) {
+        console.error('Suggestions error:', suggestionsError);
+        throw suggestionsError;
+      }
+      setProactiveSuggestions(suggestions || []);
+
+    } catch (err) {
+      console.error('Error refreshing visitor behavior data:', err);
+      
+      if (err && typeof err === 'object' && 'message' in err) {
+        const errorMessage = (err as any).message;
+        if (errorMessage.includes('Failed to fetch')) {
+          setError('Unable to connect to the server. Please check your internet connection and try again.');
+        } else if (errorMessage.includes('permission denied') || errorMessage.includes('RLS')) {
+          setError('Access denied. Please ensure you have permission to view this agent\'s data.');
+        } else {
+          setError(errorMessage);
+        }
+      } else {
+        setError('Failed to refresh visitor data');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
