@@ -45,14 +45,37 @@ serve(async (req) => {
       .eq('id', agentId)
       .single();
 
-    // Disable automatic proactive suggestions - only user-created triggers should work
-    console.log('Automatic proactive suggestions disabled');
-    return new Response(JSON.stringify({ 
-      success: false, 
-      reason: 'Automatic suggestions disabled - only user-created triggers work' 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    if (agentError) {
+      console.error('Error fetching agent config:', agentError);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Failed to fetch agent configuration' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!agent) {
+      console.log('Agent not found or proactive engagement disabled');
+      return new Response(JSON.stringify({ 
+        success: false, 
+        reason: 'Agent not found or proactive engagement disabled' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if proactive engagement is enabled for this agent
+    if (!agent.enable_proactive_engagement) {
+      console.log('Proactive engagement disabled for agent:', agentId);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        reason: 'Proactive engagement disabled for this agent' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     const config = agent.proactive_config || {};
     console.log('Agent proactive config:', config);
@@ -104,32 +127,78 @@ serve(async (req) => {
 });
 
 async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, timeOnPage) {
-  console.log('Starting analysis with:', { config, sessionsCount: sessions?.length, currentUrl, currentPath, timeOnPage });
+  console.log('Starting analysis with:', { 
+    configEnabled: config.enabled,
+    customTriggersCount: config.custom_triggers?.length || 0,
+    sessionsCount: sessions?.length, 
+    currentUrl, 
+    currentPath, 
+    timeOnPage 
+  });
 
-  // Check custom triggers first (highest priority)
+  // Check if proactive engagement is enabled in config
+  if (!config.enabled) {
+    console.log('Proactive engagement disabled in config');
+    return { triggered: false, reason: 'Proactive engagement disabled' };
+  }
+
+  // Check custom triggers first (highest priority) - includes Quick Triggers
   if (config.custom_triggers && config.custom_triggers.length > 0) {
+    console.log('Checking custom triggers:', config.custom_triggers.map(t => ({
+      name: t.name,
+      enabled: t.enabled,
+      trigger_type: t.trigger_type,
+      time_threshold: t.time_threshold,
+      url_patterns: t.url_patterns
+    })));
+
     for (const trigger of config.custom_triggers) {
-      if (!trigger.enabled) continue;
+      if (!trigger.enabled) {
+        console.log(`Skipping disabled trigger: ${trigger.name}`);
+        continue;
+      }
 
-      console.log('Checking custom trigger:', trigger);
+      console.log(`Evaluating trigger: ${trigger.name}`);
 
-      // Check URL pattern matching
+      // Enhanced URL pattern matching
+      let urlMatches = true; // Default to true if no URL patterns specified
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
-        const urlMatches = trigger.url_patterns.some(pattern => {
-          if (!pattern) return false;
+        urlMatches = trigger.url_patterns.some(pattern => {
+          if (!pattern || pattern.trim() === '') return false;
+          
           const normalizedPattern = pattern.toLowerCase().trim();
           const normalizedUrl = (currentUrl || '').toLowerCase();
           const normalizedPath = (currentPath || '').toLowerCase();
           
-          return normalizedUrl.includes(normalizedPattern) || 
-                 normalizedPath.includes(normalizedPattern) ||
-                 (currentUrl || '').includes(pattern) ||
-                 (currentPath || '').includes(pattern);
+          // Check various pattern matching scenarios
+          const matches = normalizedUrl.includes(normalizedPattern) || 
+                         normalizedPath.includes(normalizedPattern) ||
+                         (currentUrl || '').includes(pattern) ||
+                         (currentPath || '').includes(pattern) ||
+                         // Check for fragment/hash patterns (e.g., #pricing)
+                         normalizedUrl.includes(normalizedPattern.replace('#', '')) ||
+                         // Check domain patterns
+                         normalizedUrl.split('/').some(segment => segment.includes(normalizedPattern));
+          
+          console.log(`Pattern matching for "${pattern}":`, {
+            pattern: normalizedPattern,
+            url: normalizedUrl,
+            path: normalizedPath,
+            matches
+          });
+          
+          return matches;
         });
 
         if (!urlMatches) {
-          console.log('URL pattern not matched for trigger:', trigger.name, trigger.url_patterns);
+          console.log(`URL pattern not matched for trigger: ${trigger.name}`, {
+            patterns: trigger.url_patterns,
+            currentUrl,
+            currentPath
+          });
           continue;
+        } else {
+          console.log(`URL pattern MATCHED for trigger: ${trigger.name}`);
         }
       }
 
@@ -137,36 +206,54 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, time
       let triggerMet = false;
       
       if (trigger.trigger_type === 'time_based' && trigger.time_threshold) {
-        const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage) : timeOnPage || 0;
+        const timeInSeconds = typeof timeOnPage === 'number' ? Math.floor(timeOnPage) : parseInt(timeOnPage) || 0;
         triggerMet = timeInSeconds >= trigger.time_threshold;
-        console.log('Time-based trigger check:', { 
-          triggerName: trigger.name,
+        console.log(`Time-based trigger evaluation for "${trigger.name}":`, { 
           timeInSeconds, 
           threshold: trigger.time_threshold, 
-          triggerMet 
+          triggerMet,
+          rawTimeOnPage: timeOnPage
         });
       } else if (trigger.trigger_type === 'scroll_based' && trigger.scroll_depth) {
         // TODO: Implement scroll depth tracking
+        console.log(`Scroll-based trigger not yet implemented: ${trigger.name}`);
         triggerMet = false;
       } else if (trigger.trigger_type === 'element_interaction' && trigger.element_selector) {
         // TODO: Implement element interaction tracking
+        console.log(`Element interaction trigger not yet implemented: ${trigger.name}`);
         triggerMet = false;
       } else if (trigger.trigger_type === 'exit_intent') {
         // TODO: Implement exit intent detection
+        console.log(`Exit intent trigger not yet implemented: ${trigger.name}`);
         triggerMet = false;
+      } else {
+        console.log(`Unknown or incomplete trigger type for "${trigger.name}":`, {
+          trigger_type: trigger.trigger_type,
+          time_threshold: trigger.time_threshold,
+          scroll_depth: trigger.scroll_depth
+        });
       }
 
       if (triggerMet) {
-        console.log('Custom trigger activated:', trigger.name);
+        console.log(`🎯 TRIGGER ACTIVATED: ${trigger.name}`);
         return {
           triggered: true,
           suggestedMessage: trigger.message,
           triggerType: trigger.trigger_type,
           triggerName: trigger.name,
-          reason: `Custom trigger: ${trigger.name}`
+          reason: `Custom trigger: ${trigger.name}`,
+          debug: {
+            timeOnPage,
+            currentUrl,
+            currentPath,
+            urlMatches,
+            trigger: trigger
+          }
         };
       }
     }
+  } else {
+    console.log('No custom triggers found in config');
   }
 
   // Check predefined triggers

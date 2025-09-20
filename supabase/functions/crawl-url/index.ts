@@ -21,9 +21,12 @@ serve(async (req) => {
       throw new Error('URL is required');
     }
 
+    console.log('Crawl request details:', { url, linkId, hasApiKey: !!Deno.env.get('FIRECRAWL_API_KEY') });
+
     // Get Firecrawl API key from environment
     const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!firecrawlApiKey) {
+      console.error('FIRECRAWL_API_KEY not found in environment variables');
       throw new Error('Firecrawl API key not configured');
     }
 
@@ -32,20 +35,28 @@ serve(async (req) => {
     // Initialize Firecrawl
     const app = new Firecrawl({ apiKey: firecrawlApiKey });
 
-    // Crawl the URL
+    // Crawl the URL with better error handling
     const crawlResult = await app.scrape(url, {
       formats: ['markdown'],
       onlyMainContent: true,
     });
 
+    console.log('Firecrawl response:', { success: crawlResult.success, hasData: !!crawlResult.data });
+
     if (!crawlResult.success) {
-      throw new Error('Failed to crawl URL');
+      const errorMsg = crawlResult.error || 'Failed to crawl URL - unknown error';
+      console.error('Firecrawl error:', errorMsg);
+      throw new Error(`Crawl failed: ${errorMsg}`);
     }
 
     const content = crawlResult.data?.markdown || '';
     const title = crawlResult.data?.metadata?.title || new URL(url).hostname;
 
-    console.log('Crawl successful, extracted content length:', content.length);
+    console.log('Crawl successful:', { 
+      title, 
+      contentLength: content.length,
+      hasMetadata: !!crawlResult.data?.metadata 
+    });
 
     return new Response(JSON.stringify({
       success: true,
@@ -58,9 +69,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in crawl-url function:', error);
+    console.error('Error stack:', error.stack);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: error.message,
+      details: error.stack?.split('\n')[0] || 'No additional details'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
