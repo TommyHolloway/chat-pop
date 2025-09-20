@@ -48,22 +48,24 @@ serve(async (req) => {
       rawResult: crawlResult 
     });
 
-    if (!crawlResult.success) {
-      const errorMsg = crawlResult.error || 'Failed to crawl URL - unknown error';
+    // Check for success based on actual content, not just the success flag
+    const content = crawlResult.data?.markdown || '';
+    const title = crawlResult.data?.metadata?.title || new URL(url).hostname;
+
+    // If we have no content, consider it a failure regardless of success flag
+    if (!content || content.trim() === '') {
+      const errorMsg = crawlResult.error || 'No content extracted from URL';
       console.error('Firecrawl error:', errorMsg);
       
       return new Response(JSON.stringify({
         success: false,
         error: errorMsg,
-        details: 'Firecrawl API returned unsuccessful response'
+        details: 'No content was extracted from the website'
       }), {
         status: 200, // Return 200 so client can read the error
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    const content = crawlResult.data?.markdown || '';
-    const title = crawlResult.data?.metadata?.title || new URL(url).hostname;
 
     console.log('Crawl successful:', { 
       title, 
