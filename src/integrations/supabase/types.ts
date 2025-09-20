@@ -82,6 +82,53 @@ export type Database = {
           },
         ]
       }
+      agent_crawl_pages: {
+        Row: {
+          agent_link_id: string
+          content: string | null
+          created_at: string
+          id: string
+          markdown: string | null
+          metadata_json: Json | null
+          status: string
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          agent_link_id: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          markdown?: string | null
+          metadata_json?: Json | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          agent_link_id?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          markdown?: string | null
+          metadata_json?: Json | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_crawl_pages_agent_link_id_fkey"
+            columns: ["agent_link_id"]
+            isOneToOne: false
+            referencedRelation: "agent_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_knowledge_chunks: {
         Row: {
           agent_id: string
@@ -125,8 +172,13 @@ export type Database = {
         Row: {
           agent_id: string
           content: string | null
+          crawl_job_id: string | null
+          crawl_limit: number | null
+          crawl_mode: string
           created_at: string
           id: string
+          pages_found: number | null
+          pages_processed: number | null
           status: string
           title: string | null
           updated_at: string
@@ -135,8 +187,13 @@ export type Database = {
         Insert: {
           agent_id: string
           content?: string | null
+          crawl_job_id?: string | null
+          crawl_limit?: number | null
+          crawl_mode?: string
           created_at?: string
           id?: string
+          pages_found?: number | null
+          pages_processed?: number | null
           status?: string
           title?: string | null
           updated_at?: string
@@ -145,8 +202,13 @@ export type Database = {
         Update: {
           agent_id?: string
           content?: string | null
+          crawl_job_id?: string | null
+          crawl_limit?: number | null
+          crawl_mode?: string
           created_at?: string
           id?: string
+          pages_found?: number | null
+          pages_processed?: number | null
           status?: string
           title?: string | null
           updated_at?: string
