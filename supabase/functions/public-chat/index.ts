@@ -617,8 +617,8 @@ serve(async (req) => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': '${supabaseAnonKey}',
-                        'Authorization': 'Bearer ${supabaseAnonKey}'
+                        'apikey': '${supabaseKey}',
+                        'Authorization': 'Bearer ${supabaseKey}'
                     },
                     body: JSON.stringify(requestBody)
                 });
