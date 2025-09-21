@@ -532,6 +532,9 @@ serve(async (req) => {
         const agentId = '${agentId}';
         const supabaseUrl = '${supabaseUrl}';
         const supabaseKey = '${supabaseKey}';
+        const sessionId = ${sessionId ? `'${sessionId}'` : 'null'};
+        const proactiveMessage = ${proactiveMessage ? `'${proactiveMessage}'` : 'null'};
+        
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
@@ -548,15 +551,15 @@ serve(async (req) => {
                 };
 
                 // Link to visitor session if available
-                if ('${sessionId}') {
-                    conversationData.visitor_session_id = '${sessionId}';
+                if (sessionId) {
+                    conversationData.visitor_session_id = sessionId;
                 }
 
-                const response = await fetch('${supabaseUrl}/rest/v1/conversations', {
+                const response = await fetch(supabaseUrl + '/rest/v1/conversations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': '${supabaseKey}',
+                        'apikey': supabaseKey,
                         'Prefer': 'return=representation'
                     },
                     body: JSON.stringify(conversationData)
@@ -567,14 +570,13 @@ serve(async (req) => {
                     conversationId = conversation.id;
                     
                     // If we have a proactive message, save it as the first message
-                    const proactiveMessage = '${proactiveMessage || ''}';
                     if (proactiveMessage && proactiveMessage.trim()) {
                         try {
-                            await fetch('${supabaseUrl}/rest/v1/messages', {
+                            await fetch(supabaseUrl + '/rest/v1/messages', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'apikey': '${supabaseKey}',
+                                    'apikey': supabaseKey,
                                     'Prefer': 'return=minimal'
                                 },
                                 body: JSON.stringify({
@@ -611,8 +613,8 @@ serve(async (req) => {
                 };
 
                 // Include visitor session context if available
-                if ('${sessionId}') {
-                    requestBody.visitorSessionId = '${sessionId}';
+                if (sessionId) {
+                    requestBody.visitorSessionId = sessionId;
                 }
 
                 const response = await fetch(supabaseUrl + '/functions/v1/chat-completion', {
@@ -744,7 +746,6 @@ serve(async (req) => {
         initConversation();
         
         // Show proactive message or initial message if available
-        const proactiveMessage = '${proactiveMessage || ''}';
         const initialMessage = ${agent?.initial_message ? `"${agent.initial_message.replace(/"/g, '\\"').replace(/'/g, "\\'")}"` : 'null'};
         
         if (proactiveMessage && proactiveMessage.trim()) {
