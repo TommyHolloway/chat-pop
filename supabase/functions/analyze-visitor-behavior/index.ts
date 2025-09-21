@@ -253,9 +253,51 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
         console.log(`Scroll-based trigger not yet implemented: ${trigger.name}`);
         triggerMet = false;
       } else if (trigger.trigger_type === 'element_interaction' && trigger.element_selector) {
-        // TODO: Implement element interaction tracking
-        console.log(`Element interaction trigger not yet implemented: ${trigger.name}`);
-        triggerMet = false;
+        console.log(`Element interaction trigger evaluation for "${trigger.name}":`, {
+          element_selector: trigger.element_selector,
+          time_threshold: trigger.time_threshold
+        });
+        
+        // Fetch recent element visibility events for this session
+        const { data: elementEvents, error: elementError } = await supabase
+          .from('visitor_behavior_events')
+          .select('element_selector, created_at, event_data')
+          .eq('session_id', sessionId)
+          .eq('event_type', 'element_visible')
+          .order('created_at', { ascending: false });
+        
+        if (elementError) {
+          console.error('Error fetching element events:', elementError);
+          triggerMet = false;
+        } else if (elementEvents && elementEvents.length > 0) {
+          const elementSelector = trigger.element_selector.toLowerCase();
+          const matchingElements = elementEvents.filter(event => {
+            const eventSelector = (event.element_selector || '').toLowerCase();
+            return eventSelector === elementSelector || eventSelector.includes(elementSelector);
+          });
+          
+          if (matchingElements.length > 0) {
+            // Check if enough time has passed since element became visible
+            const latestMatch = matchingElements[0];
+            const elementVisibleTime = new Date(latestMatch.created_at);
+            const now = new Date();
+            const timeSinceVisible = Math.floor((now.getTime() - elementVisibleTime.getTime()) / 1000);
+            
+            triggerMet = timeSinceVisible >= (trigger.time_threshold || 5);
+            console.log(`Element interaction trigger evaluation:`, {
+              element_found: true,
+              time_since_visible: timeSinceVisible,
+              threshold: trigger.time_threshold || 5,
+              triggerMet
+            });
+          } else {
+            console.log(`Element selector "${trigger.element_selector}" not found in visitor events`);
+            triggerMet = false;
+          }
+        } else {
+          console.log(`No element visibility events found for session: ${sessionId}`);
+          triggerMet = false;
+        }
       } else if (trigger.trigger_type === 'exit_intent') {
         // TODO: Implement exit intent detection
         console.log(`Exit intent trigger not yet implemented: ${trigger.name}`);

@@ -315,7 +315,7 @@ export const Landing = () => {
       </section>
 
       {/* Pricing */}
-      <div id="pricing">
+      <div id="pricing" data-track="pricing-section">
         <PricingSection />
       </div>
 
