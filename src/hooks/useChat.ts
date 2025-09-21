@@ -110,59 +110,26 @@ export const useChat = (agentId: string) => {
       if (enableStreaming) {
         // Try streaming first
         try {
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          const response = await fetch(`https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-completion`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session?.access_token}`,
-              'Content-Type': 'application/json',
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM'
-            },
-            body: JSON.stringify({
+          const { data, error } = await supabase.functions.invoke('chat-completion', {
+            body: {
               agentId,
               message: sanitizedContent,
               conversationId: currentConversationId,
               stream: true
-            })
+            }
           });
 
-          if (!response.ok) throw new Error('Streaming failed');
+          if (error) throw error;
 
-          const reader = response.body?.getReader();
-          const decoder = new TextDecoder();
-
-          if (reader) {
-            let accumulatedContent = '';
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n');
-
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(line.slice(6));
-                    if (data.content && !data.done) {
-                      accumulatedContent += data.content;
-                      
-                      // Update the bot message with accumulated content
-                      setMessages(prev => prev.map(msg => 
-                        msg.id === botMessageId 
-                          ? { ...msg, content: accumulatedContent }
-                          : msg
-                      ));
-                    }
-                  } catch (e) {
-                    // Skip invalid JSON
-                  }
-                }
-              }
-            }
-
+          // Handle streaming response
+          if (data?.message) {
+            // Update the bot message with the complete response
+            setMessages(prev => prev.map(msg => 
+              msg.id === botMessageId 
+                ? { ...msg, content: data.message, actions: data.actions || [] }
+                : msg
+            ));
+            
             setIsLoading(false);
             return;
           }

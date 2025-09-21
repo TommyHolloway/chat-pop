@@ -563,6 +563,28 @@ serve(async (req) => {
                 if (response.ok) {
                     const [conversation] = await response.json();
                     conversationId = conversation.id;
+                    
+                    // If we have a proactive message, save it as the first message
+                    const proactiveMessage = '${proactiveMessage || ''}';
+                    if (proactiveMessage && proactiveMessage.trim()) {
+                        try {
+                            await fetch('${supabaseUrl}/rest/v1/messages', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'apikey': '${supabaseKey}',
+                                    'Prefer': 'return=minimal'
+                                },
+                                body: JSON.stringify({
+                                    conversation_id: conversationId,
+                                    role: 'assistant',
+                                    content: proactiveMessage
+                                })
+                            });
+                        } catch (error) {
+                            console.error('Error saving proactive message:', error);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error initializing conversation:', error);
@@ -711,14 +733,23 @@ serve(async (req) => {
         // Initialize
         initConversation();
         
-        // Show initial message if available
-        ${agent?.initial_message ? 
-        `setTimeout(() => {
-          const emptyState = document.querySelector(".empty-state");
-          if (emptyState) emptyState.remove();
-          addMessage("assistant", "${agent.initial_message.replace(/"/g, '\\"').replace(/'/g, "\\'")}");
-        }, 100);`
-        : ''}
+        // Show proactive message or initial message if available
+        const proactiveMessage = '${proactiveMessage || ''}';
+        const initialMessage = ${agent?.initial_message ? `"${agent.initial_message.replace(/"/g, '\\"').replace(/'/g, "\\'")}"` : 'null'};
+        
+        if (proactiveMessage && proactiveMessage.trim()) {
+          setTimeout(() => {
+            const emptyState = document.querySelector(".empty-state");
+            if (emptyState) emptyState.remove();
+            addMessage("assistant", proactiveMessage);
+          }, 100);
+        } else if (initialMessage) {
+          setTimeout(() => {
+            const emptyState = document.querySelector(".empty-state");
+            if (emptyState) emptyState.remove();
+            addMessage("assistant", initialMessage);
+          }, 100);
+        }
         
         try {
           if (window.parent) {
