@@ -530,6 +530,8 @@ serve(async (req) => {
 
     <script>
         const agentId = '${agentId}';
+        const supabaseUrl = '${supabaseUrl}';
+        const supabaseKey = '${supabaseKey}';
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
@@ -613,12 +615,12 @@ serve(async (req) => {
                     requestBody.visitorSessionId = '${sessionId}';
                 }
 
-                const response = await fetch('${supabaseUrl}/functions/v1/chat-completion', {
+                const response = await fetch(supabaseUrl + '/functions/v1/chat-completion', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': '${supabaseKey}',
-                        'Authorization': 'Bearer ${supabaseKey}'
+                        'apikey': supabaseKey,
+                        'Authorization': 'Bearer ' + supabaseKey
                     },
                     body: JSON.stringify(requestBody)
                 });
