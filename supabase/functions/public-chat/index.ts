@@ -529,11 +529,11 @@ serve(async (req) => {
     </div>
 
     <script>
-        const agentId = '${agentId}';
-        const supabaseUrl = '${supabaseUrl}';
-        const supabaseKey = '${supabaseKey}';
-        const sessionId = ${sessionId ? `'${sessionId}'` : 'null'};
-        const proactiveMessage = ${proactiveMessage ? `'${proactiveMessage}'` : 'null'};
+        const agentId = "${agentId}";
+        const supabaseUrl = "${supabaseUrl}";
+        const supabaseKey = "${supabaseKey}";
+        const sessionId = ${sessionId ? `"${sessionId}"` : 'null'};
+        const proactiveMessage = ${proactiveMessage ? `"${proactiveMessage.replace(/"/g, '\\"')}"` : 'null'};
         
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
