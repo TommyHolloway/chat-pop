@@ -537,6 +537,9 @@ serve(async (req) => {
         </a>
     </div>
 
+    // Construct JavaScript variables with proper server-side evaluation
+    const initialMessageValue = safeInitialMessage ? `"${safeInitialMessage}"` : 'null';
+
     <script>
         const agentId = "${agentId}";
         const supabaseUrl = "${supabaseUrl}";
@@ -609,9 +612,15 @@ serve(async (req) => {
 
         // Send message
         async function sendMessage() {
+            console.log('Send button clicked!');
             const message = messageInput.value.trim();
-            if (!message || isLoading) return;
+            if (!message || isLoading) {
+                console.log('No message or loading:', { message, isLoading });
+                return;
+            }
 
+            console.log('Sending message:', message);
+            
             // Add user message
             addMessage('user', message);
             messageInput.value = '';
@@ -629,6 +638,8 @@ serve(async (req) => {
                     requestBody.visitorSessionId = sessionId;
                 }
 
+                console.log('Making API request with body:', requestBody);
+
                 const response = await fetch(supabaseUrl + '/functions/v1/chat-completion', {
                     method: 'POST',
                     headers: {
@@ -639,10 +650,15 @@ serve(async (req) => {
                     body: JSON.stringify(requestBody)
                 });
 
+                console.log('Response status:', response.status);
+
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Response data:', data);
                     addMessage('assistant', data.message);
                 } else {
+                    const errorText = await response.text();
+                    console.error('API error:', errorText);
                     addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
                 }
             } catch (error) {
@@ -655,6 +671,8 @@ serve(async (req) => {
 
         // Add message to UI
         function addMessage(role, content) {
+            console.log('Adding message:', { role, content });
+            
             // Remove empty state if it exists
             const emptyState = messagesContainer.querySelector('.empty-state');
             if (emptyState) {
@@ -706,6 +724,7 @@ serve(async (req) => {
 
         // Set loading state
         function setLoading(loading) {
+            console.log('Setting loading state:', loading);
             isLoading = loading;
             sendButton.disabled = loading;
             
@@ -742,21 +761,31 @@ serve(async (req) => {
         window.sendMessage = sendMessage;
         
         // Add backup event listener for send button
-        sendButton.addEventListener('click', sendMessage);
-
-        // Handle enter key
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+        if (sendButton) {
+            sendButton.addEventListener('click', function(e) {
+                console.log('Send button event listener triggered');
                 e.preventDefault();
                 sendMessage();
-            }
-        });
+            });
+        }
+
+        // Handle enter key
+        if (messageInput) {
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    console.log('Enter key pressed');
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
 
         // Initialize
+        console.log('Initializing chat widget...');
         initConversation();
         
         // Show proactive message or initial message if available
-        const initialMessage = ${safeInitialMessage ? `"${safeInitialMessage}"` : 'null'};
+        const initialMessage = ${initialMessageValue};
         
         if (proactiveMessage && proactiveMessage.trim()) {
           setTimeout(() => {
@@ -777,6 +806,8 @@ serve(async (req) => {
             window.parent.postMessage('CHATPOP_READY', '*');
           }
         } catch (_) {}
+        
+        console.log('Chat widget initialized successfully');
     </script>
 </body>
 </html>
