@@ -41,17 +41,12 @@ serve(async (req) => {
   // Fetch agent configuration to check widget page restrictions
   async function checkWidgetPageRestrictions() {
     try {
-      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/rest/v1/agents?id=eq.' + agentId + '&select=widget_page_restrictions', {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM',
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/get-widget-config?agentId=' + agentId);
       
       if (response.ok) {
-        const [agent] = await response.json();
-        if (agent && agent.widget_page_restrictions) {
-          widgetAllowedPages = agent.widget_page_restrictions;
+        const config = await response.json();
+        if (config && config.widgetPageRestrictions) {
+          widgetAllowedPages = config.widgetPageRestrictions;
         }
       }
     } catch (error) {
@@ -148,18 +143,13 @@ serve(async (req) => {
   // Fetch agent configuration to check proactive engagement settings
   async function checkProactiveSettings() {
     try {
-      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/rest/v1/agents?id=eq.' + agentId + '&select=enable_proactive_engagement,proactive_config', {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM',
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/get-widget-config?agentId=' + agentId);
       
       if (response.ok) {
-        const [agent] = await response.json();
-        if (agent) {
-          proactiveEnabled = agent.enable_proactive_engagement && agent.proactive_config?.enabled;
-          allowedPages = agent.proactive_config?.allowed_pages || [];
+        const config = await response.json();
+        if (config) {
+          proactiveEnabled = config.proactiveEnabled;
+          allowedPages = config.allowedPages || [];
         }
       }
     } catch (error) {
