@@ -161,8 +161,8 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* Proactive Intelligence Features */}
-      <section id="features" className="py-20 bg-muted/10">
+      {/* Features Preview */}
+      <section className="py-20 bg-muted/10">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
@@ -172,10 +172,18 @@ export const Landing = () => {
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               While competitors wait for visitors to ask questions, our AI starts conversations first with configurable behavioral triggers and intelligent engagement rules.
             </p>
+            <div className="pt-8">
+              <Link to="/features">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto">
+                  Explore All Features
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {intelligenceFeatures.map((feature, index) => (
+            {intelligenceFeatures.slice(0, 3).map((feature, index) => (
               <Card key={index} className="hover-lift border-primary/20 shadow-intelligence bg-gradient-card">
                 <CardHeader>
                   <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4 shadow-glow">
