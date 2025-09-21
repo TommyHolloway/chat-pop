@@ -726,6 +726,12 @@ serve(async (req) => {
             }
         }
 
+        // Make sendMessage globally accessible for onclick
+        window.sendMessage = sendMessage;
+        
+        // Add backup event listener for send button
+        sendButton.addEventListener('click', sendMessage);
+
         // Handle enter key
         messageInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {

@@ -158,7 +158,7 @@ serve(async (req) => {
   }
 
   async function analyzeAndSuggest() {
-    if (!proactiveEnabled) return;
+    if (!proactiveEnabled || isOpen) return; // Don't show suggestions when chat is open
     
     // Check if current page is allowed
     if (allowedPages.length > 0) {
@@ -191,7 +191,7 @@ serve(async (req) => {
       if (response.ok) {
         const data = await response.json();
         
-        if (data.success && data.analysis && data.analysis.triggered && !suggestionShown) {
+        if (data.success && data.analysis && data.analysis.triggered && !suggestionShown && !isOpen) {
           showProactiveSuggestion(data.analysis, data.messageDisplayDuration || 15000);
         }
       }
