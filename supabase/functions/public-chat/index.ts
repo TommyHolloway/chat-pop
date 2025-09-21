@@ -49,6 +49,9 @@ serve(async (req) => {
       ? `<img src="${safeProfileImageUrl}" alt="Agent Avatar" />`
       : avatarFallback;
 
+    // Construct JavaScript variables with proper server-side evaluation
+    const initialMessageValue = safeInitialMessage ? `"${safeInitialMessage}"` : 'null';
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -536,11 +539,6 @@ serve(async (req) => {
             ⚡ Powered by ChatPop
         </a>
     </div>
-
-    // Construct JavaScript variables with proper server-side evaluation
-    const initialMessageValue = safeInitialMessage ? `"${safeInitialMessage}"` : 'null';
-
-    const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
