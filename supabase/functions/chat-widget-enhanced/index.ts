@@ -330,8 +330,13 @@ serve(async (req) => {
   }
 
   window.acceptSuggestion = function() {
-    const bubbles = document.querySelectorAll('[style*="z-index: 9998"]');
-    bubbles.forEach(bubble => bubble.remove());
+    // Remove all suggestion bubbles by searching for elements with the correct z-index
+    const bubbles = document.querySelectorAll('[style*="z-index: 999999"]');
+    bubbles.forEach(bubble => {
+      if (bubble.innerHTML && bubble.innerHTML.includes('Start Chat')) {
+        bubble.remove();
+      }
+    });
     
     if (suggestion && suggestion.suggestedMessage) {
       if (iframe) {

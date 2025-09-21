@@ -616,7 +616,9 @@ serve(async (req) => {
                 const response = await fetch('${supabaseUrl}/functions/v1/chat-completion', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'apikey': '${supabaseAnonKey}',
+                        'Authorization': 'Bearer ${supabaseAnonKey}'
                     },
                     body: JSON.stringify(requestBody)
                 });
