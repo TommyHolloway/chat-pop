@@ -18,7 +18,7 @@ interface TriggerCreationWizardProps {
   onUpdateTrigger?: (triggerId: string, updates: Partial<CustomTrigger>) => void;
 }
 
-type TriggerType = 'time_based' | 'scroll_based' | 'element_interaction';
+type TriggerType = 'time_based' | 'scroll_based';
 
 interface TriggerTypeOption {
   value: TriggerType;
@@ -39,12 +39,6 @@ const triggerTypes: TriggerTypeOption[] = [
     label: 'Scroll Based',
     description: 'Show message when visitor scrolls down the page',
     icon: <MousePointer className="h-6 w-6" />
-  },
-  {
-    value: 'element_interaction',
-    label: 'Element Visibility',
-    description: 'Show message when specific page elements become visible',
-    icon: <Plus className="h-6 w-6" />
   }
 ];
 
@@ -67,7 +61,6 @@ export const TriggerCreationWizard = ({
     enabled: true,
     time_threshold: 30,
     scroll_depth: 50,
-    element_selector: '',
     url_patterns: [],
     message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
   });
@@ -81,7 +74,6 @@ export const TriggerCreationWizard = ({
         enabled: editingTrigger.enabled,
         time_threshold: editingTrigger.time_threshold || 30,
         scroll_depth: editingTrigger.scroll_depth || 50,
-        element_selector: editingTrigger.element_selector || '',
         url_patterns: editingTrigger.url_patterns || [],
         message: editingTrigger.message
       });
@@ -97,7 +89,6 @@ export const TriggerCreationWizard = ({
         enabled: true,
         time_threshold: 30,
         scroll_depth: 50,
-        element_selector: '',
         url_patterns: [],
         message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
       });
@@ -284,10 +275,10 @@ export const TriggerCreationWizard = ({
 
             {pageMode === 'specific' && (
               <div className="space-y-4 mt-6">
-                <Label htmlFor="url-patterns">Page Names or Sections</Label>
+                <Label htmlFor="url-patterns">Page Paths</Label>
                 <Input
                   id="url-patterns"
-                  placeholder="pricing, contact, about-us, product-demo"
+                  placeholder="/pricing, /contact, /about-us, /product-demo"
                   value={urlPatternsInput}
                   onChange={(e) => setUrlPatternsInput(e.target.value)}
                   onBlur={() => {
@@ -301,7 +292,7 @@ export const TriggerCreationWizard = ({
                   }}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Enter page names or sections separated by commas. Examples: "pricing" matches pages like "/pricing" or "/pricing-plans"
+                  Enter page paths separated by commas. Examples: "/pricing", "/contact", "/about-us"
                 </p>
                 {urlPatternsInput && (
                   <div className="flex flex-wrap gap-2 mt-3">
@@ -359,39 +350,6 @@ export const TriggerCreationWizard = ({
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>10%</span>
                   <span>90%</span>
-                </div>
-              </div>
-            )}
-
-            {triggerData.trigger_type === 'element_interaction' && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="element-selector">Element Selector</Label>
-                  <Input
-                    id="element-selector"
-                    placeholder="#pricing, .contact-section, .cta-button"
-                    value={triggerData.element_selector || ''}
-                    onChange={(e) => setTriggerData({ ...triggerData, element_selector: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Enter a CSS selector for the element to watch. Examples: "#pricing" for element with ID pricing, ".section" for elements with class section
-                  </p>
-                </div>
-                
-                <div>
-                  <Label>Show message {triggerData.time_threshold || 5} seconds after element becomes visible</Label>
-                  <Slider
-                    value={[triggerData.time_threshold || 5]}
-                    onValueChange={([value]) => setTriggerData({ ...triggerData, time_threshold: value })}
-                    min={1}
-                    max={30}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>1 second</span>
-                    <span>30 seconds</span>
-                  </div>
                 </div>
               </div>
             )}

@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X, Globe, MousePointer, ArrowUp, Eye } from 'lucide-react';
+import { Plus, X, Globe, MousePointer, ArrowUp } from 'lucide-react';
 import type { CustomTrigger } from '@/hooks/useProactiveConfig';
 
 interface CustomTriggerManagerProps {
@@ -25,10 +25,6 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
         return <Globe className="h-4 w-4 text-muted-foreground" />;
       case 'scroll_based':
         return <ArrowUp className="h-4 w-4 text-muted-foreground" />;
-      case 'element_interaction':
-        return <MousePointer className="h-4 w-4 text-muted-foreground" />;
-      case 'exit_intent':
-        return <Eye className="h-4 w-4 text-muted-foreground" />;
       default:
         return <Globe className="h-4 w-4 text-muted-foreground" />;
     }
@@ -114,8 +110,6 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                         <SelectContent>
                           <SelectItem value="time_based">Time Based</SelectItem>
                           <SelectItem value="scroll_based">Scroll Based</SelectItem>
-                          <SelectItem value="element_interaction">Element Interaction</SelectItem>
-                          <SelectItem value="exit_intent">Exit Intent</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -149,20 +143,6 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                     </div>
                   )}
 
-                  {trigger.trigger_type === 'element_interaction' && (
-                    <div className="space-y-2">
-                      <Label>Element Selector</Label>
-                      <Input
-                        value={trigger.element_selector || ''}
-                        onChange={(e) => handleUpdate(trigger.id, { element_selector: e.target.value })}
-                        placeholder=".button-class, #element-id"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        CSS selector for the element to track interactions
-                      </p>
-                    </div>
-                  )}
-
                   <div className="space-y-2">
                     <Label>URL Patterns (comma-separated)</Label>
                     <Input
@@ -173,7 +153,7 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                       onBlur={(e) => handleUpdate(trigger.id, { 
                         url_patterns: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                       })}
-                      placeholder="specific-page, /products, #section"
+                      placeholder="/specific-page, /products"
                     />
                   </div>
 

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Clock, MousePointer, Eye, ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { Clock, MousePointer, Edit, Trash2 } from 'lucide-react';
 import { CustomTrigger } from '@/hooks/useProactiveConfig';
 
 interface TriggerListCardProps {
@@ -19,10 +19,6 @@ const getTriggerIcon = (type: string) => {
       return <Clock className="h-4 w-4" />;
     case 'scroll_based':
       return <MousePointer className="h-4 w-4" />;
-    case 'element_interaction':
-      return <Eye className="h-4 w-4" />;
-    case 'exit_intent':
-      return <ArrowLeft className="h-4 w-4" />;
     default:
       return <Clock className="h-4 w-4" />;
   }
@@ -34,10 +30,6 @@ const getTriggerTypeLabel = (type: string) => {
       return 'Time Based';
     case 'scroll_based':
       return 'Scroll Based';
-    case 'element_interaction':
-      return 'Element Interaction';
-    case 'exit_intent':
-      return 'Exit Intent';
     default:
       return 'Unknown';
   }
@@ -49,10 +41,6 @@ const getTriggerDescription = (trigger: CustomTrigger) => {
       return `Shows after ${trigger.time_threshold || 30} seconds`;
     case 'scroll_based':
       return `Shows at ${trigger.scroll_depth || 50}% scroll`;
-    case 'element_interaction':
-      return `Shows on ${trigger.element_selector || 'element'} interaction`;
-    case 'exit_intent':
-      return 'Shows when visitor attempts to leave';
     default:
       return 'Custom trigger';
   }

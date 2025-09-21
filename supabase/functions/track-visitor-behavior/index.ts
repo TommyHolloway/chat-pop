@@ -73,7 +73,7 @@ serve(async (req) => {
     }
 
     // Validate event type
-    const validEventTypes = ['page_view', 'click', 'scroll', 'time_spent', 'form_interaction', 'element_visible'];
+    const validEventTypes = ['page_view', 'click', 'scroll', 'time_spent', 'form_interaction'];
     if (!validEventTypes.includes(eventType)) {
       return new Response(
         JSON.stringify({ error: 'Invalid event type' }),

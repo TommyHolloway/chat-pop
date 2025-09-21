@@ -15,9 +15,8 @@ export interface ProactiveTrigger {
 export interface CustomTrigger extends ProactiveTrigger {
   id: string;
   name: string;
-  trigger_type: 'time_based' | 'scroll_based' | 'element_interaction' | 'exit_intent';
+  trigger_type: 'time_based' | 'scroll_based';
   scroll_depth?: number;
-  element_selector?: string;
   isQuickTrigger?: boolean;
 }
 
@@ -43,7 +42,7 @@ const quickTriggerTemplates: CustomTrigger[] = [
     enabled: false,
     time_threshold: 30,
     message: "Hi! I noticed you're looking at our pricing. I'd be happy to help you find the perfect plan for your needs!",
-    url_patterns: ['pricing', 'plans', 'cost', '#pricing'],
+    url_patterns: ['/pricing', '/plans', '/cost'],
     isQuickTrigger: true
   },
   {
@@ -64,7 +63,7 @@ const quickTriggerTemplates: CustomTrigger[] = [
     enabled: false,
     page_threshold: 3,
     message: "I see you're exploring our features. Want to learn more about how they can benefit you?",
-    url_patterns: ['features', 'product', 'demo', '#features'],
+    url_patterns: ['/features', '/product', '/demo'],
     isQuickTrigger: true
   }
 ];
@@ -80,7 +79,7 @@ const defaultConfig: ProactiveConfig = {
       enabled: false,
       time_threshold: 30,
       message: "Hi! I noticed you're looking at our pricing. I'd be happy to help you find the perfect plan for your needs!",
-      url_patterns: ['pricing', 'plans', 'cost', '#pricing']
+      url_patterns: ['/pricing', '/plans', '/cost']
     },
     high_engagement: {
       enabled: false,
@@ -93,7 +92,7 @@ const defaultConfig: ProactiveConfig = {
       enabled: false,
       page_threshold: 3,
       message: "I see you're exploring our features. Want to learn more about how they can benefit you?",
-      url_patterns: ['features', 'product', 'demo', '#features']
+      url_patterns: ['/features', '/product', '/demo']
     }
   },
   custom_triggers: []

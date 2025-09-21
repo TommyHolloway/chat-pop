@@ -135,7 +135,6 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
     sessionsCount: sessions?.length, 
     currentUrl, 
     currentPath, 
-    currentHash,
     timeOnPage 
   });
 
@@ -163,72 +162,38 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
 
       console.log(`Evaluating trigger: ${trigger.name}`);
 
-      // Enhanced URL pattern matching with proper hash support
+      // Simple URL pattern matching for page paths only
       let urlMatches = true; // Default to true if no URL patterns specified
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         urlMatches = trigger.url_patterns.some(pattern => {
           if (!pattern || pattern.trim() === '') return false;
           
-          const cleanPattern = pattern.trim();
-          const normalizedPattern = cleanPattern.toLowerCase();
+          const cleanPattern = pattern.trim().toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();
           const normalizedPath = (currentPath || '').toLowerCase();
-          const normalizedHash = (currentHash || '').toLowerCase();
           
-          let matches = false;
+          // Simple path matching - check if URL contains the pattern
+          const pathMatches = normalizedPath.includes(cleanPattern) ||
+                             normalizedUrl.includes(cleanPattern) ||
+                             normalizedPath === cleanPattern ||
+                             normalizedPath.endsWith('/' + cleanPattern) ||
+                             normalizedPath.startsWith(cleanPattern + '/');
           
-          // Hash pattern matching (e.g., #pricing, #plans)
-          if (cleanPattern.startsWith('#')) {
-            const hashWithoutSymbol = cleanPattern.substring(1);
-            // Match against hash with or without # symbol
-            matches = normalizedHash === normalizedPattern || 
-                     normalizedHash === '#' + hashWithoutSymbol ||
-                     normalizedHash.substring(1) === hashWithoutSymbol;
-            console.log(`Hash pattern matching for "${cleanPattern}":`, {
-              pattern: cleanPattern,
-              currentHash: currentHash || 'none',
-              normalizedHash,
-              hashWithoutSymbol,
-              matches
-            });
-          }
-          // Path pattern matching (e.g., /pricing, /plans, pricing)
-          else {
-            // Check path matches
-            const pathMatches = normalizedPath.includes(normalizedPattern) ||
-                               normalizedPath === '/' + normalizedPattern ||
-                               normalizedPath.endsWith('/' + normalizedPattern);
-            
-            // Check URL matches (full URL contains pattern)
-            const urlMatches = normalizedUrl.includes(normalizedPattern);
-            
-            // Check if pattern matches any URL segment
-            const segmentMatches = normalizedUrl.split('/').some(segment => 
-              segment === normalizedPattern || segment.includes(normalizedPattern)
-            );
-            
-            matches = pathMatches || urlMatches || segmentMatches;
-            
-            console.log(`Path pattern matching for "${cleanPattern}":`, {
-              pattern: cleanPattern,
-              currentPath: currentPath || 'none',
-              currentUrl: currentUrl || 'none',
-              pathMatches,
-              urlMatches,
-              segmentMatches,
-              matches
-            });
-          }
+          console.log(`Path pattern matching for "${cleanPattern}":`, {
+            pattern: cleanPattern,
+            currentPath: currentPath || 'none',
+            currentUrl: currentUrl || 'none',
+            pathMatches
+          });
           
-          return matches;
+          return pathMatches;
         });
 
         if (!urlMatches) {
           console.log(`URL pattern not matched for trigger: ${trigger.name}`, {
             patterns: trigger.url_patterns,
             currentUrl,
-            currentPath,
-            currentHash
+            currentPath
           });
           continue;
         } else {
@@ -252,56 +217,6 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
         // TODO: Implement scroll depth tracking
         console.log(`Scroll-based trigger not yet implemented: ${trigger.name}`);
         triggerMet = false;
-      } else if (trigger.trigger_type === 'element_interaction' && trigger.element_selector) {
-        console.log(`Element interaction trigger evaluation for "${trigger.name}":`, {
-          element_selector: trigger.element_selector,
-          time_threshold: trigger.time_threshold
-        });
-        
-        // Fetch recent element visibility events for this session
-        const { data: elementEvents, error: elementError } = await supabase
-          .from('visitor_behavior_events')
-          .select('element_selector, created_at, event_data')
-          .eq('session_id', sessionId)
-          .eq('event_type', 'element_visible')
-          .order('created_at', { ascending: false });
-        
-        if (elementError) {
-          console.error('Error fetching element events:', elementError);
-          triggerMet = false;
-        } else if (elementEvents && elementEvents.length > 0) {
-          const elementSelector = trigger.element_selector.toLowerCase();
-          const matchingElements = elementEvents.filter(event => {
-            const eventSelector = (event.element_selector || '').toLowerCase();
-            return eventSelector === elementSelector || eventSelector.includes(elementSelector);
-          });
-          
-          if (matchingElements.length > 0) {
-            // Check if enough time has passed since element became visible
-            const latestMatch = matchingElements[0];
-            const elementVisibleTime = new Date(latestMatch.created_at);
-            const now = new Date();
-            const timeSinceVisible = Math.floor((now.getTime() - elementVisibleTime.getTime()) / 1000);
-            
-            triggerMet = timeSinceVisible >= (trigger.time_threshold || 5);
-            console.log(`Element interaction trigger evaluation:`, {
-              element_found: true,
-              time_since_visible: timeSinceVisible,
-              threshold: trigger.time_threshold || 5,
-              triggerMet
-            });
-          } else {
-            console.log(`Element selector "${trigger.element_selector}" not found in visitor events`);
-            triggerMet = false;
-          }
-        } else {
-          console.log(`No element visibility events found for session: ${sessionId}`);
-          triggerMet = false;
-        }
-      } else if (trigger.trigger_type === 'exit_intent') {
-        // TODO: Implement exit intent detection
-        console.log(`Exit intent trigger not yet implemented: ${trigger.name}`);
-        triggerMet = false;
       } else {
         console.log(`Unknown or incomplete trigger type for "${trigger.name}":`, {
           trigger_type: trigger.trigger_type,
@@ -322,7 +237,6 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
             timeOnPage,
             currentUrl,
             currentPath,
-            currentHash,
             urlMatches,
             trigger: trigger
           }
@@ -333,7 +247,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
     console.log('No custom triggers found in config');
   }
 
-  // Check predefined triggers
+  // Check predefined triggers with simple path matching
   if (config.triggers) {
     // Check pricing concern trigger
     if (config.triggers.pricing_concern && config.triggers.pricing_concern.enabled) {
@@ -343,26 +257,14 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
           if (!pattern) return false;
-          const cleanPattern = pattern.trim();
-          const normalizedPattern = cleanPattern.toLowerCase();
+          const cleanPattern = pattern.trim().toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();
           const normalizedPath = (currentPath || '').toLowerCase();
-          const normalizedHash = (currentHash || '').toLowerCase();
           
-          // Hash pattern matching
-          if (cleanPattern.startsWith('#')) {
-            const hashWithoutSymbol = cleanPattern.substring(1);
-            return normalizedHash === normalizedPattern || 
-                   normalizedHash === '#' + hashWithoutSymbol ||
-                   normalizedHash.substring(1) === hashWithoutSymbol;
-          }
-          // Path pattern matching
-          else {
-            return normalizedPath.includes(normalizedPattern) ||
-                   normalizedUrl.includes(normalizedPattern) ||
-                   normalizedPath === '/' + normalizedPattern ||
-                   normalizedPath.endsWith('/' + normalizedPattern);
-          }
+          return normalizedPath.includes(cleanPattern) ||
+                 normalizedUrl.includes(cleanPattern) ||
+                 normalizedPath === cleanPattern ||
+                 normalizedPath.endsWith('/' + cleanPattern);
         });
 
         if (urlMatches && timeInSeconds >= (trigger.time_threshold || 30)) {
@@ -384,26 +286,14 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
         const urlMatches = trigger.url_patterns.some(pattern => {
           if (!pattern) return false;
-          const cleanPattern = pattern.trim();
-          const normalizedPattern = cleanPattern.toLowerCase();
+          const cleanPattern = pattern.trim().toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();
           const normalizedPath = (currentPath || '').toLowerCase();
-          const normalizedHash = (currentHash || '').toLowerCase();
           
-          // Hash pattern matching
-          if (cleanPattern.startsWith('#')) {
-            const hashWithoutSymbol = cleanPattern.substring(1);
-            return normalizedHash === normalizedPattern || 
-                   normalizedHash === '#' + hashWithoutSymbol ||
-                   normalizedHash.substring(1) === hashWithoutSymbol;
-          }
-          // Path pattern matching
-          else {
-            return normalizedPath.includes(normalizedPattern) ||
-                   normalizedUrl.includes(normalizedPattern) ||
-                   normalizedPath === '/' + normalizedPattern ||
-                   normalizedPath.endsWith('/' + normalizedPattern);
-          }
+          return normalizedPath.includes(cleanPattern) ||
+                 normalizedUrl.includes(cleanPattern) ||
+                 normalizedPath === cleanPattern ||
+                 normalizedPath.endsWith('/' + cleanPattern);
         });
 
         if (urlMatches) {

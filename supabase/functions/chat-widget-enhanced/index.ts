@@ -141,62 +141,6 @@ serve(async (req) => {
     }
   }
 
-  // Element visibility tracking
-  let visibleElements = new Set();
-  let elementObserver;
-
-  function initElementObserver() {
-    if (!window.IntersectionObserver) return;
-
-    elementObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          const elementId = entry.target.id || entry.target.className || entry.target.tagName.toLowerCase();
-          const selector = entry.target.id ? '#' + entry.target.id : 
-                          entry.target.className ? '.' + entry.target.className.split(' ')[0] :
-                          entry.target.tagName.toLowerCase();
-          
-          if (entry.isIntersecting && !visibleElements.has(selector)) {
-            visibleElements.add(selector);
-            trackBehavior('element_visible', { 
-              elementSelector: selector,
-              elementId: entry.target.id,
-              elementClass: entry.target.className,
-              visibilityRatio: entry.intersectionRatio
-            });
-          }
-        });
-      },
-      {
-        threshold: [0.1, 0.5],
-        rootMargin: '0px'
-      }
-    );
-
-    // Observe common sections
-    const elementsToObserve = [
-      '#pricing', '#features', '#contact', '#about', '#services',
-      '.pricing-section', '.features-section', '.contact-section', '.about-section'
-    ];
-    
-    elementsToObserve.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(el => elementObserver.observe(el));
-    });
-
-    // Also observe any element with data-track attribute
-    const trackableElements = document.querySelectorAll('[data-track]');
-    trackableElements.forEach(el => elementObserver.observe(el));
-  }
-
-  function cleanupElementObserver() {
-    if (elementObserver) {
-      elementObserver.disconnect();
-      elementObserver = null;
-    }
-    visibleElements.clear();
-  }
-
   // Check if proactive engagement should be enabled for this agent
   let proactiveEnabled = false;
   let allowedPages = [];
@@ -727,16 +671,13 @@ serve(async (req) => {
     console.log('- window.testProactiveMessage() - manually trigger proactive message');
     console.log('- Current suggestionShown state:', suggestionShown);
     
-    // Mark widget as loaded and cleanup on unload
+    // Mark widget as loaded
     window.ChatPopWidget = {
       agentId: agentId,
       toggleChat: toggleChat,
       isOpen: () => isOpen,
       testMessage: window.testProactiveMessage
     };
-    
-    // Cleanup element observer on page unload
-    window.addEventListener('beforeunload', cleanupElementObserver);
     
     console.log('✅ Widget initialization complete');
   }
