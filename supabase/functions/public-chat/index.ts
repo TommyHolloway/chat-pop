@@ -39,6 +39,10 @@ serve(async (req) => {
 
     // Escape agent data to prevent XSS
     const safeName = agent.name?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'Agent';
+    const safeInitialMessage = agent.initial_message?.replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r') || '';
+    const safeProfileImageUrl = agent.profile_image_url?.replace(/"/g, '\\"') || '';
+    const hasProfileImage = !!agent.profile_image_url;
+    const avatarFallback = safeName.charAt(0).toUpperCase();
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -221,6 +225,7 @@ serve(async (req) => {
             font-weight: 700;
             flex-shrink: 0;
             position: relative;
+            overflow: hidden;
         }
         
         .message.user .message-avatar {
@@ -487,9 +492,9 @@ serve(async (req) => {
 <body>
     <div class="header">
         <div class="avatar">
-          ${agent?.profile_image_url 
-            ? `<img src="${agent.profile_image_url}" alt="Agent Avatar" />`
-            : safeName.charAt(0).toUpperCase()
+          ${hasProfileImage 
+            ? `<img src="${safeProfileImageUrl}" alt="Agent Avatar" />`
+            : avatarFallback
           }
         </div>
         <div class="agent-info">
@@ -500,32 +505,34 @@ serve(async (req) => {
             </div>
         </div>
     </div>
-    
+
     <div class="chat-container">
         <div class="messages" id="messages">
             <div class="empty-state">
                 <div class="empty-state-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
-                        <circle cx="12" cy="11" r="1" fill="white" opacity="0.8"/>
-                        <circle cx="8" cy="11" r="1" fill="white" opacity="0.6"/>
-                        <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                 </div>
                 <p>Start a conversation with ${safeName}</p>
             </div>
         </div>
-        
+
         <div class="input-area">
-            <input type="text" id="messageInput" placeholder="Type your message..." />
-            <button onclick="sendMessage()" id="sendButton">Send</button>
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Type your message..." 
+                autofocus
+            />
+            <button id="sendButton" onclick="sendMessage()">Send</button>
         </div>
-        
-        <div class="powered-by">
-            <a href="https://chatpop.ai" target="_blank" rel="noopener noreferrer">
-                Powered by Chatpop
-            </a>
-        </div>
+    </div>
+
+    <div class="powered-by">
+        <a href="https://chatpop.ai" target="_blank" rel="noopener noreferrer">
+            ⚡ Powered by ChatPop
+        </a>
     </div>
 
     <script>
@@ -534,6 +541,9 @@ serve(async (req) => {
         const supabaseKey = "${supabaseKey}";
         const sessionId = ${sessionId ? `"${sessionId}"` : 'null'};
         const proactiveMessage = ${proactiveMessage ? `"${proactiveMessage.replace(/"/g, '\\"')}"` : 'null'};
+        const hasAgentProfileImage = ${hasProfileImage};
+        const agentProfileImageUrl = "${safeProfileImageUrl}";
+        const agentAvatarFallback = "${avatarFallback}";
         
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
@@ -657,11 +667,10 @@ serve(async (req) => {
             if (role === 'user') {
               avatar.textContent = 'U';
             } else {
-              const hasProfileImage = ${agent?.profile_image_url ? 'true' : 'false'};
-              if (hasProfileImage) {
-                avatar.innerHTML = '<img src="${agent?.profile_image_url || ''}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+              if (hasAgentProfileImage) {
+                avatar.innerHTML = '<img src="' + agentProfileImageUrl + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
               } else {
-                avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
+                avatar.textContent = agentAvatarFallback;
               }
             }
             
@@ -705,11 +714,10 @@ serve(async (req) => {
                 
                 const avatar = document.createElement('div');
                 avatar.className = 'message-avatar';
-                const hasProfileImage = ${agent?.profile_image_url ? 'true' : 'false'};
-                if (hasProfileImage) {
-                  avatar.innerHTML = '<img src="${agent?.profile_image_url || ''}" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                if (hasAgentProfileImage) {
+                  avatar.innerHTML = '<img src="' + agentProfileImageUrl + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
                 } else {
-                  avatar.textContent = '${safeName.charAt(0).toUpperCase()}';
+                  avatar.textContent = agentAvatarFallback;
                 }
                 
                 const loadingContent = document.createElement('div');
@@ -746,7 +754,7 @@ serve(async (req) => {
         initConversation();
         
         // Show proactive message or initial message if available
-        const initialMessage = ${agent?.initial_message ? `"${agent.initial_message.replace(/"/g, '\\"').replace(/'/g, "\\'")}"` : 'null'};
+        const initialMessage = ${safeInitialMessage ? `"${safeInitialMessage}"` : 'null'};
         
         if (proactiveMessage && proactiveMessage.trim()) {
           setTimeout(() => {
