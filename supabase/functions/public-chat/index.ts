@@ -44,6 +44,11 @@ serve(async (req) => {
     const hasProfileImage = !!agent.profile_image_url;
     const avatarFallback = safeName.charAt(0).toUpperCase();
 
+    // Construct avatar HTML
+    const avatarHtml = hasProfileImage 
+      ? `<img src="${safeProfileImageUrl}" alt="Agent Avatar" />`
+      : avatarFallback;
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -492,10 +497,7 @@ serve(async (req) => {
 <body>
     <div class="header">
         <div class="avatar">
-          ${hasProfileImage 
-            ? `<img src="${safeProfileImageUrl}" alt="Agent Avatar" />`
-            : avatarFallback
-          }
+          ${avatarHtml}
         </div>
         <div class="agent-info">
             <h1>${safeName}</h1>
@@ -541,7 +543,7 @@ serve(async (req) => {
         const supabaseKey = "${supabaseKey}";
         const sessionId = ${sessionId ? `"${sessionId}"` : 'null'};
         const proactiveMessage = ${proactiveMessage ? `"${proactiveMessage.replace(/"/g, '\\"')}"` : 'null'};
-        const hasAgentProfileImage = ${hasProfileImage};
+        const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
         const agentProfileImageUrl = "${safeProfileImageUrl}";
         const agentAvatarFallback = "${avatarFallback}";
         
