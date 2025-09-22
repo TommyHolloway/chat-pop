@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, Eye, Activity, Clock, User, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, AlertTriangle, Eye, Activity, Clock, User, CheckCircle, XCircle, RefreshCw, Database, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,22 @@ import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
 import { useEnhancedSecurity } from '@/hooks/useEnhancedSecurity';
 import { useUserRole } from '@/hooks/useUserRole';
 import { SecurityAlert, SecurityStatus } from './SecurityAlert';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
+
+interface SecurityHealthReport {
+  timestamp: string;
+  overall_status: 'healthy' | 'warning' | 'critical';
+  tables_without_rls: number;
+  critical_events_24h: number;
+  failed_logins_1h: number;
+  suspicious_activity_24h: number;
+  rls_coverage: 'complete' | 'incomplete';
+  monitoring_active: boolean;
+  privacy_compliance: string;
+  security_version: string;
+}
 
 export const SecurityDashboard: React.FC = () => {
   const { securityEvents, piiAccessLogs, loading, fetchSecurityEvents, checkSuspiciousActivity } = useSecurityMonitoring();
@@ -18,6 +33,8 @@ export const SecurityDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [auditResult, setAuditResult] = useState<any>(null);
   const [isRunningAudit, setIsRunningAudit] = useState(false);
+  const [healthReport, setHealthReport] = useState<SecurityHealthReport | null>(null);
+  const [isRunningHealthCheck, setIsRunningHealthCheck] = useState(false);
 
   const handleRunSecurityAudit = async () => {
     setIsRunningAudit(true);
@@ -29,9 +46,53 @@ export const SecurityDashboard: React.FC = () => {
     }
   };
 
+  const runEnhancedSecurityScan = async () => {
+    setIsRunningHealthCheck(true);
+    try {
+      // Run comprehensive security scan
+      await Promise.all([
+        supabase.rpc('detect_rapid_login_attempts'),
+        supabase.rpc('detect_suspicious_pii_access'),
+        supabase.rpc('generate_daily_security_audit')
+      ]);
+
+      // Get security health report
+      const { data: healthData, error: healthError } = await supabase.rpc('security_health_check');
+      if (healthError) throw healthError;
+      
+      setHealthReport(healthData as unknown as SecurityHealthReport);
+
+      // Refresh security events
+      await Promise.all([
+        fetchSecurityEvents(),
+        checkSuspiciousActivity()
+      ]);
+
+      toast.success('Enhanced security scan completed');
+    } catch (error) {
+      console.error('Enhanced security scan failed:', error);
+      toast.error('Enhanced security scan failed');
+    } finally {
+      setIsRunningHealthCheck(false);
+    }
+  };
+
+  const fetchSecurityHealth = async () => {
+    try {
+      const { data, error } = await supabase.rpc('security_health_check');
+      if (error) throw error;
+      setHealthReport(data as unknown as SecurityHealthReport);
+    } catch (error) {
+      console.error('Error fetching security health:', error);
+    }
+  };
+
   useEffect(() => {
-    // Run initial security audit
-    handleRunSecurityAudit();
+    // Run initial security audit and health check
+    Promise.all([
+      handleRunSecurityAudit(),
+      fetchSecurityHealth()
+    ]);
   }, []);
 
   if (role !== 'admin') {
@@ -84,6 +145,15 @@ export const SecurityDashboard: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <Button
+            onClick={runEnhancedSecurityScan}
+            variant="default"
+            size="sm"
+            disabled={isRunningHealthCheck}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRunningHealthCheck ? 'animate-spin' : ''}`} />
+            {isRunningHealthCheck ? 'Running Enhanced Scan...' : 'Enhanced Security Scan'}
+          </Button>
+          <Button
             onClick={handleRunSecurityAudit}
             variant="outline"
             size="sm"
@@ -133,29 +203,70 @@ export const SecurityDashboard: React.FC = () => {
         actionLabel="Go to Auth Settings"
         onAction={() => window.open('https://supabase.com/dashboard/project/etwjtxqjcwyxdamlcorf/auth/providers', '_blank')}
       />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Security Events</CardTitle>
+            <CardTitle className="text-sm font-medium">Security Status</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{securityEvents.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Last 50 events tracked
+            <div className="flex items-center space-x-2">
+              <Badge variant={healthReport?.overall_status === 'healthy' ? 'default' : 
+                              healthReport?.overall_status === 'warning' ? 'secondary' : 'destructive'}>
+                {healthReport?.overall_status || 'Unknown'}
+              </Badge>
+              {healthReport?.overall_status === 'healthy' && <CheckCircle className="h-4 w-4 text-green-500" />}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Version {healthReport?.security_version || 'v2.1'}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
+            <CardTitle className="text-sm font-medium">Critical Events (24h)</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{criticalEvents.length}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {healthReport?.critical_events_24h || criticalEvents.length}
+            </div>
             <p className="text-xs text-muted-foreground">
               Require immediate attention
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Failed Logins (1h)</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {healthReport?.failed_logins_1h || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Authentication failures
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">RLS Coverage</CardTitle>
+            <Database className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Badge variant={healthReport?.rls_coverage === 'complete' ? 'default' : 'destructive'}>
+                {healthReport?.rls_coverage || 'Unknown'}
+              </Badge>
+              {healthReport?.rls_coverage === 'complete' && <CheckCircle className="h-4 w-4 text-green-500" />}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Database security
             </p>
           </CardContent>
         </Card>
@@ -172,30 +283,234 @@ export const SecurityDashboard: React.FC = () => {
             </p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Monitoring</CardTitle>
-            <Activity className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Active</div>
-            <p className="text-xs text-muted-foreground">
-              Real-time security monitoring
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Detailed Security Information */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="health">Health Report</TabsTrigger>
           <TabsTrigger value="events">Security Events</TabsTrigger>
           <TabsTrigger value="pii">PII Access Logs</TabsTrigger>
           <TabsTrigger value="alerts">Critical Alerts</TabsTrigger>
           <TabsTrigger value="audit">Security Audit</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="health">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Enhanced Security Health Report</CardTitle>
+                <CardDescription>Real-time security status and compliance monitoring</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {healthReport ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Overall Security Status</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant={
+                            healthReport.overall_status === 'healthy' ? 'default' : 
+                            healthReport.overall_status === 'warning' ? 'secondary' : 'destructive'
+                          }>
+                            {healthReport.overall_status}
+                          </Badge>
+                          {healthReport.overall_status === 'healthy' && 
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          }
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Last updated: {format(new Date(healthReport.timestamp), 'MMM dd, yyyy HH:mm')}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Database Security</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">RLS Coverage</span>
+                            <Badge variant={healthReport.rls_coverage === 'complete' ? 'default' : 'destructive'}>
+                              {healthReport.rls_coverage}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Unsecured Tables</span>
+                            <span className="font-semibold">{healthReport.tables_without_rls}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Threat Monitoring</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Critical Events (24h)</span>
+                            <span className={`font-semibold ${healthReport.critical_events_24h > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {healthReport.critical_events_24h}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Failed Logins (1h)</span>
+                            <span className={`font-semibold ${healthReport.failed_logins_1h > 5 ? 'text-red-600' : 'text-green-600'}`}>
+                              {healthReport.failed_logins_1h}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Suspicious Activity (24h)</span>
+                            <span className={`font-semibold ${healthReport.suspicious_activity_24h > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {healthReport.suspicious_activity_24h}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
+                    <p className="text-muted-foreground">Loading security health report...</p>
+                    <Button onClick={fetchSecurityHealth} variant="outline" size="sm" className="mt-2">
+                      Load Report
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Enhanced Security Features Status */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Enhanced Security Features</CardTitle>
+                  <CardDescription>New security implementations (v2.1)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span>Enhanced IP Anonymization</span>
+                    <Badge variant="default">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      IPv4/16, IPv6/48
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Rapid Login Detection</span>
+                    <Badge variant="default">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Active
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Authentication Monitoring</span>
+                    <Badge variant="default">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Real-time
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Security Health Checks</span>
+                    <Badge variant="default">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Automated
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Privacy & Compliance</CardTitle>
+                  <CardDescription>Data protection measures</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span>GDPR Compliance</span>
+                    <Badge variant="default">
+                      {healthReport?.privacy_compliance || 'Enhanced'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Data Retention</span>
+                    <Badge variant="secondary">30 Days</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>PII Access Logging</span>
+                    <Badge variant="default">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Comprehensive
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Monitoring Active</span>
+                    <Badge variant="default">
+                      <Activity className="h-3 w-3 mr-1" />
+                      {healthReport?.monitoring_active ? 'Yes' : 'No'}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Security Recommendations */}
+            {healthReport?.overall_status !== 'healthy' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    Security Recommendations
+                  </CardTitle>
+                  <CardDescription>Immediate actions to improve security</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {healthReport?.critical_events_24h > 0 && (
+                      <div className="p-3 border rounded bg-red-50 border-red-200">
+                        <p className="text-sm font-medium text-red-900">
+                          Critical Security Events Detected
+                        </p>
+                        <p className="text-xs text-red-700">
+                          Review critical alerts immediately and investigate potential security breaches.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {healthReport?.tables_without_rls > 0 && (
+                      <div className="p-3 border rounded bg-yellow-50 border-yellow-200">
+                        <p className="text-sm font-medium text-yellow-900">
+                          Incomplete RLS Coverage
+                        </p>
+                        <p className="text-xs text-yellow-700">
+                          {healthReport.tables_without_rls} tables lack Row Level Security policies.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {healthReport?.failed_logins_1h > 10 && (
+                      <div className="p-3 border rounded bg-orange-50 border-orange-200">
+                        <p className="text-sm font-medium text-orange-900">
+                          High Authentication Failure Rate
+                        </p>
+                        <p className="text-xs text-orange-700">
+                          Consider implementing additional rate limiting or CAPTCHA protection.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
