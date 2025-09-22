@@ -44,13 +44,26 @@ serve(async (req) => {
     const hasProfileImage = !!agent.profile_image_url;
     const avatarFallback = safeName.charAt(0).toUpperCase();
 
+    // Safely prepare URL parameters for JavaScript injection
+    const safeSessionId = sessionId || null;
+    const safeProactiveMessage = proactiveMessage || null;
+    
+    // Create properly escaped JavaScript variable values
+    const sessionIdValue = safeSessionId ? JSON.stringify(safeSessionId) : 'null';
+    const proactiveMessageValue = safeProactiveMessage ? JSON.stringify(safeProactiveMessage) : 'null';
+    const agentIdValue = JSON.stringify(agentId);
+    const supabaseUrlValue = JSON.stringify(supabaseUrl);
+    const supabaseKeyValue = JSON.stringify(supabaseKey);
+    const profileImageUrlValue = JSON.stringify(safeProfileImageUrl);
+    const avatarFallbackValue = JSON.stringify(avatarFallback);
+
     // Construct avatar HTML
     const avatarHtml = hasProfileImage 
       ? `<img src="${safeProfileImageUrl}" alt="Agent Avatar" />`
       : avatarFallback;
 
     // Construct JavaScript variables with proper server-side evaluation
-    const initialMessageValue = safeInitialMessage ? `"${safeInitialMessage}"` : 'null';
+    const initialMessageValue = safeInitialMessage ? JSON.stringify(safeInitialMessage) : 'null';
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -543,15 +556,15 @@ serve(async (req) => {
     <script>
         console.log('🚀 Script starting execution...');
         
-        // Safely inject variables with proper escaping
-        const agentId = ${JSON.stringify(agentId)};
-        const supabaseUrl = ${JSON.stringify(supabaseUrl)};
-        const supabaseKey = ${JSON.stringify(supabaseKey)};
-        const sessionId = ${sessionId ? JSON.stringify(sessionId) : 'null'};
-        const proactiveMessage = ${proactiveMessage ? JSON.stringify(proactiveMessage) : 'null'};
+        // Safely inject variables with server-side evaluation (no template literal expressions)
+        const agentId = ${agentIdValue};
+        const supabaseUrl = ${supabaseUrlValue};
+        const supabaseKey = ${supabaseKeyValue};
+        const sessionId = ${sessionIdValue};
+        const proactiveMessage = ${proactiveMessageValue};
         const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
-        const agentProfileImageUrl = ${JSON.stringify(safeProfileImageUrl)};
-        const agentAvatarFallback = ${JSON.stringify(avatarFallback)};
+        const agentProfileImageUrl = ${profileImageUrlValue};
+        const agentAvatarFallback = ${avatarFallbackValue};
         
         console.log('🔧 Variables initialized:', { agentId, sessionId, proactiveMessage });
         
