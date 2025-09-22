@@ -684,6 +684,51 @@ export type Database = {
           },
         ]
       }
+      security_audit_logs: {
+        Row: {
+          audit_date: string
+          created_at: string | null
+          critical_events: number | null
+          id: string
+          lead_operations: number | null
+          pii_access_events: number | null
+          security_events: number | null
+          service_role_ops: number | null
+          total_operations: number | null
+          unique_ips: number | null
+          updated_at: string | null
+          visitor_operations: number | null
+        }
+        Insert: {
+          audit_date?: string
+          created_at?: string | null
+          critical_events?: number | null
+          id?: string
+          lead_operations?: number | null
+          pii_access_events?: number | null
+          security_events?: number | null
+          service_role_ops?: number | null
+          total_operations?: number | null
+          unique_ips?: number | null
+          updated_at?: string | null
+          visitor_operations?: number | null
+        }
+        Update: {
+          audit_date?: string
+          created_at?: string | null
+          critical_events?: number | null
+          id?: string
+          lead_operations?: number | null
+          pii_access_events?: number | null
+          security_events?: number | null
+          service_role_ops?: number | null
+          total_operations?: number | null
+          unique_ips?: number | null
+          updated_at?: string | null
+          visitor_operations?: number | null
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           content_type: string
@@ -1071,6 +1116,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      detect_rapid_login_attempts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       detect_suspicious_pii_access: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1086,6 +1135,10 @@ export type Database = {
       enforce_data_retention: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      enhanced_ip_anonymization: {
+        Args: { ip_addr: unknown }
+        Returns: unknown
       }
       enhanced_pii_protection_check: {
         Args: { data_fields: Json; operation_type?: string }
@@ -1115,6 +1168,10 @@ export type Database = {
       enhanced_security_scan: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      generate_daily_security_audit: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       get_public_agent_data: {
         Args: { agent_uuid: string }
@@ -1198,6 +1255,10 @@ export type Database = {
       schedule_visitor_cleanup: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      security_health_check: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       update_storage_usage: {
         Args: { p_size_change: number; p_user_id: string }
