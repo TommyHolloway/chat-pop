@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Send, Loader2, Bot } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ActionButtons } from '@/components/chat/ActionButtons';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
+import { useToast } from '@/hooks/use-toast';
+import { withRetry } from '@/utils/apiHelpers';
 
 interface Message {
   id: string;
@@ -26,11 +29,13 @@ interface Agent {
 
 export const PublicChat = () => {
   const { id } = useParams();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [agent, setAgent] = useState<Agent | null>(null);
-  const [conversationId, setConversationId] = useState<string>();
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isInitializingConversation, setIsInitializingConversation] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -58,18 +63,34 @@ export const PublicChat = () => {
   };
 
   const initializeConversation = async () => {
+    setIsInitializingConversation(true);
     const sessionId = crypto.randomUUID();
+    
     try {
-      const { data, error } = await supabase
-        .from('conversations')
-        .insert({ agent_id: id!, session_id: sessionId })
-        .select('id')
-        .single();
+      const result = await withRetry(
+        async () => {
+          const { data, error } = await supabase
+            .from('conversations')
+            .insert({ agent_id: id!, session_id: sessionId })
+            .select('id')
+            .single();
 
-      if (error) throw error;
-      setConversationId(data.id);
+          if (error) throw error;
+          return data;
+        },
+        { maxAttempts: 3, baseDelay: 1000 }
+      );
+
+      setConversationId(result.id);
     } catch (error) {
       console.error('Error creating conversation:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to start chat session. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsInitializingConversation(false);
     }
   };
 
@@ -223,11 +244,25 @@ export const PublicChat = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  disabled={isLoading}
+                  disabled={isLoading || isInitializingConversation}
                 />
-                <Button onClick={sendMessage} disabled={isLoading || !input.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={sendMessage} 
+                        disabled={conversationId === null || isLoading || !input.trim()}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    {conversationId === null && (
+                      <TooltipContent>
+                        <p>Chat is initializing...</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               
               <div className="text-center pt-2">
