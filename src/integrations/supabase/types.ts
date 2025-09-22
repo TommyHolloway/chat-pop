@@ -1187,6 +1187,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      enhanced_visitor_privacy_cleanup: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_daily_security_audit: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1201,6 +1205,18 @@ export type Database = {
           message_bubble_color: string
           name: string
           profile_image_url: string
+        }[]
+      }
+      get_security_audit_summary_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          audit_date: string
+          lead_operations: number
+          security_events: number
+          service_role_ops: number
+          total_operations: number
+          unique_ips: number
+          visitor_operations: number
         }[]
       }
       get_user_role: {
