@@ -54,8 +54,7 @@ serve(async (req) => {
     const agentIdValue = JSON.stringify(agentId);
     const supabaseUrlValue = JSON.stringify(supabaseUrl);
     const supabaseKeyValue = JSON.stringify(supabaseKey);
-    const profileImageUrlValue = JSON.stringify(safeProfileImageUrl);
-    const avatarFallbackValue = JSON.stringify(avatarFallback);
+    // Note: profileImageUrlValue and avatarFallbackValue now use Base64 encoding below
 
     // Construct avatar HTML
     const avatarHtml = hasProfileImage 
@@ -68,8 +67,10 @@ serve(async (req) => {
     const sessionIdEncoded = btoa(sessionId || '');
     const proactiveMessageEncoded = btoa(proactiveMessage || '');
     const initialMessageEncoded = btoa(safeInitialMessage || '');
-    const supabaseUrlEncoded = btoa(SUPABASE_URL);
-    const supabaseKeyEncoded = btoa(SUPABASE_ANON_KEY);
+    const supabaseUrlEncoded = btoa(supabaseUrl);
+    const supabaseKeyEncoded = btoa(supabaseKey);
+    const profileImageUrlEncoded = btoa(safeProfileImageUrl || '');
+    const avatarFallbackEncoded = btoa(avatarFallback || '');
 
     // Build safe JavaScript initialization with Base64 decoding
     const jsVariables = `
@@ -93,8 +94,8 @@ serve(async (req) => {
             const sessionId = safeDecode('${sessionIdEncoded}');
             const proactiveMessage = safeDecode('${proactiveMessageEncoded}');
             const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
-            const agentProfileImageUrl = ${profileImageUrlValue};
-            const agentAvatarFallback = ${avatarFallbackValue};
+            const agentProfileImageUrl = safeDecode('${profileImageUrlEncoded}');
+            const agentAvatarFallback = safeDecode('${avatarFallbackEncoded}');
             const initialMessage = safeDecode('${initialMessageEncoded}');
             
             console.log('🔧 Variables initialized successfully:', { 
