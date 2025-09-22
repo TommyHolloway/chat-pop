@@ -541,20 +541,31 @@ serve(async (req) => {
     </div>
 
     <script>
-        const agentId = "${agentId}";
-        const supabaseUrl = "${supabaseUrl}";
-        const supabaseKey = "${supabaseKey}";
-        const sessionId = ${sessionId ? `"${sessionId}"` : 'null'};
-        const proactiveMessage = ${proactiveMessage ? `"${proactiveMessage.replace(/"/g, '\\"')}"` : 'null'};
+        console.log('🚀 Script starting execution...');
+        
+        // Safely inject variables with proper escaping
+        const agentId = ${JSON.stringify(agentId)};
+        const supabaseUrl = ${JSON.stringify(supabaseUrl)};
+        const supabaseKey = ${JSON.stringify(supabaseKey)};
+        const sessionId = ${sessionId ? JSON.stringify(sessionId) : 'null'};
+        const proactiveMessage = ${proactiveMessage ? JSON.stringify(proactiveMessage) : 'null'};
         const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
-        const agentProfileImageUrl = "${safeProfileImageUrl}";
-        const agentAvatarFallback = "${avatarFallback}";
+        const agentProfileImageUrl = ${JSON.stringify(safeProfileImageUrl)};
+        const agentAvatarFallback = ${JSON.stringify(avatarFallback)};
+        
+        console.log('🔧 Variables initialized:', { agentId, sessionId, proactiveMessage });
         
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         let conversationId = null;
         let isLoading = false;
+        
+        console.log('🎯 DOM elements found:', { 
+            messagesContainer: !!messagesContainer, 
+            messageInput: !!messageInput, 
+            sendButton: !!sendButton 
+        });
 
         // Initialize conversation
         async function initConversation() {
@@ -612,14 +623,17 @@ serve(async (req) => {
 
         // Send message
         async function sendMessage() {
-            console.log('Send button clicked!');
+            console.log('🚀 Send button clicked!');
+            console.log('📝 Current input value:', messageInput.value);
+            console.log('⚡ Loading state:', isLoading);
+            
             const message = messageInput.value.trim();
             if (!message || isLoading) {
-                console.log('No message or loading:', { message, isLoading });
+                console.log('❌ Message blocked:', { message: !!message, isLoading });
                 return;
             }
 
-            console.log('Sending message:', message);
+            console.log('✅ Sending message:', message);
             
             // Add user message
             addMessage('user', message);
@@ -760,28 +774,51 @@ serve(async (req) => {
         // Make sendMessage globally accessible for onclick
         window.sendMessage = sendMessage;
         
+        // Add comprehensive debugging and event handlers
+        console.log('🎯 Setting up event handlers...');
+        
         // Add backup event listener for send button
         if (sendButton) {
+            console.log('✅ Send button found, adding click listener');
             sendButton.addEventListener('click', function(e) {
-                console.log('Send button event listener triggered');
+                console.log('🖱️ Send button CLICK event triggered');
                 e.preventDefault();
                 sendMessage();
             });
+            
+            // Add additional event for debugging
+            sendButton.addEventListener('mousedown', function(e) {
+                console.log('🖱️ Send button MOUSEDOWN event');
+            });
+        } else {
+            console.error('❌ Send button not found!');
         }
 
         // Handle enter key
         if (messageInput) {
+            console.log('✅ Message input found, adding keypress listener');
             messageInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
-                    console.log('Enter key pressed');
+                    console.log('⌨️ Enter key pressed');
                     e.preventDefault();
                     sendMessage();
                 }
             });
+        } else {
+            console.error('❌ Message input not found!');
         }
+        
+        // Debug function accessible from console
+        window.testSendMessage = function() {
+            console.log('🧪 Test send message called');
+            messageInput.value = 'Test message from console';
+            sendMessage();
+        };
+        
+        console.log('🎯 Event handlers setup complete');
 
         // Initialize
-        console.log('Initializing chat widget...');
+        console.log('🚀 Initializing chat widget...');
         initConversation();
         
         // Show proactive message or initial message if available
