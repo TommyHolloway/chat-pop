@@ -599,7 +599,7 @@ serve(async (req) => {
                 placeholder="Type your message..." 
                 autofocus
             />
-            <button id="sendButton" onclick="sendMessage()">Send</button>
+            <button id="sendButton">Send</button>
         </div>
     </div>
 
