@@ -86,8 +86,8 @@ serve(async (req) => {
             
             // Initialize all variables with safe decoding
             const agentId = safeDecode('${agentIdEncoded}');
-            const supabaseUrl = '${SUPABASE_URL}';
-            const supabaseKey = '${SUPABASE_ANON_KEY}';
+            const supabaseUrl = ${supabaseUrlValue};
+            const supabaseKey = ${supabaseKeyValue};
             const sessionId = safeDecode('${sessionIdEncoded}');
             const proactiveMessage = safeDecode('${proactiveMessageEncoded}');
             const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
