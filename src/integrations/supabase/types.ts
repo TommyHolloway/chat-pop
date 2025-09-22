@@ -1053,6 +1053,20 @@ export type Database = {
       }
     }
     Functions: {
+      admin_access_profile_data: {
+        Args: { access_reason: string; target_user_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          phone: string
+          plan: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       admin_emergency_profile_access: {
         Args: { access_reason: string; target_user_id: string }
         Returns: {
@@ -1115,6 +1129,10 @@ export type Database = {
       comprehensive_security_scan: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      detect_profile_data_breach: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       detect_rapid_login_attempts: {
         Args: Record<PropertyKey, never>
@@ -1259,6 +1277,15 @@ export type Database = {
       security_health_check: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      support_access_profile_basic: {
+        Args: { target_user_id: string; ticket_number: string }
+        Returns: {
+          created_at: string
+          display_name: string
+          id: string
+          plan: string
+        }[]
       }
       update_storage_usage: {
         Args: { p_size_change: number; p_user_id: string }
