@@ -903,7 +903,6 @@ serve(async (req) => {
                 '</div>';
         }
     </script>
-    </script>
 </body>
 </html>
     `;
