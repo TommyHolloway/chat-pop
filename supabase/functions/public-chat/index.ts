@@ -62,28 +62,59 @@ serve(async (req) => {
       ? `<img src="${safeProfileImageUrl}" alt="Agent Avatar" />`
       : avatarFallback;
 
-    // Construct JavaScript variables with proper server-side evaluation
-    const initialMessageValue = safeInitialMessage ? JSON.stringify(safeInitialMessage) : 'null';
+    // Use Base64 encoding to safely pass complex values through HTML
+    const encoder = new TextEncoder();
+    const agentIdEncoded = btoa(agentId || '');
+    const sessionIdEncoded = btoa(sessionId || '');
+    const proactiveMessageEncoded = btoa(proactiveMessage || '');
+    const initialMessageEncoded = btoa(safeInitialMessage || '');
 
-    // Build JavaScript section separately to avoid template literal injection issues
+    // Build safe JavaScript initialization with Base64 decoding
     const jsVariables = `
         try {
             console.log('🚀 Script starting execution...');
             
-            // Safely inject variables with direct assignment (no template literal expressions)
-            const agentId = ` + agentIdValue + `;
-            const supabaseUrl = ` + supabaseUrlValue + `;
-            const supabaseKey = ` + supabaseKeyValue + `;
-            const sessionId = ` + sessionIdValue + `;
-            const proactiveMessage = ` + proactiveMessageValue + `;
-            const hasAgentProfileImage = ` + (hasProfileImage ? 'true' : 'false') + `;
-            const agentProfileImageUrl = ` + profileImageUrlValue + `;
-            const agentAvatarFallback = ` + avatarFallbackValue + `;
-            const initialMessage = ` + initialMessageValue + `;
+            // Decode Base64 encoded values safely
+            function safeDecode(base64Str) {
+                try {
+                    return base64Str ? atob(base64Str) : '';
+                } catch (e) {
+                    console.warn('Failed to decode:', base64Str);
+                    return '';
+                }
+            }
             
-            console.log('🔧 Variables initialized:', { agentId, sessionId, proactiveMessage });
+            // Initialize all variables with safe decoding
+            const agentId = safeDecode('${agentIdEncoded}');
+            const supabaseUrl = '${SUPABASE_URL}';
+            const supabaseKey = '${SUPABASE_ANON_KEY}';
+            const sessionId = safeDecode('${sessionIdEncoded}');
+            const proactiveMessage = safeDecode('${proactiveMessageEncoded}');
+            const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
+            const agentProfileImageUrl = ${profileImageUrlValue};
+            const agentAvatarFallback = ${avatarFallbackValue};
+            const initialMessage = safeDecode('${initialMessageEncoded}');
+            
+            console.log('🔧 Variables initialized successfully:', { 
+                agentId: agentId ? 'present' : 'missing',
+                sessionId: sessionId ? 'present' : 'missing',
+                proactiveMessage: proactiveMessage ? 'present' : 'empty'
+            });
+            
+            // Validate required variables
+            if (!agentId) {
+                throw new Error('Agent ID is required');
+            }
+            if (!supabaseUrl || !supabaseKey) {
+                throw new Error('Supabase configuration is missing');
+            }
+            
+            console.log('✅ All variables validated successfully');
+            
         } catch (error) {
-            console.error('❌ Variable initialization error:', error);
+            console.error('❌ Critical initialization error:', error);
+            document.body.innerHTML = '<div style="padding: 20px; color: red; font-family: Arial;">Error loading chat: ' + error.message + '</div>';
+            throw error;
         }
     `;
 
@@ -578,294 +609,299 @@ serve(async (req) => {
     <script>
     ` + jsVariables + `
         
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        let conversationId = null;
-        let isLoading = false;
-        
-        console.log('🎯 DOM elements found:', { 
-            messagesContainer: !!messagesContainer, 
-            messageInput: !!messageInput, 
-            sendButton: !!sendButton 
-        });
+        // Wrap all function definitions in comprehensive try-catch to ensure they get defined
+        try {
+            console.log('🔧 Defining chat functions...');
+            
+            const messagesContainer = document.getElementById('messages');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            
+            if (!messagesContainer || !messageInput || !sendButton) {
+                throw new Error('Required DOM elements not found');
+            }
 
-        // Initialize conversation
-        async function initConversation() {
-            const newSessionId = crypto.randomUUID();
-            try {
-                const conversationData = {
-                    agent_id: agentId,
-                    session_id: newSessionId
-                };
+            let isLoading = false;
+            let conversationId = null;
 
-                // Link to visitor session if available
-                if (sessionId) {
-                    conversationData.visitor_session_id = sessionId;
-                }
+            console.log('🎯 DOM elements found:', { 
+                messagesContainer: !!messagesContainer, 
+                messageInput: !!messageInput, 
+                sendButton: !!sendButton 
+            });
 
-                const response = await fetch(supabaseUrl + '/rest/v1/conversations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(conversationData)
-                });
-                
-                if (response.ok) {
-                    const [conversation] = await response.json();
-                    conversationId = conversation.id;
+            // Define sendMessage function with comprehensive error handling
+            window.sendMessage = async function() {
+                try {
+                    console.log('🚀 Send button clicked!');
+                    console.log('📝 Current input value:', messageInput.value);
+                    console.log('⚡ Loading state:', isLoading);
                     
-                    // If we have a proactive message, save it as the first message
-                    if (proactiveMessage && proactiveMessage.trim()) {
-                        try {
-                            await fetch(supabaseUrl + '/rest/v1/messages', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'apikey': supabaseKey,
-                                    'Prefer': 'return=minimal'
-                                },
-                                body: JSON.stringify({
-                                    conversation_id: conversationId,
-                                    role: 'assistant',
-                                    content: proactiveMessage
-                                })
-                            });
-                        } catch (error) {
-                            console.error('Error saving proactive message:', error);
+                    const message = messageInput.value.trim();
+                    if (!message || isLoading) {
+                        console.log('❌ Message blocked:', { message: !!message, isLoading });
+                        return;
+                    }
+
+                    console.log('✅ Sending message:', message);
+                    
+                    // Add user message
+                    addMessage('user', message);
+                    messageInput.value = '';
+                    setLoading(true);
+
+                    // Create conversation if needed
+                    if (!conversationId) {
+                        console.log('🔄 Creating new conversation...');
+                        const newSessionId = crypto.randomUUID();
+                        const conversationData = {
+                            agent_id: agentId,
+                            session_id: newSessionId
+                        };
+
+                        // Link to visitor session if available
+                        if (sessionId) {
+                            conversationData.visitor_session_id = sessionId;
+                        }
+
+                        const convResponse = await fetch(supabaseUrl + '/rest/v1/conversations', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': supabaseKey,
+                                'Prefer': 'return=representation'
+                            },
+                            body: JSON.stringify(conversationData)
+                        });
+                        
+                        if (convResponse.ok) {
+                            const [conversation] = await convResponse.json();
+                            conversationId = conversation.id;
+                            console.log('✅ Conversation created:', conversationId);
+                        } else {
+                            throw new Error('Failed to create conversation');
                         }
                     }
-                }
-            } catch (error) {
-                console.error('Error initializing conversation:', error);
-            }
-        }
 
-        // Send message
-        async function sendMessage() {
-            console.log('🚀 Send button clicked!');
-            console.log('📝 Current input value:', messageInput.value);
-            console.log('⚡ Loading state:', isLoading);
-            
-            const message = messageInput.value.trim();
-            if (!message || isLoading) {
-                console.log('❌ Message blocked:', { message: !!message, isLoading });
-                return;
-            }
+                    const requestBody = {
+                        agentId: agentId,
+                        message: message,
+                        conversationId: conversationId
+                    };
 
-            console.log('✅ Sending message:', message);
-            
-            // Add user message
-            addMessage('user', message);
-            messageInput.value = '';
-            setLoading(true);
+                    // Include visitor session context if available
+                    if (sessionId) {
+                        requestBody.visitorSessionId = sessionId;
+                    }
 
-            try {
-                const requestBody = {
-                    agentId: agentId,
-                    message: message,
-                    conversationId: conversationId
-                };
+                    console.log('Making API request with body:', requestBody);
 
-                // Include visitor session context if available
-                if (sessionId) {
-                    requestBody.visitorSessionId = sessionId;
-                }
+                    const response = await fetch(supabaseUrl + '/functions/v1/chat-completion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': supabaseKey,
+                            'Authorization': 'Bearer ' + supabaseKey
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
 
-                console.log('Making API request with body:', requestBody);
+                    console.log('Response status:', response.status);
 
-                const response = await fetch(supabaseUrl + '/functions/v1/chat-completion', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': 'Bearer ' + supabaseKey
-                    },
-                    body: JSON.stringify(requestBody)
-                });
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Response data:', data);
+                        addMessage('assistant', data.message);
+                    } else {
+                        const errorText = await response.text();
+                        console.error('API error:', errorText);
+                        addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+                    }
 
-                console.log('Response status:', response.status);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Response data:', data);
-                    addMessage('assistant', data.message);
-                } else {
-                    const errorText = await response.text();
-                    console.error('API error:', errorText);
+                } catch (error) {
+                    console.error('❌ Send message error:', error);
                     addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+                } finally {
+                    setLoading(false);
                 }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        }
+            };
 
-        // Add message to UI
-        function addMessage(role, content) {
-            console.log('Adding message:', { role, content });
-            
-            // Remove empty state if it exists
-            const emptyState = messagesContainer.querySelector('.empty-state');
-            if (emptyState) {
-                emptyState.remove();
-            }
+            // Define addMessage function
+            function addMessage(role, content) {
+                try {
+                    console.log('Adding message:', { role, content });
+                    
+                    // Remove empty state if it exists
+                    const emptyState = messagesContainer.querySelector('.empty-state');
+                    if (emptyState) {
+                        emptyState.remove();
+                    }
 
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + role;
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            if (role === 'user') {
-              avatar.textContent = 'U';
-            } else {
-              if (hasAgentProfileImage) {
-                avatar.innerHTML = '<img src="' + agentProfileImageUrl + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
-              } else {
-                avatar.textContent = agentAvatarFallback;
-              }
-            }
-            
-            const messageContent = document.createElement('div');
-            messageContent.className = 'message-content';
-            
-            // Process content to make URLs clickable and sanitize
-            // First escape HTML characters to prevent XSS
-            let processedContent = content
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#39;');
-            
-            // Then make URLs clickable (they are now safely escaped)
-            processedContent = processedContent
-              .replace(/https?:\/\/[^\s&<>"{}|^[\]]+/g, function(url) {
-                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">' + url + '</a>';
-              });
-            
-            messageContent.innerHTML = processedContent;
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(messageContent);
-            messagesContainer.appendChild(messageDiv);
-            
-            // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        // Set loading state
-        function setLoading(loading) {
-            console.log('Setting loading state:', loading);
-            isLoading = loading;
-            sendButton.disabled = loading;
-            
-            if (loading) {
-                const loadingDiv = document.createElement('div');
-                loadingDiv.className = 'message assistant';
-                loadingDiv.id = 'loading-message';
-                
-                const avatar = document.createElement('div');
-                avatar.className = 'message-avatar';
-                if (hasAgentProfileImage) {
-                  avatar.innerHTML = '<img src="' + agentProfileImageUrl + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
-                } else {
-                  avatar.textContent = agentAvatarFallback;
-                }
-                
-                const loadingContent = document.createElement('div');
-                loadingContent.className = 'loading';
-                loadingContent.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div> Thinking...';
-                
-                loadingDiv.appendChild(avatar);
-                loadingDiv.appendChild(loadingContent);
-                messagesContainer.appendChild(loadingDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            } else {
-                const loadingMessage = document.getElementById('loading-message');
-                if (loadingMessage) {
-                    loadingMessage.remove();
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message ' + role;
+                    
+                    const avatar = document.createElement('div');
+                    avatar.className = 'message-avatar';
+                    if (role === 'user') {
+                      avatar.textContent = 'U';
+                    } else {
+                      if (hasAgentProfileImage) {
+                        avatar.innerHTML = '<img src="' + agentProfileImageUrl + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                      } else {
+                        avatar.textContent = agentAvatarFallback;
+                      }
+                    }
+                    
+                    const messageContent = document.createElement('div');
+                    messageContent.className = 'message-content';
+                    
+                    // Process content to make URLs clickable and sanitize
+                    // First escape HTML characters to prevent XSS
+                    let processedContent = content
+                      .replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;');
+                    
+                    // Then make URLs clickable (they are now safely escaped)
+                    processedContent = processedContent
+                      .replace(/https?:\/\/[^\s&<>"{}|^[\]]+/g, function(url) {
+                        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="color: #84cc16; text-decoration: underline; font-weight: 500;">' + url + '</a>';
+                      });
+                    
+                    messageContent.innerHTML = processedContent;
+                    
+                    messageDiv.appendChild(avatar);
+                    messageDiv.appendChild(messageContent);
+                    messagesContainer.appendChild(messageDiv);
+                    
+                    // Scroll to bottom
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } catch (error) {
+                    console.error('❌ Error adding message:', error);
                 }
             }
-        }
 
-        // Make sendMessage globally accessible for onclick
-        window.sendMessage = sendMessage;
-        
-        // Add comprehensive debugging and event handlers
-        console.log('🎯 Setting up event handlers...');
-        
-        // Add backup event listener for send button
-        if (sendButton) {
-            console.log('✅ Send button found, adding click listener');
-            sendButton.addEventListener('click', function(e) {
-                console.log('🖱️ Send button CLICK event triggered');
-                e.preventDefault();
-                sendMessage();
-            });
+            // Define setLoading function
+            function setLoading(loading) {
+                try {
+                    console.log('Setting loading state:', loading);
+                    isLoading = loading;
+                    sendButton.disabled = loading;
+                    
+                    if (loading) {
+                        const loadingDiv = document.createElement('div');
+                        loadingDiv.className = 'message assistant';
+                        loadingDiv.id = 'loading-message';
+                        
+                        const avatar = document.createElement('div');
+                        avatar.className = 'message-avatar';
+                        if (hasAgentProfileImage) {
+                          avatar.innerHTML = '<img src="' + agentProfileImageUrl + '" alt="Agent" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                        } else {
+                          avatar.textContent = agentAvatarFallback;
+                        }
+                        
+                        const loadingContent = document.createElement('div');
+                        loadingContent.className = 'loading';
+                        loadingContent.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div> Thinking...';
+                        
+                        loadingDiv.appendChild(avatar);
+                        loadingDiv.appendChild(loadingContent);
+                        messagesContainer.appendChild(loadingDiv);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    } else {
+                        const loadingMessage = document.getElementById('loading-message');
+                        if (loadingMessage) {
+                            loadingMessage.remove();
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error setting loading state:', error);
+                }
+            }
+
+            // Set up event listeners with error handling
+            console.log('🎯 Setting up event handlers...');
             
-            // Add additional event for debugging
-            sendButton.addEventListener('mousedown', function(e) {
-                console.log('🖱️ Send button MOUSEDOWN event');
-            });
-        } else {
-            console.error('❌ Send button not found!');
-        }
-
-        // Handle enter key
-        if (messageInput) {
-            console.log('✅ Message input found, adding keypress listener');
-            messageInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    console.log('⌨️ Enter key pressed');
+            // Add backup event listener for send button
+            if (sendButton) {
+                console.log('✅ Send button found, adding click listener');
+                sendButton.addEventListener('click', function(e) {
+                    console.log('🖱️ Send button CLICK event triggered');
                     e.preventDefault();
-                    sendMessage();
-                }
-            });
-        } else {
-            console.error('❌ Message input not found!');
-        }
-        
-        // Debug function accessible from console
-        window.testSendMessage = function() {
-            console.log('🧪 Test send message called');
-            messageInput.value = 'Test message from console';
-            sendMessage();
-        };
-        
-        console.log('🎯 Event handlers setup complete');
+                    window.sendMessage();
+                });
+                
+                // Add additional event for debugging
+                sendButton.addEventListener('mousedown', function(e) {
+                    console.log('🖱️ Send button MOUSEDOWN event');
+                });
+            } else {
+                console.error('❌ Send button not found!');
+            }
 
-        // Initialize
-        console.log('🚀 Initializing chat widget...');
-        initConversation();
-        
-        // Show proactive message or initial message if available        
-        if (proactiveMessage && proactiveMessage.trim()) {
-          setTimeout(() => {
-            const emptyState = document.querySelector(".empty-state");
-            if (emptyState) emptyState.remove();
-            addMessage("assistant", proactiveMessage);
-          }, 100);
-        } else if (initialMessage) {
-          setTimeout(() => {
-            const emptyState = document.querySelector(".empty-state");
-            if (emptyState) emptyState.remove();
-            addMessage("assistant", initialMessage);
-          }, 100);
+            // Handle enter key
+            if (messageInput) {
+                console.log('✅ Message input found, adding keypress listener');
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        console.log('⌨️ Enter key pressed');
+                        e.preventDefault();
+                        window.sendMessage();
+                    }
+                });
+            } else {
+                console.error('❌ Message input not found!');
+            }
+            
+            // Debug function accessible from console
+            window.testSendMessage = function() {
+                console.log('🧪 Test send message called');
+                messageInput.value = 'Test message from console';
+                window.sendMessage();
+            };
+            
+            console.log('🎯 Event handlers setup complete');
+
+            // Initialize conversation
+            console.log('🚀 Initializing chat widget...');
+            
+            // Show proactive message or initial message if available        
+            if (proactiveMessage && proactiveMessage.trim()) {
+              setTimeout(() => {
+                const emptyState = document.querySelector(".empty-state");
+                if (emptyState) emptyState.remove();
+                addMessage("assistant", proactiveMessage);
+              }, 100);
+            } else if (initialMessage && initialMessage.trim()) {
+              setTimeout(() => {
+                const emptyState = document.querySelector(".empty-state");
+                if (emptyState) emptyState.remove();
+                addMessage("assistant", initialMessage);
+              }, 100);
+            }
+            
+            try {
+              if (window.parent) {
+                window.parent.postMessage('CHATPOP_READY', '*');
+              }
+            } catch (_) {}
+            
+            console.log('✅ Chat widget initialized successfully');
+
+        } catch (error) {
+            console.error('❌ Critical script error:', error);
+            document.body.innerHTML = `
+                <div style="padding: 20px; color: red; font-family: Arial; text-align: center; background: white;">
+                    <h3>Chat Loading Error</h3>
+                    <p>Unable to initialize chat: ` + error.message + `</p>
+                    <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px; cursor: pointer;">Retry</button>
+                </div>
+            `;
         }
-        
-        try {
-          if (window.parent) {
-            window.parent.postMessage('CHATPOP_READY', '*');
-          }
-        } catch (_) {}
-        
-        console.log('Chat widget initialized successfully');
+    </script>
     </script>
 </body>
 </html>
