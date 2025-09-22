@@ -893,13 +893,12 @@ serve(async (req) => {
 
         } catch (error) {
             console.error('❌ Critical script error:', error);
-            document.body.innerHTML = `
-                <div style="padding: 20px; color: red; font-family: Arial; text-align: center; background: white;">
-                    <h3>Chat Loading Error</h3>
-                    <p>Unable to initialize chat: ` + error.message + `</p>
-                    <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px; cursor: pointer;">Retry</button>
-                </div>
-            `;
+            document.body.innerHTML = 
+                '<div style="padding: 20px; color: red; font-family: Arial; text-align: center; background: white;">' +
+                    '<h3>Chat Loading Error</h3>' +
+                    '<p>Unable to initialize chat: ' + error.message + '</p>' +
+                    '<button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px; cursor: pointer;">Retry</button>' +
+                '</div>';
         }
     </script>
     </script>
