@@ -68,6 +68,8 @@ serve(async (req) => {
     const sessionIdEncoded = btoa(sessionId || '');
     const proactiveMessageEncoded = btoa(proactiveMessage || '');
     const initialMessageEncoded = btoa(safeInitialMessage || '');
+    const supabaseUrlEncoded = btoa(SUPABASE_URL);
+    const supabaseKeyEncoded = btoa(SUPABASE_ANON_KEY);
 
     // Build safe JavaScript initialization with Base64 decoding
     const jsVariables = `
@@ -86,8 +88,8 @@ serve(async (req) => {
             
             // Initialize all variables with safe decoding
             const agentId = safeDecode('${agentIdEncoded}');
-            const supabaseUrl = ${supabaseUrlValue};
-            const supabaseKey = ${supabaseKeyValue};
+            const supabaseUrl = safeDecode('${supabaseUrlEncoded}');
+            const supabaseKey = safeDecode('${supabaseKeyEncoded}');
             const sessionId = safeDecode('${sessionIdEncoded}');
             const proactiveMessage = safeDecode('${proactiveMessageEncoded}');
             const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
