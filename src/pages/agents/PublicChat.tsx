@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Send, Loader2, Bot } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ActionButtons } from '@/components/chat/ActionButtons';
@@ -35,14 +34,25 @@ export const PublicChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [agent, setAgent] = useState<Agent | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [isInitializingConversation, setIsInitializingConversation] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchAgent();
-      initializeConversation();
     }
   }, [id]);
+
+  useEffect(() => {
+    // Add welcome message when agent loads
+    if (agent && messages.length === 0) {
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        role: 'assistant',
+        content: agent.name ? `Hello! I'm ${agent.name}. How can I help you today?` : 'Hello! How can I help you today?',
+        created_at: new Date().toISOString()
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [agent, messages.length]);
 
   const fetchAgent = async () => {
     try {
@@ -62,40 +72,40 @@ export const PublicChat = () => {
     }
   };
 
-  const initializeConversation = async () => {
-    setIsInitializingConversation(true);
-    const sessionId = crypto.randomUUID();
-    
-    try {
-      const result = await withRetry(
-        async () => {
-          const { data, error } = await supabase
-            .from('conversations')
-            .insert({ agent_id: id!, session_id: sessionId })
-            .select('id')
-            .single();
-
-          if (error) throw error;
-          return data;
-        },
-        { maxAttempts: 3, baseDelay: 1000 }
-      );
-
-      setConversationId(result.id);
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      toast({
-        title: "Connection Failed",
-        description: "Failed to start chat session. Please try again later.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsInitializingConversation(false);
-    }
-  };
-
   const sendMessage = async () => {
-    if (!input.trim() || isLoading || !conversationId) return;
+    if (!input.trim() || isLoading) return;
+
+    // Create conversation if it doesn't exist yet
+    let currentConversationId = conversationId;
+    if (!currentConversationId) {
+      try {
+        const sessionId = crypto.randomUUID();
+        const result = await withRetry(
+          async () => {
+            const { data, error } = await supabase
+              .from('conversations')
+              .insert({ agent_id: id!, session_id: sessionId })
+              .select('id')
+              .single();
+
+            if (error) throw error;
+            return data;
+          },
+          { maxAttempts: 3, baseDelay: 1000 }
+        );
+
+        currentConversationId = result.id;
+        setConversationId(currentConversationId);
+      } catch (error) {
+        console.error('Error creating conversation:', error);
+        toast({
+          title: "Connection Failed",
+          description: "Failed to start chat session. Please try again later.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -113,7 +123,7 @@ export const PublicChat = () => {
         body: {
           agentId: id,
           message: input,
-          conversationId
+          conversationId: currentConversationId
         }
       });
 
@@ -181,13 +191,6 @@ export const PublicChat = () => {
             
             <CardContent className="flex-1 flex flex-col p-4">
               <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                {messages.length === 0 && (
-                  <div className="text-center text-muted-foreground py-8">
-                    <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Start a conversation with {agent.name}</p>
-                  </div>
-                )}
-                
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -244,25 +247,14 @@ export const PublicChat = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  disabled={isLoading || isInitializingConversation}
+                  disabled={isLoading}
                 />
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        onClick={sendMessage} 
-                        disabled={conversationId === null || isLoading || !input.trim()}
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    {conversationId === null && (
-                      <TooltipContent>
-                        <p>Chat is initializing...</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={isLoading || !input.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
               
               <div className="text-center pt-2">
