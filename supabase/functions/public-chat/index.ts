@@ -65,6 +65,28 @@ serve(async (req) => {
     // Construct JavaScript variables with proper server-side evaluation
     const initialMessageValue = safeInitialMessage ? JSON.stringify(safeInitialMessage) : 'null';
 
+    // Build JavaScript section separately to avoid template literal injection issues
+    const jsVariables = `
+        try {
+            console.log('🚀 Script starting execution...');
+            
+            // Safely inject variables with direct assignment (no template literal expressions)
+            const agentId = ` + agentIdValue + `;
+            const supabaseUrl = ` + supabaseUrlValue + `;
+            const supabaseKey = ` + supabaseKeyValue + `;
+            const sessionId = ` + sessionIdValue + `;
+            const proactiveMessage = ` + proactiveMessageValue + `;
+            const hasAgentProfileImage = ` + (hasProfileImage ? 'true' : 'false') + `;
+            const agentProfileImageUrl = ` + profileImageUrlValue + `;
+            const agentAvatarFallback = ` + avatarFallbackValue + `;
+            const initialMessage = ` + initialMessageValue + `;
+            
+            console.log('🔧 Variables initialized:', { agentId, sessionId, proactiveMessage });
+        } catch (error) {
+            console.error('❌ Variable initialization error:', error);
+        }
+    `;
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -554,19 +576,7 @@ serve(async (req) => {
     </div>
 
     <script>
-        console.log('🚀 Script starting execution...');
-        
-        // Safely inject variables with server-side evaluation (no template literal expressions)
-        const agentId = ${agentIdValue};
-        const supabaseUrl = ${supabaseUrlValue};
-        const supabaseKey = ${supabaseKeyValue};
-        const sessionId = ${sessionIdValue};
-        const proactiveMessage = ${proactiveMessageValue};
-        const hasAgentProfileImage = ${hasProfileImage ? 'true' : 'false'};
-        const agentProfileImageUrl = ${profileImageUrlValue};
-        const agentAvatarFallback = ${avatarFallbackValue};
-        
-        console.log('🔧 Variables initialized:', { agentId, sessionId, proactiveMessage });
+    ` + jsVariables + `
         
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
@@ -834,9 +844,7 @@ serve(async (req) => {
         console.log('🚀 Initializing chat widget...');
         initConversation();
         
-        // Show proactive message or initial message if available
-        const initialMessage = ${initialMessageValue};
-        
+        // Show proactive message or initial message if available        
         if (proactiveMessage && proactiveMessage.trim()) {
           setTimeout(() => {
             const emptyState = document.querySelector(".empty-state");
