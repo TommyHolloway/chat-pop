@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -11,6 +11,7 @@ import { Logo } from './Logo';
 export const AuthenticatedNavbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const getInitials = (email: string) => {
     return email ? email.slice(0, 2).toUpperCase() : 'U';
@@ -18,6 +19,7 @@ export const AuthenticatedNavbar = () => {
 
   const handleSignOut = async () => {
     await signOut();
+    navigate('/');
   };
 
   return (

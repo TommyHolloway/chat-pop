@@ -99,12 +99,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       await supabase.auth.signOut({ scope: 'global' });
-      
-      // Use window.location for navigation in context
-      window.location.href = '/';
     } catch (error) {
-      // Still navigate to home on error
-      window.location.href = '/';
+      console.error('Error signing out:', error);
     } finally {
       setLoading(false);
     }
