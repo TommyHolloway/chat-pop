@@ -37,13 +37,59 @@ export const Deploy = () => {
   const [widgetColor, setWidgetColor] = useState('#84cc16');
   const [widgetPages, setWidgetPages] = useState('');
   const [proactivePages, setProactivePages] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const { updateAgent } = useAgents();
 
   useEffect(() => {
     if (agents && id) {
       const currentAgent = agents.find(a => a.id === id);
       setAgent(currentAgent);
+      // Load existing widget page restrictions
+      if (currentAgent?.widget_page_restrictions) {
+        setWidgetPages(currentAgent.widget_page_restrictions.join('\n'));
+      }
     }
   }, [agents, id]);
+
+  // Track changes for unsaved indicator
+  useEffect(() => {
+    if (agent) {
+      const existingPages = agent.widget_page_restrictions?.join('\n') || '';
+      setHasUnsavedChanges(widgetPages !== existingPages);
+    }
+  }, [widgetPages, agent]);
+
+  const saveConfiguration = async () => {
+    if (!agent || !id) return;
+    
+    setSaving(true);
+    try {
+      const pageArray = widgetPages
+        .split('\n')
+        .map(page => page.trim())
+        .filter(page => page.length > 0);
+      
+      await updateAgent(id, {
+        widget_page_restrictions: pageArray.length > 0 ? pageArray : null,
+      });
+      
+      setHasUnsavedChanges(false);
+      toast({
+        title: "Configuration Saved",
+        description: "Widget page restrictions have been updated.",
+      });
+    } catch (error) {
+      console.error('Error saving configuration:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save configuration. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const agentUrl = `${window.location.origin}/agents/${id}/chat`;
   const embedCode = `<iframe
@@ -262,18 +308,34 @@ export const Deploy = () => {
                   </div>
 
                   {/* Widget Loading Restrictions */}
-                  <div className="space-y-2">
-                    <Label>Widget Loading Pages (Optional)</Label>
-                    <Textarea
-                      placeholder="Leave empty for all pages, or specify URL patterns (one per line):&#10;/&#10;/landing&#10;/home&#10;/product/*"
-                      value={widgetPages}
-                      onChange={(e) => setWidgetPages(e.target.value)}
-                      rows={3}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Control which pages the widget loads on. Leave empty to load on all pages.
-                    </p>
-                  </div>
+                   <div className="space-y-2">
+                     <Label>Widget Loading Pages (Optional)</Label>
+                     <Textarea
+                       placeholder="Leave empty for all pages, or specify URL patterns (one per line):&#10;/&#10;/landing&#10;/home&#10;/product/*"
+                       value={widgetPages}
+                       onChange={(e) => setWidgetPages(e.target.value)}
+                       rows={3}
+                     />
+                     <p className="text-sm text-muted-foreground">
+                       Control which pages the widget loads on. Leave empty to load on all pages.
+                     </p>
+                   </div>
+
+                   {/* Save Configuration Button */}
+                   <div className="flex items-center gap-2 pt-2">
+                     <Button 
+                       onClick={saveConfiguration}
+                       disabled={saving || !hasUnsavedChanges}
+                       size="sm"
+                     >
+                       {saving ? 'Saving...' : 'Save Configuration'}
+                     </Button>
+                     {hasUnsavedChanges && (
+                       <span className="text-sm text-muted-foreground">
+                         Unsaved changes
+                       </span>
+                     )}
+                   </div>
 
                   {/* Proactive Engagement Restrictions */}
                   <div className="space-y-2">

@@ -20,6 +20,7 @@ export interface Agent {
   chat_interface_theme?: string | null;
   enable_proactive_engagement?: boolean | null;
   proactive_config?: any | null;
+  widget_page_restrictions?: string[] | null;
 }
 
 export interface KnowledgeFile {
@@ -105,9 +106,9 @@ export const useAgents = () => {
   };
 
   const updateAgent = async (id: string, agentData: {
-    name: string;
+    name?: string;
     description?: string;
-    instructions: string;
+    instructions?: string;
     status?: 'active' | 'inactive' | 'draft';
     initial_message?: string;
     creativity_level?: number;
@@ -116,6 +117,7 @@ export const useAgents = () => {
     chat_interface_theme?: string;
     enable_proactive_engagement?: boolean;
     proactive_config?: any;
+    widget_page_restrictions?: string[];
   }) => {
     const { data, error } = await supabase
       .from('agents')
