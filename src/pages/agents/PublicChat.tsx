@@ -73,11 +73,23 @@ export const PublicChat = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    console.log('🚀 [PublicChat] sendMessage called with input:', input);
+    console.log('🔍 [PublicChat] Current state:', { 
+      input, 
+      agentId: id, 
+      conversationId,
+      isLoading 
+    });
+    
+    if (!input.trim() || isLoading) {
+      console.log('⚠️ [PublicChat] Early return - empty input or already loading');
+      return;
+    }
 
     // Create conversation if it doesn't exist yet
     let currentConversationId = conversationId;
     if (!currentConversationId) {
+      console.log('🔄 [PublicChat] Creating new conversation...');
       try {
         const sessionId = crypto.randomUUID();
         const result = await withRetry(
@@ -96,8 +108,9 @@ export const PublicChat = () => {
 
         currentConversationId = result.id;
         setConversationId(currentConversationId);
+        console.log('✅ [PublicChat] Conversation created successfully:', currentConversationId);
       } catch (error) {
-        console.error('Error creating conversation:', error);
+        console.error('❌ [PublicChat] Error creating conversation:', error);
         toast({
           title: "Connection Failed",
           description: "Failed to start chat session. Please try again later.",
@@ -117,8 +130,15 @@ export const PublicChat = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    console.log('📝 [PublicChat] User message added, loading state set');
 
     try {
+      console.log('📤 [PublicChat] Invoking chat-completion function with:', {
+        agentId: id,
+        message: input,
+        conversationId: currentConversationId
+      });
+      
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           agentId: id,
@@ -127,6 +147,7 @@ export const PublicChat = () => {
         }
       });
 
+      console.log('📥 [PublicChat] Response received:', { data, error });
       if (error) throw error;
 
       const assistantMessage: Message = {
@@ -138,8 +159,9 @@ export const PublicChat = () => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      console.log('✅ [PublicChat] Assistant message added successfully');
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('❌ [PublicChat] Error sending message:', error);
       const errorMessage: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -149,12 +171,15 @@ export const PublicChat = () => {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      console.log('🔄 [PublicChat] Request completed, loading state reset');
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    console.log('⌨️ [PublicChat] Key pressed:', e.key);
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('📨 [PublicChat] Enter pressed, calling sendMessage');
       sendMessage();
     }
   };
@@ -250,7 +275,10 @@ export const PublicChat = () => {
                   disabled={isLoading}
                 />
                 <Button 
-                  onClick={sendMessage} 
+                  onClick={() => {
+                    console.log('🖱️ [PublicChat] Send button clicked');
+                    sendMessage();
+                  }} 
                   disabled={isLoading || !input.trim()}
                 >
                   <Send className="h-4 w-4" />

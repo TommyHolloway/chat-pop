@@ -104,14 +104,21 @@ export const Playground = () => {
   }, [hasUnsavedChanges]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    console.log('🚀 [Playground] handleSendMessage called with input:', inputValue);
+    if (!inputValue.trim()) {
+      console.log('⚠️ [Playground] Empty input value, returning early');
+      return;
+    }
     await sendMessage(inputValue);
     setInputValue('');
+    console.log('✅ [Playground] Message sent and input cleared');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    console.log('⌨️ [Playground] Key pressed:', e.key);
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('📨 [Playground] Enter pressed, calling handleSendMessage');
       handleSendMessage();
     }
   };
@@ -491,7 +498,13 @@ export const Playground = () => {
                 disabled={isLoading}
                 className="flex-1"
               />
-              <Button onClick={handleSendMessage} disabled={isLoading || !inputValue.trim()}>
+              <Button 
+                onClick={() => {
+                  console.log('🖱️ [Playground] Send button clicked');
+                  handleSendMessage();
+                }} 
+                disabled={isLoading || !inputValue.trim()}
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
