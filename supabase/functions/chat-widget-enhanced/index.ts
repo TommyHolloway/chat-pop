@@ -525,10 +525,9 @@ serve(async (req) => {
     \`;
     document.head.appendChild(overlayStyles);
 
-    iframe = document.createElement('iframe');
-    iframe.setAttribute('allow', 'fullscreen');
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
-    iframe.setAttribute('loading', 'eager');
+            iframe = document.createElement('iframe');
+            iframe.setAttribute('allow', 'fullscreen');
+            iframe.setAttribute('loading', 'eager');
     iframe.style.cssText = \`
       width: 100% !important;
       height: 100% !important;
