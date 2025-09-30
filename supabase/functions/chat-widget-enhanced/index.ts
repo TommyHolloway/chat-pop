@@ -608,20 +608,37 @@ serve(async (req) => {
       // Show overlay first
       overlay.style.display = 'block';
       
-      // Wait for iframe to be fully in DOM before setting src
+      // Wait for iframe to be fully in DOM before fetching content
       requestAnimationFrame(() => {
         const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
-        console.log('🔄 Loading chat with URL:', chatUrlWithSession);
+        console.log('🔄 Fetching chat interface HTML from:', chatUrlWithSession);
         console.log('📍 Iframe in DOM:', document.body.contains(iframe));
         
-        iframe.src = chatUrlWithSession;
+        // Fetch HTML content and use srcdoc for better rendering
+        fetch(chatUrlWithSession)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to fetch: ' + response.status);
+            }
+            return response.text();
+          })
+          .then(html => {
+            iframe.srcdoc = html;
+            console.log('✅ Chat interface loaded via srcdoc');
+          })
+          .catch(error => {
+            console.error('❌ Failed to fetch chat HTML:', error);
+            console.log('⚠️ Falling back to direct iframe.src');
+            // Fallback to direct src
+            iframe.src = chatUrlWithSession;
+          });
         
         // Add load handlers for debugging
         iframe.onload = function() {
-          console.log('✅ Iframe loaded successfully');
+          console.log('✅ Iframe rendered successfully');
         };
         iframe.onerror = function(error) {
-          console.error('❌ Iframe failed to load:', error);
+          console.error('❌ Iframe failed to render:', error);
         };
       });
       overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
