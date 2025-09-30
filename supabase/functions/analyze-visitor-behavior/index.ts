@@ -118,8 +118,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in analyze-visitor-behavior function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
@@ -128,7 +129,7 @@ serve(async (req) => {
   }
 });
 
-async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, currentHash, timeOnPage) {
+async function analyzeAndTrigger(config: any, sessions: any, currentUrl: string, currentPath: string, currentHash: string, timeOnPage: number) {
   console.log('Starting analysis with:', { 
     configEnabled: config.enabled,
     customTriggersCount: config.custom_triggers?.length || 0,
@@ -146,7 +147,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
 
   // Check custom triggers first (highest priority) - includes Quick Triggers
   if (config.custom_triggers && config.custom_triggers.length > 0) {
-    console.log('Checking custom triggers:', config.custom_triggers.map(t => ({
+    console.log('Checking custom triggers:', config.custom_triggers.map((t: any) => ({
       name: t.name,
       enabled: t.enabled,
       trigger_type: t.trigger_type,
@@ -165,7 +166,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
       // Simple URL pattern matching for page paths only
       let urlMatches = true; // Default to true if no URL patterns specified
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
-        urlMatches = trigger.url_patterns.some(pattern => {
+        urlMatches = trigger.url_patterns.some((pattern: string) => {
           if (!pattern || pattern.trim() === '') return false;
           
           const cleanPattern = pattern.trim().toLowerCase();
@@ -255,7 +256,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
       const timeInSeconds = Math.floor(timeOnPage);
       
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
-        const urlMatches = trigger.url_patterns.some(pattern => {
+        const urlMatches = trigger.url_patterns.some((pattern: string) => {
           if (!pattern) return false;
           const cleanPattern = pattern.trim().toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();
@@ -284,7 +285,7 @@ async function analyzeAndTrigger(config, sessions, currentUrl, currentPath, curr
       const trigger = config.triggers.feature_exploration;
       
       if (trigger.url_patterns && trigger.url_patterns.length > 0) {
-        const urlMatches = trigger.url_patterns.some(pattern => {
+        const urlMatches = trigger.url_patterns.some((pattern: string) => {
           if (!pattern) return false;
           const cleanPattern = pattern.trim().toLowerCase();
           const normalizedUrl = (currentUrl || '').toLowerCase();

@@ -61,11 +61,11 @@ serve(async (req) => {
 
     // Validate required fields based on agent configuration
     const config = agent.lead_capture_config;
-    const requiredFields = config.fields?.filter(field => field.required) || [];
-    const missingFields = requiredFields.filter(field => !leadData[field.key]?.trim?.());
+    const requiredFields = config.fields?.filter((field: any) => field.required) || [];
+    const missingFields = requiredFields.filter((field: any) => !leadData[field.key]?.trim?.());
     
     if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.map(f => f.label).join(', ')}`);
+      throw new Error(`Missing required fields: ${missingFields.map((f: any) => f.label).join(', ')}`);
     }
 
     // Store the lead
@@ -95,8 +95,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in capture-lead function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to capture lead';
     return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to capture lead' 
+      error: errorMessage
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

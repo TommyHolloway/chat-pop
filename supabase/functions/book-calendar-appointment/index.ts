@@ -79,9 +79,10 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message 
+      error: errorMessage 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -123,7 +124,8 @@ async function bookCalendlyAppointment(apiKey: string, config: any, slot: any): 
     };
 
   } catch (error) {
-    throw new Error(`Calendly booking failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Calendly booking failed: ${errorMessage}`);
   }
 }
 
@@ -149,7 +151,8 @@ async function bookCalcomAppointment(apiKey: string, config: any, slot: any): Pr
       meeting_link: `${config.baseUrl}/book?eventType=${config.eventTypeId}&date=${slot.datetime}`
     };
   } catch (error) {
-    throw new Error(`Cal.com booking failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Cal.com booking failed: ${errorMessage}`);
   }
 }
 
@@ -201,6 +204,7 @@ async function bookGoogleCalendarAppointment(apiKey: string, config: any, slot: 
       meeting_link: result.conferenceData?.entryPoints?.[0]?.uri || result.htmlLink
     };
   } catch (error) {
-    throw new Error(`Google Calendar booking failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Google Calendar booking failed: ${errorMessage}`);
   }
 }
