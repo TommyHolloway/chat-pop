@@ -526,7 +526,6 @@ serve(async (req) => {
     document.head.appendChild(overlayStyles);
 
     iframe = document.createElement('iframe');
-    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads');
     iframe.style.cssText = \`
       width: 100% !important;
       height: 100% !important;
