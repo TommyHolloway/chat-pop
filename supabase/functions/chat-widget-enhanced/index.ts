@@ -526,6 +526,7 @@ serve(async (req) => {
     document.head.appendChild(overlayStyles);
 
     iframe = document.createElement('iframe');
+    iframe.setAttribute('allow', 'fullscreen');
     iframe.style.cssText = \`
       width: 100% !important;
       height: 100% !important;
@@ -603,19 +604,25 @@ serve(async (req) => {
         </svg>
       \`;
     } else {
-      // Always reload iframe to ensure fresh content
-      console.log('🔄 Loading chat with URL:', chatUrlWithSession);
-      iframe.src = chatUrlWithSession;
-      
-      // Add load handlers for debugging
-      iframe.onload = function() {
-        console.log('✅ Iframe loaded successfully');
-      };
-      iframe.onerror = function(error) {
-        console.error('❌ Iframe failed to load:', error);
-      };
-      
+      // Show overlay first
       overlay.style.display = 'block';
+      
+      // Wait for iframe to be fully in DOM before setting src
+      requestAnimationFrame(() => {
+        const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
+        console.log('🔄 Loading chat with URL:', chatUrlWithSession);
+        console.log('📍 Iframe in DOM:', document.body.contains(iframe));
+        
+        iframe.src = chatUrlWithSession;
+        
+        // Add load handlers for debugging
+        iframe.onload = function() {
+          console.log('✅ Iframe loaded successfully');
+        };
+        iframe.onerror = function(error) {
+          console.error('❌ Iframe failed to load:', error);
+        };
+      });
       overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
       widget.style.transform = 'scale(0.9)';
       widget.innerHTML = \`
