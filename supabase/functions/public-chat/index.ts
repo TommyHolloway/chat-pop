@@ -918,7 +918,7 @@ serve(async (req) => {
       status: 200,
       headers: { 
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src *; frame-ancestors *",
+        'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; connect-src *; frame-ancestors *",
         'X-Frame-Options': 'ALLOWALL',
         'Cache-Control': 'no-cache',
         ...corsHeaders
