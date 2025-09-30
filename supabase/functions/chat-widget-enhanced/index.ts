@@ -342,16 +342,7 @@ serve(async (req) => {
       if (iframe) {
         const chatUrlWithMessage = chatUrl + '&sessionId=' + encodeURIComponent(sessionId) + 
           '&proactiveMessage=' + encodeURIComponent(suggestion.suggestedMessage);
-        
-        fetch(chatUrlWithMessage)
-          .then(response => response.text())
-          .then(html => {
-            iframe.srcdoc = html;
-          })
-          .catch(error => {
-            console.error('Failed to reload chat with proactive message:', error);
-            iframe.src = chatUrlWithMessage;
-          });
+        iframe.src = chatUrlWithMessage;
       }
     }
     
@@ -535,6 +526,7 @@ serve(async (req) => {
     document.head.appendChild(overlayStyles);
 
     iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads');
     iframe.style.cssText = \`
       width: 100% !important;
       height: 100% !important;
@@ -612,16 +604,8 @@ serve(async (req) => {
         </svg>
       \`;
     } else {
-      if (!iframe.src && !iframe.srcdoc) {
-        fetch(chatUrlWithSession)
-          .then(response => response.text())
-          .then(html => {
-            iframe.srcdoc = html;
-          })
-          .catch(error => {
-            console.error('Failed to fetch chat HTML:', error);
-            iframe.src = chatUrlWithSession;
-          });
+      if (!iframe.src) {
+        iframe.src = chatUrlWithSession;
       }
       
       overlay.style.display = 'block';
