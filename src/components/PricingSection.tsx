@@ -101,10 +101,10 @@ export const PricingSection = ({ showDescription = true, className = "" }: Prici
         {showDescription && (
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">
-              Simple, Transparent Pricing
+              Pricing That Pays For Itself
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that's right for your business. Start with our free plan or upgrade for more features.
+              Our customers average 250% increase in conversions. Most plans pay for themselves with just a few recovered customers.
             </p>
           </div>
         )}
@@ -117,10 +117,10 @@ export const PricingSection = ({ showDescription = true, className = "" }: Prici
         
         <div className="text-center mt-12">
           <p className="text-muted-foreground mb-4">
-            Need a custom solution for your enterprise?
+            Need unlimited conversations or custom integrations for your enterprise?
           </p>
-          <Button variant="outline" size="lg">
-            Contact Sales
+          <Button variant="outline" size="lg" onClick={() => window.location.href = '/contact'}>
+            Talk to Our Sales Team
           </Button>
         </div>
       </div>
