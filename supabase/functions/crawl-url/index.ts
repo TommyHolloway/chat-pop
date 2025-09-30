@@ -59,14 +59,13 @@ serve(async (req) => {
       });
 
       console.log('Crawl result:', {
-        success: crawlResult.success,
         status: crawlResult.status,
         completed: crawlResult.completed,
         total: crawlResult.total,
         dataLength: crawlResult.data?.length || 0
       });
 
-      if (!crawlResult.success) {
+      if (crawlResult.status !== 'completed') {
         // Update agent_links with failed status
         if (linkId) {
           await supabase
@@ -78,7 +77,7 @@ serve(async (req) => {
             .eq('id', linkId);
         }
 
-        const errorMsg = crawlResult.error || 'Crawl failed';
+        const errorMsg = 'Crawl failed';
         return new Response(JSON.stringify({
           success: false,
           error: errorMsg,
@@ -152,18 +151,16 @@ serve(async (req) => {
       });
 
       console.log('Scrape result:', {
-        success: scrapeResult.success,
-        hasContent: !!(scrapeResult.markdown || scrapeResult.data?.markdown),
-        error: scrapeResult.error
+        hasContent: !!(scrapeResult.markdown),
       });
 
       // Check for success based on actual content
-      const content = scrapeResult.markdown || scrapeResult.data?.markdown || '';
-      const title = scrapeResult.metadata?.title || scrapeResult.data?.metadata?.title || new URL(url).hostname;
+      const content = scrapeResult.markdown || '';
+      const title = scrapeResult.metadata?.title || new URL(url).hostname;
 
-      // If we have no content, consider it a failure regardless of success flag
+      // If we have no content, consider it a failure
       if (!content || content.trim() === '') {
-        const errorMsg = scrapeResult.error || 'No content extracted from URL';
+        const errorMsg = 'No content extracted from URL';
         console.error('Scrape error:', errorMsg);
         
         return new Response(JSON.stringify({
@@ -178,8 +175,7 @@ serve(async (req) => {
 
       console.log('Scrape successful:', { 
         title, 
-        contentLength: content.length,
-        hasMetadata: !!scrapeResult.data?.metadata 
+        contentLength: content.length
       });
 
       return new Response(JSON.stringify({
@@ -195,11 +191,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in crawl-url function:', error);
-    console.error('Error stack:', error.stack);
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack);
+    }
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
-      details: error.stack?.split('\n')[0] || 'No additional details'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      details: error instanceof Error ? (error.stack?.split('\n')[0] || 'No additional details') : 'No additional details'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

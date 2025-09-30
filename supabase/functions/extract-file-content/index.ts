@@ -199,7 +199,8 @@ serve(async (req) => {
         
       } catch (pdfError) {
         console.error('PDF processing failed:', pdfError);
-        content = `PDF processing failed: ${pdfError.message}. Please try converting the PDF to a text file or check if the file is corrupted.`;
+        const errorMsg = pdfError instanceof Error ? pdfError.message : 'Unknown error';
+        content = `PDF processing failed: ${errorMsg}. Please try converting the PDF to a text file or check if the file is corrupted.`;
       }
       
     } else {
@@ -216,7 +217,8 @@ serve(async (req) => {
         console.log(`Text file extracted: ${content.length} characters`);
       } catch (textError) {
         console.error('Text extraction failed:', textError);
-        content = `Text extraction failed: ${textError.message}`;
+        const errorMsg = textError instanceof Error ? textError.message : 'Unknown error';
+        content = `Text extraction failed: ${errorMsg}`;
       }
     }
 
@@ -238,10 +240,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in extract-file-content function:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
-      content: `Content extraction failed: ${error.message}`
+      error: errorMsg,
+      content: `Content extraction failed: ${errorMsg}`
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

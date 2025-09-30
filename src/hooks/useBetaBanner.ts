@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const BETA_BANNER_KEY = 'beta-banner-dismissed';
-const LAUNCH_DATE = new Date('2025-10-01');
+const LAUNCH_DATE = new Date('2025-11-01');
 
 export const useBetaBanner = () => {
   const [isVisible, setIsVisible] = useState(false);

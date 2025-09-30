@@ -57,7 +57,7 @@ serve(async (req) => {
   } catch (error) {
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'Decryption failed'
+      error: error instanceof Error ? error.message : 'Decryption failed'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

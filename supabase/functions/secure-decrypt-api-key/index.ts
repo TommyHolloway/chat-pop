@@ -61,7 +61,8 @@ async function decryptApiKeySecurely(encryptedKey: string, userSalt: string): Pr
     return decoder.decode(decrypted);
     
   } catch (error) {
-    throw new Error('Failed to decrypt API key: ' + error.message);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error('Failed to decrypt API key: ' + errorMsg);
   }
 }
 
@@ -127,13 +128,14 @@ serve(async (req) => {
   } catch (error) {
     // Log error without exposing sensitive details
     try {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       await supabase.from('activity_logs').insert({
         action: 'API_KEY_DECRYPTION_ERROR_SECURE',
         ip_address: req.headers.get('x-forwarded-for') || 'unknown',
         user_agent: req.headers.get('user-agent'),
         details: { 
           endpoint: 'secure-decrypt-api-key',
-          error_type: error.message.includes('required') ? 'validation_error' : 'decryption_error'
+          error_type: errorMsg.includes('required') ? 'validation_error' : 'decryption_error'
         }
       });
     } catch (logError) {
@@ -142,7 +144,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'Decryption failed'
+      error: error instanceof Error ? error.message : 'Decryption failed'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

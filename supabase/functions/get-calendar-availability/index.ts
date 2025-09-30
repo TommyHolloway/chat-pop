@@ -74,7 +74,7 @@ serve(async (req) => {
   } catch (error) {
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -144,7 +144,8 @@ async function getCalendlyAvailability(apiKey: string, config: any): Promise<any
     }));
 
   } catch (error) {
-    throw new Error(`Calendly availability failed: ${error.message}`);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Calendly availability failed: ${errorMsg}`);
   }
 }
 
@@ -182,7 +183,8 @@ async function getCalcomAvailability(apiKey: string, config: any): Promise<any[]
     
     return slots.slice(0, 20); // Return max 20 slots to avoid overwhelming UI
   } catch (error) {
-    throw new Error(`Cal.com availability failed: ${error.message}`);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Cal.com availability failed: ${errorMsg}`);
   }
 }
 
@@ -257,6 +259,7 @@ async function getGoogleCalendarAvailability(apiKey: string, config: any): Promi
     
     return slots.slice(0, 20); // Return max 20 slots
   } catch (error) {
-    throw new Error(`Google Calendar availability failed: ${error.message}`);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Google Calendar availability failed: ${errorMsg}`);
   }
 }

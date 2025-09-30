@@ -200,13 +200,14 @@ serve(async (req) => {
   } catch (error) {
     // Log error without exposing sensitive details
     try {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       await supabase.from('activity_logs').insert({
         action: 'API_KEY_ENCRYPTION_ERROR_SECURE',
         ip_address: req.headers.get('x-forwarded-for') || 'unknown',
         user_agent: req.headers.get('user-agent'),
         details: { 
           endpoint: 'secure-encrypt-api-key',
-          error_type: error.message.includes('required') ? 'validation_error' : 'encryption_error'
+          error_type: errorMsg.includes('required') ? 'validation_error' : 'encryption_error'
         }
       });
     } catch (logError) {
@@ -215,7 +216,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'Encryption failed'
+      error: error instanceof Error ? error.message : 'Encryption failed'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
