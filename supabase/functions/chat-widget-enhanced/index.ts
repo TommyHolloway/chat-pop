@@ -1,14 +1,9 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'application/javascript',
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,85 +13,74 @@ serve(async (req) => {
     const agentId = url.searchParams.get('agentId');
     const position = url.searchParams.get('position') || 'bottom-right';
     const theme = url.searchParams.get('theme') || 'light';
-    const color = url.searchParams.get('color') || '#84cc16';
-
-    if (!agentId) {
-      return new Response('Agent ID is required', { status: 400 });
-    }
+    const primaryColor = url.searchParams.get('color') || '#84cc16';
 
     const widgetScript = `
 (function() {
-  // Check if widget is already loaded
-  if (window.ChatPopWidget) return;
+  'use strict';
+  
+  if (window.ChatPopWidget) {
+    console.log('ChatPop widget already loaded');
+    return;
+  }
 
   const agentId = '${agentId}';
   const position = '${position}';
   const theme = '${theme}';
-  const primaryColor = '${color}';
+  const primaryColor = '${primaryColor}';
   const chatUrl = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/public-chat?agentId=' + agentId;
+  const supabaseUrl = 'https://etwjtxqjcwyxdamlcorf.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM';
 
-  // Widget-level page restrictions - check before loading widget
-  let widgetAllowedPages = [];
-  
-  // Fetch agent configuration to check widget page restrictions
+  let widget, overlay;
+  let isOpen = false;
+  let sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  let startTime = Date.now();
+  let totalPageViews = 0;
+  let hasTrackedCurrentPage = false;
+  let currentPageStartTime = Date.now();
+  let suggestionShown = false;
+  let suggestion = null;
+  let conversationId = null;
+  let agentData = null;
+  let isLoading = false;
+
   async function checkWidgetPageRestrictions() {
     try {
       const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/get-widget-config?agentId=' + agentId);
       
       if (response.ok) {
         const config = await response.json();
-        if (config && config.widgetPageRestrictions) {
-          widgetAllowedPages = config.widgetPageRestrictions;
+        if (config && config.allowedPages && config.allowedPages.length > 0) {
+          const currentPath = window.location.pathname;
+          const currentUrl = window.location.href;
+          
+          const isAllowed = config.allowedPages.some(pattern => {
+            return currentUrl.includes(pattern) || currentPath.includes(pattern);
+          });
+          
+          if (!isAllowed) {
+            console.log('Widget not allowed on this page');
+            return false;
+          }
         }
       }
+      return true;
     } catch (error) {
-      console.error('Error fetching widget page restrictions:', error);
+      console.error('Error checking widget restrictions:', error);
+      return true;
     }
-    
-    // Check if current page is allowed for widget loading
-    if (widgetAllowedPages.length > 0) {
-      const currentPath = window.location.pathname;
-      const currentUrl = window.location.href;
-      
-      const isAllowed = widgetAllowedPages.some(pattern => {
-        return currentUrl.includes(pattern) || currentPath.includes(pattern);
-      });
-      
-      if (!isAllowed) {
-        console.log('ChatPop Widget: Page not allowed for widget loading');
-        return false;
-      }
-    }
-    
-    return true;
   }
 
-  // Widget state
-  let isOpen = false;
-  let widget = null;
-  let overlay = null;
-  let iframe = null;
-  let iframeReady = false;
-
-  // Visitor tracking
-  const sessionId = 'vis_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  let startTime = Date.now();
-  let currentPageStartTime = Date.now();
-  let totalPageViews = 0;
-  let hasTrackedCurrentPage = false;
-  let suggestion = null;
-  let suggestionShown = false;
-
-  // Visitor tracking functions
-  function trackBehavior(eventType, data = {}) {
+  function trackBehavior(eventType, additionalData = {}) {
     const payload = {
-      sessionId: sessionId,
       agentId: agentId,
+      sessionId: sessionId,
       eventType: eventType,
-      pageUrl: window.location.href,
-      eventData: data,
-      sessionData: {
-        userAgent: navigator.userAgent,
+      eventData: {
+        ...additionalData,
+        url: window.location.href,
+        path: window.location.pathname,
         referrer: document.referrer,
         firstPageUrl: window.location.href,
         totalPageViews: totalPageViews,
@@ -136,11 +120,9 @@ serve(async (req) => {
     }
   }
 
-  // Check if proactive engagement should be enabled for this agent
   let proactiveEnabled = false;
   let allowedPages = [];
   
-  // Fetch agent configuration to check proactive engagement settings
   async function checkProactiveSettings() {
     try {
       const response = await fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/get-widget-config?agentId=' + agentId);
@@ -158,9 +140,8 @@ serve(async (req) => {
   }
 
   async function analyzeAndSuggest() {
-    if (!proactiveEnabled || isOpen) return; // Don't show suggestions when chat is open
+    if (!proactiveEnabled || isOpen) return;
     
-    // Check if current page is allowed
     if (allowedPages.length > 0) {
       const currentPath = window.location.pathname;
       const currentUrl = window.location.href;
@@ -206,10 +187,10 @@ serve(async (req) => {
 
     const suggestionBubble = document.createElement('div');
     
-    suggestionBubble.style.cssText = \`
+    suggestionBubble.style.cssText = `
       position: fixed !important;
-      \${position.includes('right') ? 'right: 100px !important;' : 'left: 100px !important;'}
-      \${position.includes('bottom') ? 'bottom: 30px !important;' : 'top: 100px !important;'}
+      ${position.includes('right') ? 'right: 100px !important;' : 'left: 100px !important;'}
+      ${position.includes('bottom') ? 'bottom: 30px !important;' : 'top: 100px !important;'}
       background: rgba(255, 255, 255, 0.98) !important;
       backdrop-filter: blur(16px);
       border: 1px solid rgba(132, 204, 22, 0.2) !important;
@@ -227,97 +208,38 @@ serve(async (req) => {
       animation: slideInSuggestion 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
       color: #374151 !important;
-    \`;
+    `;
 
-    suggestionBubble.innerHTML = \`
-      <div style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #84cc16 0%, #65a30d 100%);
-        border-radius: 16px 16px 0 0;
-      "></div>
-      <div style="
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-        padding-top: 4px;
-      ">
-        <div style="
-          width: 28px;
-          height: 28px;
-          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
-        ">
+    suggestionBubble.innerHTML = `
+      <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #84cc16 0%, #65a30d 100%); border-radius: 16px 16px 0 0;"></div>
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-top: 4px;">
+        <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
             <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
           </svg>
         </div>
-        <div style="
-          font-weight: 600;
-          color: #374151;
-          font-size: 13px;
-        ">AI Assistant</div>
+        <div style="font-weight: 600; color: #374151; font-size: 13px;">AI Assistant</div>
       </div>
-      <div style="
-        margin-bottom: 18px; 
-        color: #6b7280;
-        font-weight: 400;
-        line-height: 1.6;
-      ">
-        \${analysis.suggestedMessage}
+      <div style="margin-bottom: 18px; color: #6b7280; font-weight: 400; line-height: 1.6;">
+        ${analysis.suggestedMessage}
       </div>
       <div style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button onclick="this.parentElement.parentElement.remove()" style="
-          padding: 8px 14px; 
-          background: rgba(156, 163, 175, 0.1); 
-          border: 1px solid rgba(156, 163, 175, 0.2); 
-          border-radius: 8px; 
-          font-size: 12px; 
-          cursor: pointer;
-          color: #6b7280;
-          font-weight: 500;
-          transition: all 0.2s ease;
-        " onmouseover="this.style.background='rgba(156, 163, 175, 0.15)'" onmouseout="this.style.background='rgba(156, 163, 175, 0.1)'">
+        <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 14px; background: rgba(156, 163, 175, 0.1); border: 1px solid rgba(156, 163, 175, 0.2); border-radius: 8px; font-size: 12px; cursor: pointer; color: #6b7280; font-weight: 500; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(156, 163, 175, 0.15)'" onmouseout="this.style.background='rgba(156, 163, 175, 0.1)'">
           Maybe Later
         </button>
-        <button onclick="acceptSuggestion()" style="
-          padding: 8px 16px; 
-          background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); 
-          color: white; 
-          border: none; 
-          border-radius: 8px; 
-          font-size: 12px; 
-          cursor: pointer;
-          font-weight: 600;
-          box-shadow: 0 4px 12px rgba(132, 204, 22, 0.25);
-          transition: all 0.2s ease;
-        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(132, 204, 22, 0.35)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(132, 204, 22, 0.25)'">
+        <button onclick="acceptSuggestion()" style="padding: 8px 16px; background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); color: white; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(132, 204, 22, 0.25); transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(132, 204, 22, 0.35)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(132, 204, 22, 0.25)'">
           Start Chat
         </button>
       </div>
-    \`;
+    `;
 
     const style = document.createElement('style');
-    style.textContent = \`
+    style.textContent = `
       @keyframes slideInSuggestion {
-        0% { 
-          opacity: 0; 
-          transform: translateY(20px) scale(0.95); 
-        }
-        100% { 
-          opacity: 1; 
-          transform: translateY(0) scale(1); 
-        }
+        0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
       }
-    \`;
+    `;
     document.head.appendChild(style);
 
     document.body.appendChild(suggestionBubble);
@@ -330,7 +252,6 @@ serve(async (req) => {
   }
 
   window.acceptSuggestion = function() {
-    // Remove all suggestion bubbles by searching for elements with the correct z-index
     const bubbles = document.querySelectorAll('[style*="z-index: 999999"]');
     bubbles.forEach(bubble => {
       if (bubble.innerHTML && bubble.innerHTML.includes('Start Chat')) {
@@ -339,20 +260,15 @@ serve(async (req) => {
     });
     
     if (suggestion && suggestion.suggestedMessage) {
-      if (iframe) {
-        const chatUrlWithMessage = chatUrl + '&sessionId=' + encodeURIComponent(sessionId) + 
-          '&proactiveMessage=' + encodeURIComponent(suggestion.suggestedMessage);
-        iframe.src = chatUrlWithMessage;
-      }
+      // Store proactive message to show when chat opens
+      sessionStorage.setItem('chatpop_proactive_message', suggestion.suggestedMessage);
     }
     
     if (!isOpen) toggleChat();
   };
 
   async function initTracking() {
-    // Check proactive settings first
     await checkProactiveSettings();
-    
     trackPageView();
 
     document.addEventListener('visibilitychange', () => {
@@ -378,216 +294,505 @@ serve(async (req) => {
       }
     });
 
-    // Only start proactive analysis if enabled
     if (proactiveEnabled) {
       setInterval(() => analyzeAndSuggest(), 5000);
     }
   }
 
-  window.addEventListener('message', (event) => {
-    if (event && event.data === 'CHATPOP_READY') {
-      iframeReady = true;
-      console.log('ChatPop iframe ready');
-    }
-  });
-
   function createWidget() {
     widget = document.createElement('div');
-    widget.style.cssText = \`
+    widget.style.cssText = `
       position: fixed !important;
-      \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
-      \${position.includes('bottom') ? 'bottom: 20px !important;' : 'top: 20px !important;'}
+      ${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
+      ${position.includes('bottom') ? 'bottom: 20px !important;' : 'top: 20px !important;'}
       width: 60px !important;
       height: 60px !important;
-      background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%) !important;
-      border: none !important;
+      background: linear-gradient(135deg, ${primaryColor} 0%, #65a30d 100%);
       border-radius: 50% !important;
-      box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1) !important;
       cursor: pointer !important;
-      z-index: 999999 !important;
+      box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.15);
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
+      z-index: 2147483647 !important;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      animation: pulseGlow 3s ease-in-out infinite !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
-    \`;
+      animation: float 3s ease-in-out infinite;
+      position: relative;
+      overflow: visible;
+    `;
+
+    const sparkle = document.createElement('div');
+    sparkle.className = 'chat-widget-sparkle';
+    sparkle.style.cssText = `
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      background: #fbbf24;
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+      animation: pulse 2s ease-in-out infinite;
+    `;
 
     const styleSheet = document.createElement('style');
-    styleSheet.textContent = \`
-      @keyframes pulseGlow {
-        0%, 100% { 
-          box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1);
-          transform: scale(1);
-        }
-        50% { 
-          box-shadow: 0 12px 40px rgba(132, 204, 22, 0.6), 0 6px 20px rgba(0, 0, 0, 0.15);
-          transform: scale(1.02);
-        }
+    styleSheet.textContent = `
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
       }
-      
-      @keyframes sparkle {
-        0%, 100% { opacity: 0; transform: rotate(0deg) scale(0); }
-        50% { opacity: 1; transform: rotate(180deg) scale(1); }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.7; }
       }
-      
-      .chat-widget-button:hover {
-        transform: scale(1.05) !important;
-        box-shadow: 0 16px 48px rgba(132, 204, 22, 0.6), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-        animation: none !important;
-      }
-      
-      .chat-widget-sparkle {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 12px;
-        height: 12px;
-        background: radial-gradient(circle, #fbbf24 0%, #f59e0b 100%);
-        border-radius: 50%;
-        animation: sparkle 2s ease-in-out infinite;
-        animation-delay: 1s;
-      }
-    \`;
+    `;
     document.head.appendChild(styleSheet);
 
-    widget.className = 'chat-widget-button';
-
-    widget.innerHTML = \`
-      <div class="chat-widget-sparkle"></div>
+    widget.appendChild(sparkle);
+    
+    widget.innerHTML += `
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
         <circle cx="12" cy="11" r="1" fill="white" opacity="0.8"/>
         <circle cx="8" cy="11" r="1" fill="white" opacity="0.6"/>
         <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
       </svg>
-    \`;
+    `;
 
     widget.addEventListener('click', toggleChat);
     widget.addEventListener('mouseenter', () => {
-      widget.style.animation = 'none';
+      widget.style.transform = 'scale(1.1) translateY(-4px)';
+      widget.style.boxShadow = '0 12px 40px rgba(132, 204, 22, 0.5), 0 6px 20px rgba(0, 0, 0, 0.2)';
     });
     widget.addEventListener('mouseleave', () => {
-      widget.style.animation = 'pulseGlow 3s ease-in-out infinite';
+      widget.style.transform = 'scale(1)';
+      widget.style.boxShadow = '0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.15)';
     });
-    
+
     document.body.appendChild(widget);
   }
 
-  function createOverlay() {
-    overlay = document.createElement('div');
-    overlay.style.cssText = \`
-      position: fixed !important;
-      \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
-      \${position.includes('bottom') ? 'bottom: 90px !important;' : 'top: 90px !important;'}
-      width: 360px !important;
-      height: 500px !important;
-      background: rgba(255, 255, 255, 0.98) !important;
-      backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      border-radius: 16px !important;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.15),
-        0 8px 32px rgba(132, 204, 22, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-      z-index: 999998 !important;
-      display: none !important;
-      overflow: hidden !important;
-      animation: slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      transform-origin: \${position.includes('right') ? 'bottom right' : 'bottom left'} !important;
-    \`;
+  async function fetchAgentData() {
+    try {
+      const response = await fetch(\`\${supabaseUrl}/rest/v1/rpc/get_public_agent_data?agent_uuid=\${agentId}\`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          agentData = data[0];
+          return agentData;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching agent data:', error);
+    }
+    return null;
+  }
 
-    const overlayStyles = document.createElement('style');
-    overlayStyles.textContent = \`
+  function addMessage(content, isUser = false) {
+    const messagesContainer = document.getElementById('chatpop-messages');
+    if (!messagesContainer) return;
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chatpop-message ' + (isUser ? 'user' : 'bot');
+    
+    const avatarImg = document.createElement('img');
+    avatarImg.className = 'chatpop-message-avatar';
+    avatarImg.src = isUser ? 'https://ui-avatars.com/api/?name=You&background=84cc16&color=fff' : (agentData?.profile_image_url || 'https://ui-avatars.com/api/?name=AI&background=84cc16&color=fff');
+    avatarImg.alt = isUser ? 'You' : 'Agent';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'chatpop-message-content';
+    contentDiv.textContent = content;
+    
+    messageDiv.appendChild(avatarImg);
+    messageDiv.appendChild(contentDiv);
+    messagesContainer.appendChild(messageDiv);
+    
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function setLoading(loading) {
+    isLoading = loading;
+    const input = document.getElementById('chatpop-input');
+    const sendBtn = document.getElementById('chatpop-send-btn');
+    const messagesContainer = document.getElementById('chatpop-messages');
+    
+    if (input) input.disabled = loading;
+    if (sendBtn) sendBtn.disabled = loading;
+    
+    if (loading) {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'chatpop-message bot';
+      typingDiv.id = 'chatpop-typing';
+      
+      const avatarImg = document.createElement('img');
+      avatarImg.className = 'chatpop-message-avatar';
+      avatarImg.src = agentData?.profile_image_url || 'https://ui-avatars.com/api/?name=AI&background=84cc16&color=fff';
+      
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'chatpop-typing-indicator';
+      typingIndicator.innerHTML = `
+        <div class="chatpop-typing-dot"></div>
+        <div class="chatpop-typing-dot"></div>
+        <div class="chatpop-typing-dot"></div>
+      `;
+      
+      typingDiv.appendChild(avatarImg);
+      typingDiv.appendChild(typingIndicator);
+      messagesContainer.appendChild(typingDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } else {
+      const typingIndicator = document.getElementById('chatpop-typing');
+      if (typingIndicator) typingIndicator.remove();
+    }
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chatpop-input');
+    const message = input?.value.trim();
+    
+    if (!message || isLoading) return;
+    
+    addMessage(message, true);
+    input.value = '';
+    setLoading(true);
+    
+    try {
+      const response = await fetch(\`\${supabaseUrl}/functions/v1/chat-completion\`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey
+        },
+        body: JSON.stringify({
+          agentId: agentId,
+          message: message,
+          conversationId: conversationId,
+          sessionId: sessionId
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to send message');
+      
+      const data = await response.json();
+      
+      if (!conversationId && data.conversationId) {
+        conversationId = data.conversationId;
+      }
+      
+      if (data.reply) {
+        addMessage(data.reply, false);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      addMessage('Sorry, I encountered an error. Please try again.', false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function createOverlay() {
+    const chatStyles = document.createElement('style');
+    chatStyles.textContent = `
+      .chatpop-overlay * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
       @keyframes slideInChat {
-        0% {
-          opacity: 0;
-          transform: scale(0.8) translateY(20px);
-        }
-        100% {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
+        0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
       }
       
       @keyframes slideOutChat {
-        0% {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
-        100% {
-          opacity: 0;
-          transform: scale(0.8) translateY(20px);
-        }
+        0% { opacity: 1; transform: scale(1) translateY(0); }
+        100% { opacity: 0; transform: scale(0.8) translateY(20px); }
       }
-    \`;
-    document.head.appendChild(overlayStyles);
+      
+      @keyframes pulseAvatar {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(132, 204, 22, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(132, 204, 22, 0); }
+      }
+      
+      @keyframes messageSlideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes typingBounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-4px); }
+      }
+      
+      .chatpop-chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      }
+      
+      .chatpop-chat-header {
+        background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(132, 204, 22, 0.2);
+      }
+      
+      .chatpop-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        animation: pulseAvatar 2s infinite;
+      }
+      
+      .chatpop-agent-info h2 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+      }
+      
+      .chatpop-agent-info p {
+        font-size: 13px;
+        opacity: 0.9;
+        margin: 0;
+      }
+      
+      .chatpop-chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      
+      .chatpop-message {
+        display: flex;
+        gap: 12px;
+        animation: messageSlideIn 0.3s ease-out;
+      }
+      
+      .chatpop-message.user {
+        flex-direction: row-reverse;
+      }
+      
+      .chatpop-message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      
+      .chatpop-message-content {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      
+      .chatpop-message.bot .chatpop-message-content {
+        background: white;
+        color: #374151;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      
+      .chatpop-message.user .chatpop-message-content {
+        background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+        box-shadow: 0 2px 8px rgba(132, 204, 22, 0.3);
+      }
+      
+      .chatpop-typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 12px 16px;
+        background: white;
+        border-radius: 16px;
+        border-bottom-left-radius: 4px;
+        width: fit-content;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      
+      .chatpop-typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #84cc16;
+        animation: typingBounce 1.4s infinite;
+      }
+      
+      .chatpop-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+      .chatpop-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+      
+      .chatpop-chat-input-area {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 12px;
+      }
+      
+      .chatpop-chat-input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.2s;
+      }
+      
+      .chatpop-chat-input:focus {
+        outline: none;
+        border-color: #84cc16;
+        box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
+      }
+      
+      .chatpop-chat-input:disabled {
+        background: #f3f4f6;
+        cursor: not-allowed;
+      }
+      
+      .chatpop-send-btn {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(132, 204, 22, 0.25);
+      }
+      
+      .chatpop-send-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(132, 204, 22, 0.35);
+      }
+      
+      .chatpop-send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .chatpop-powered-by {
+        text-align: center;
+        padding: 12px;
+        font-size: 11px;
+        color: #9ca3af;
+        background: white;
+      }
+    `;
+    document.head.appendChild(chatStyles);
 
-            iframe = document.createElement('iframe');
-            iframe.setAttribute('allow', 'fullscreen');
-            iframe.setAttribute('loading', 'eager');
-    iframe.style.cssText = \`
-      width: 100% !important;
-      height: 100% !important;
-      border: none !important;
-      border-radius: 16px !important;
-      background: white !important;
-      overflow: hidden !important;
-    \`;
+    overlay = document.createElement('div');
+    overlay.className = 'chatpop-overlay';
+    overlay.style.cssText = `
+      position: fixed !important;
+      ${position.includes('right') ? 'right: 0 !important;' : 'left: 0 !important;'}
+      ${position.includes('bottom') ? 'bottom: 0 !important;' : 'top: 0 !important;'}
+      width: 400px !important;
+      height: 600px !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      background: white;
+      box-shadow: -4px 0 40px rgba(0, 0, 0, 0.15);
+      z-index: 2147483646 !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: none;
+      ${position.includes('left') ? 'border-radius: 0 16px 16px 0;' : 'border-radius: 16px 0 0 16px;'}
+      overflow: hidden;
+      transform-origin: ${position.includes('right') ? 'bottom right' : 'bottom left'};
+    `;
 
-    // Add close button
-    const closeButton = document.createElement('button');
-    closeButton.style.cssText = \`
-      position: absolute !important;
-      top: 16px !important;
-      right: 16px !important;
-      background: rgba(156, 163, 175, 0.1) !important;
-      border: 1px solid rgba(156, 163, 175, 0.2) !important;
-      border-radius: 50% !important;
-      width: 32px !important;
-      height: 32px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      cursor: pointer !important;
-      z-index: 1000001 !important;
-      backdrop-filter: blur(10px) !important;
-      transition: all 0.2s ease !important;
-    \`;
+    overlay.innerHTML = `
+      <div class="chatpop-chat-container">
+        <div class="chatpop-chat-header">
+          <img class="chatpop-avatar" id="chatpop-agent-avatar" src="https://ui-avatars.com/api/?name=AI&background=84cc16&color=fff" alt="Agent" />
+          <div class="chatpop-agent-info">
+            <h2 id="chatpop-agent-name">Loading...</h2>
+            <p>AI Assistant</p>
+          </div>
+        </div>
+        <div class="chatpop-chat-messages" id="chatpop-messages"></div>
+        <div class="chatpop-chat-input-area">
+          <input 
+            type="text" 
+            class="chatpop-chat-input" 
+            id="chatpop-input" 
+            placeholder="Type your message..."
+          />
+          <button class="chatpop-send-btn" id="chatpop-send-btn">Send</button>
+        </div>
+        <div class="chatpop-powered-by">
+          Powered by ChatPop
+        </div>
+      </div>
+    `;
 
-    closeButton.innerHTML = \`
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
-    \`;
-
-    closeButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleChat();
-    });
-
-    closeButton.addEventListener('mouseenter', () => {
-      closeButton.style.background = 'rgba(156, 163, 175, 0.2)';
-    });
-
-    closeButton.addEventListener('mouseleave', () => {
-      closeButton.style.background = 'rgba(156, 163, 175, 0.1)';
-    });
-
-    overlay.appendChild(iframe);
-    overlay.appendChild(closeButton);
+    `;
+    closeBtn.style.cssText = `
+      position: absolute !important;
+      top: 20px !important;
+      right: 20px !important;
+      width: 36px !important;
+      height: 36px !important;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
+    `;
+    closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+    closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+    closeBtn.onclick = toggleChat;
+    overlay.appendChild(closeBtn);
+    
     document.body.appendChild(overlay);
+
+    const sendBtn = document.getElementById('chatpop-send-btn');
+    const input = document.getElementById('chatpop-input');
+    
+    if (sendBtn) sendBtn.onclick = sendMessage;
+    if (input) {
+      input.onkeypress = (e) => {
+        if (e.key === 'Enter') sendMessage();
+      };
+    }
   }
 
-  function toggleChat() {
+  async function toggleChat() {
     if (!overlay) {
       createOverlay();
     }
-
-    const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
 
     if (isOpen) {
       overlay.style.animation = 'slideOutChat 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -595,7 +800,7 @@ serve(async (req) => {
         overlay.style.display = 'none';
       }, 300);
       widget.style.transform = 'scale(1)';
-      widget.innerHTML = \`
+      widget.innerHTML = `
         <div class="chat-widget-sparkle"></div>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
           <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
@@ -603,70 +808,53 @@ serve(async (req) => {
           <circle cx="8" cy="11" r="1" fill="white" opacity="0.6"/>
           <circle cx="16" cy="11" r="1" fill="white" opacity="0.6"/>
         </svg>
-      \`;
+      `;
     } else {
-      // Show overlay first
       overlay.style.display = 'block';
-      
-      // Wait for iframe to be fully in DOM before fetching content
-      requestAnimationFrame(() => {
-        const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
-        console.log('🔄 Fetching chat interface HTML from:', chatUrlWithSession);
-        console.log('📍 Iframe in DOM:', document.body.contains(iframe));
-        
-        // Fetch HTML content and use srcdoc for better rendering
-        fetch(chatUrlWithSession)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Failed to fetch: ' + response.status);
-            }
-            return response.text();
-          })
-          .then(html => {
-            iframe.srcdoc = html;
-            console.log('✅ Chat interface loaded via srcdoc');
-          })
-          .catch(error => {
-            console.error('❌ Failed to fetch chat HTML:', error);
-            console.log('⚠️ Falling back to direct iframe.src');
-            // Fallback to direct src
-            iframe.src = chatUrlWithSession;
-          });
-        
-        // Add load handlers for debugging
-        iframe.onload = function() {
-          console.log('✅ Iframe rendered successfully');
-        };
-        iframe.onerror = function(error) {
-          console.error('❌ Iframe failed to render:', error);
-        };
-      });
       overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      
+      const data = await fetchAgentData();
+      if (data) {
+        const nameEl = document.getElementById('chatpop-agent-name');
+        const avatarEl = document.getElementById('chatpop-agent-avatar');
+        if (nameEl) nameEl.textContent = data.name;
+        if (avatarEl && data.profile_image_url) avatarEl.src = data.profile_image_url;
+        
+        const proactiveMsg = sessionStorage.getItem('chatpop_proactive_message');
+        if (proactiveMsg) {
+          addMessage(proactiveMsg, false);
+          sessionStorage.removeItem('chatpop_proactive_message');
+        } else if (data.initial_message) {
+          addMessage(data.initial_message, false);
+        }
+      }
+      
       widget.style.transform = 'scale(0.9)';
-      widget.innerHTML = \`
+      widget.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
-      \`;
+      `;
+      
+      setTimeout(() => {
+        const input = document.getElementById('chatpop-input');
+        if (input) input.focus();
+      }, 400);
     }
     
     isOpen = !isOpen;
   }
 
-  // Initialize everything
   async function init() {
     console.log('🚀 Initializing Enhanced Chat Widget for agent:', agentId);
-    console.log('🎯 Position:', position, 'Theme:', theme, 'Color:', primaryColor);
     
-    // Check widget page restrictions first
     const canLoadWidget = await checkWidgetPageRestrictions();
     if (!canLoadWidget) return;
     
     createWidget();
     await initTracking();
     
-    // Add manual test function for debugging
     window.testProactiveMessage = function() {
       console.log('🧪 Manual test triggered');
       showProactiveSuggestion({
@@ -678,11 +866,6 @@ serve(async (req) => {
       });
     };
     
-    console.log('🛠️ Debug functions available:');
-    console.log('- window.testProactiveMessage() - manually trigger proactive message');
-    console.log('- Current suggestionShown state:', suggestionShown);
-    
-    // Mark widget as loaded
     window.ChatPopWidget = {
       agentId: agentId,
       toggleChat: toggleChat,
@@ -693,7 +876,6 @@ serve(async (req) => {
     console.log('✅ Widget initialization complete');
   }
 
-  // Start initialization when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
@@ -704,7 +886,7 @@ serve(async (req) => {
     `;
 
     return new Response(widgetScript, {
-      headers: corsHeaders
+      headers: { ...corsHeaders, 'Content-Type': 'application/javascript' }
     });
 
   } catch (error) {
