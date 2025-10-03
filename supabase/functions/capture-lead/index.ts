@@ -44,8 +44,8 @@ serve(async (req) => {
       );
     }
     
-    if (!agentId || !conversationId || !leadData) {
-      throw new Error('Agent ID, conversation ID, and lead data are required');
+    if (!agentId || !leadData) {
+      throw new Error('Agent ID and lead data are required');
     }
 
     // Validate that the agent exists and get lead capture configuration
@@ -73,7 +73,7 @@ serve(async (req) => {
       .from('leads')
       .insert({
         agent_id: agentId,
-        conversation_id: conversationId,
+        conversation_id: conversationId || null,
         lead_data_json: leadData
       })
       .select()

@@ -147,14 +147,14 @@ Deno.serve(async (req) => {
     widgetScript += '    actionData.fields.forEach(field => {\n';
     widgetScript += '      formHTML += \'<div style="margin-bottom:12px;"><label style="display:block;margin-bottom:4px;font-size:13px;color:#4b5563;">\' + field.label + (field.required ? \' *\' : \'\') + \'</label>\';\n';
     widgetScript += '      if (field.type === "textarea") {\n';
-    widgetScript += '        formHTML += \'<textarea id="lead-\' + field.key + \'" placeholder="\' + field.placeholder + \'" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" rows="3"></textarea>\';\n';
+    widgetScript += '        formHTML += \'<textarea id="lead-\' + field.key + \'" placeholder="\' + field.placeholder + \'" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1f2937;" rows="3"></textarea>\';\n';
     widgetScript += '      } else if (field.type === "select") {\n';
-    widgetScript += '        formHTML += \'<select id="lead-\' + field.key + \'" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;">\';\n';
+    widgetScript += '        formHTML += \'<select id="lead-\' + field.key + \'" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1f2937;">\';\n';
     widgetScript += '        formHTML += \'<option value="">\' + field.placeholder + \'</option>\';\n';
     widgetScript += '        if (field.options) field.options.forEach(opt => { formHTML += \'<option value="\' + opt + \'">\' + opt + \'</option>\'; });\n';
     widgetScript += '        formHTML += \'</select>\';\n';
     widgetScript += '      } else {\n';
-    widgetScript += '        formHTML += \'<input type="\' + field.type + \'" id="lead-\' + field.key + \'" placeholder="\' + field.placeholder + \'" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" />\';\n';
+    widgetScript += '        formHTML += \'<input type="\' + field.type + \'" id="lead-\' + field.key + \'" placeholder="\' + field.placeholder + \'" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1f2937;" />\';\n';
     widgetScript += '      }\n';
     widgetScript += '      formHTML += \'</div>\';\n';
     widgetScript += '    });\n';
