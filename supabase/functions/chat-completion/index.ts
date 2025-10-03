@@ -85,13 +85,28 @@ Use this knowledge base as a foundation, but feel free to provide creative and c
     }
   }
 
+  let leadCaptureInstruction = '';
+  if (agent.lead_capture_config?.enabled && agent.lead_capture_config.trigger_type === 'ai_detection') {
+    leadCaptureInstruction = `
+
+LEAD CAPTURE INSTRUCTIONS:
+You have access to a capture_lead tool. Use it proactively when you detect ANY user interest, including:
+- Positive responses like "yes", "interested", "sounds good", "tell me more"
+- Questions about features, pricing, demos, or how things work
+- Expressed needs or pain points you can solve
+- Requests for information or next steps
+- ANY indication they want to learn more or engage further
+
+Be aggressive - it's better to offer lead capture too early than miss the opportunity. When you detect interest, call the capture_lead tool immediately before continuing the conversation. Don't wait for explicit permission - the user's interest IS permission.`;
+  }
+
   return `You are ${agent.name}, an AI assistant. 
 
 ${agent.description}
 
 Instructions: ${agent.instructions}
 
-${visitorContextPrompt}${knowledgeInstruction}
+${visitorContextPrompt}${knowledgeInstruction}${leadCaptureInstruction}
 
 Be helpful, accurate, and follow the instructions provided. Keep responses conversational and engaging.`;
 }
