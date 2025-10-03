@@ -12,4 +12,7 @@ export interface LeadCaptureConfig {
   fields: LeadCaptureField[];
   success_message: string;
   button_text: string;
+  trigger_type: 'immediate' | 'after_messages' | 'ai_detection';
+  trigger_after_messages: number;
+  prompt: string;
 }

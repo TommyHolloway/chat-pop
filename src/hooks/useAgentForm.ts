@@ -34,7 +34,10 @@ const defaultFormData: AgentFormData = {
       { key: 'phone', label: 'Phone Number', type: 'tel', required: false, placeholder: '+1 (555) 123-4567' }
     ],
     success_message: 'Thank you! We will be in touch soon.',
-    button_text: 'Get in Touch'
+    button_text: 'Get in Touch',
+    trigger_type: 'ai_detection',
+    trigger_after_messages: 2,
+    prompt: "I'd love to help you further! Could you share your contact information?"
   },
 };
 
@@ -75,14 +78,20 @@ export const useAgentForm = (agentId?: string) => {
                 enabled: config.enabled || (data as any).enable_lead_capture || false,
                 fields: config.fields || defaultFormData.lead_capture_config.fields,
                 success_message: config.success_message || 'Thank you! We will be in touch soon.',
-                button_text: config.button_text || 'Get in Touch'
+                button_text: config.button_text || 'Get in Touch',
+                trigger_type: config.trigger_type || 'ai_detection',
+                trigger_after_messages: config.trigger_after_messages || 2,
+                prompt: config.prompt || "I'd love to help you further! Could you share your contact information?"
               };
             }
             return {
               enabled: (data as any).enable_lead_capture || false,
               fields: defaultFormData.lead_capture_config.fields,
               success_message: 'Thank you! We will be in touch soon.',
-              button_text: 'Get in Touch'
+              button_text: 'Get in Touch',
+              trigger_type: 'ai_detection',
+              trigger_after_messages: 2,
+              prompt: "I'd love to help you further! Could you share your contact information?"
             };
           })(),
         });

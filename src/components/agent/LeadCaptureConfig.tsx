@@ -76,24 +76,67 @@ export const LeadCaptureConfig: React.FC<LeadCaptureConfigProps> = ({ config, on
   return (
     <Card>
       <CardHeader>
+        <CardTitle>Lead Capture</CardTitle>
+        <CardDescription>
+          Configure lead capture forms to collect visitor information during conversations
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Lead Capture</CardTitle>
-            <CardDescription>
-              Configure lead capture forms to collect visitor information during conversations
-            </CardDescription>
+          <div className="space-y-0.5">
+            <Label htmlFor="lead-capture-enabled" className="text-base">
+              Enable Lead Capture
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Collect visitor information during conversations
+            </p>
           </div>
           <Switch
+            id="lead-capture-enabled"
             checked={config.enabled}
             onCheckedChange={(enabled) => onChange({ ...config, enabled })}
           />
         </div>
-      </CardHeader>
-      
-      {config.enabled && (
-        <CardContent className="space-y-6">
-          {/* Form Configuration */}
-          <div className="grid grid-cols-2 gap-4">
+
+        {config.enabled && (
+          <>
+            <div className="space-y-3">
+              <Label>When to Show Lead Form</Label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={config.trigger_type || 'ai_detection'}
+                onChange={(e) => onChange({ ...config, trigger_type: e.target.value as any })}
+              >
+                <option value="immediate">Immediately when chat opens</option>
+                <option value="after_messages">After X messages</option>
+                <option value="ai_detection">When AI detects interest</option>
+              </select>
+            </div>
+
+            {config.trigger_type === 'after_messages' && (
+              <div className="space-y-2">
+                <Label>Number of Messages Before Showing Form</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={config.trigger_after_messages || 2}
+                  onChange={(e) => onChange({ ...config, trigger_after_messages: parseInt(e.target.value) })}
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Lead Capture Prompt</Label>
+              <Input
+                placeholder="I'd love to help you further! Could you share your contact info?"
+                value={config.prompt || ''}
+                onChange={(e) => onChange({ ...config, prompt: e.target.value })}
+              />
+            </div>
+
+            {/* Form Configuration */}
+            <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="button_text">Button Text</Label>
               <Input
@@ -225,8 +268,9 @@ export const LeadCaptureConfig: React.FC<LeadCaptureConfigProps> = ({ config, on
               </div>
             )}
           </div>
-        </CardContent>
-      )}
+          </>
+        )}
+      </CardContent>
     </Card>
   );
 };

@@ -30,10 +30,10 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch only the configuration needed for the widget
+    // Fetch configuration needed for the widget
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('enable_proactive_engagement, proactive_config, widget_page_restrictions, status')
+      .select('name, initial_message, message_bubble_color, chat_interface_theme, profile_image_url, description, lead_capture_config, enable_proactive_engagement, proactive_config, widget_page_restrictions, status')
       .eq('id', agentId)
       .eq('status', 'active')
       .single();
@@ -46,16 +46,9 @@ serve(async (req) => {
       );
     }
 
-    // Return only the minimal configuration needed for the widget
-    const config = {
-      proactiveEnabled: agent.enable_proactive_engagement && agent.proactive_config?.enabled,
-      proactiveConfig: agent.proactive_config || {},
-      allowedPages: agent.proactive_config?.allowed_pages || [],
-      widgetPageRestrictions: agent.widget_page_restrictions || []
-    };
-
+    // Return configuration needed for the widget
     return new Response(
-      JSON.stringify(config), 
+      JSON.stringify({ agent }), 
       { headers: corsHeaders }
     );
 
