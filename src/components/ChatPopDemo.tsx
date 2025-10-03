@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, MessageCircle } from 'lucide-react';
 
 interface Scenario {
   id: number;
@@ -120,16 +120,27 @@ export const ChatPopDemo = () => {
                 <p className="text-sm text-muted-foreground">
                   {scenario.description}
                 </p>
+
+                {/* Chat Widget Button */}
+                <div 
+                  className="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-primary shadow-lg flex items-center justify-center transition-all duration-300"
+                  style={{
+                    transform: activeCard === scenario.id ? 'scale(1.1)' : 'scale(1)',
+                    animation: activeCard === scenario.id ? 'pulse 2s ease-in-out infinite' : 'none',
+                  }}
+                >
+                  <MessageCircle className="w-7 h-7 text-primary-foreground" />
+                </div>
               </Card>
 
-              {/* Chat Widget Overlay */}
+              {/* Chat Bubble - appears above button */}
               <div 
-                className="absolute -bottom-4 -right-4 pointer-events-none"
+                className="absolute bottom-20 right-4 pointer-events-none"
                 style={{
                   opacity: activeCard === scenario.id ? 1 : 0,
                   transform: activeCard === scenario.id 
                     ? 'scale(1) translateY(0) rotate(0deg)' 
-                    : 'scale(0.8) translateY(10px) rotate(-2deg)',
+                    : 'scale(0.8) translateY(20px) rotate(-2deg)',
                   transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
                 }}
               >
@@ -140,8 +151,8 @@ export const ChatPopDemo = () => {
                     animation: activeCard === scenario.id ? 'float 2s ease-in-out infinite' : 'none',
                   }}
                 >
-                  {/* Chat bubble tail */}
-                  <div className="absolute -top-2 right-6 w-4 h-4 bg-primary transform rotate-45"></div>
+                  {/* Chat bubble tail - pointing down toward button */}
+                  <div className="absolute -bottom-2 right-6 w-4 h-4 bg-primary transform rotate-45"></div>
                   
                   <p className="text-primary-foreground text-sm leading-relaxed font-medium">
                     {scenario.message}
