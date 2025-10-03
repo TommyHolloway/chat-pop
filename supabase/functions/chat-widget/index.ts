@@ -39,6 +39,7 @@ serve(async (req) => {
   let isOpen = false;
   let widget = null;
   let overlay = null;
+  let backdrop = null;
   let iframe = null;
   let iframeReady = false;
 
@@ -140,11 +141,14 @@ serve(async (req) => {
     // Visitor behavior tracking enabled for analytics only
   }
 
-  // Listen for readiness from iframe
+  // Listen for readiness and close messages from iframe
   window.addEventListener('message', (event) => {
     if (event && event.data === 'CHATPOP_READY') {
       iframeReady = true;
       console.log('ChatPop iframe ready');
+    }
+    if (event && event.data === 'CHATPOP_CLOSE') {
+      if (isOpen) toggleChat();
     }
   });
 
@@ -234,6 +238,26 @@ serve(async (req) => {
     });
     
     document.body.appendChild(widget);
+  }
+
+  // Create backdrop
+  function createBackdrop() {
+    backdrop = document.createElement('div');
+    backdrop.style.cssText = \`
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background: rgba(0, 0, 0, 0.3) !important;
+      z-index: 999997 !important;
+      display: none !important;
+      backdrop-filter: blur(2px) !important;
+      transition: opacity 0.3s ease !important;
+    \`;
+    
+    backdrop.addEventListener('click', toggleChat);
+    document.body.appendChild(backdrop);
   }
 
   // Create chat overlay
@@ -391,11 +415,13 @@ serve(async (req) => {
     isOpen = !isOpen;
     
     if (isOpen) {
+      backdrop.style.display = 'block';
       overlay.style.display = 'block';
       overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
     } else {
       overlay.style.animation = 'slideOutChat 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
       setTimeout(() => {
+        backdrop.style.display = 'none';
         overlay.style.display = 'none';
       }, 300);
     }
@@ -430,6 +456,7 @@ serve(async (req) => {
   // Initialize widget
   function init() {
     createWidget();
+    createBackdrop();
     createOverlay();
     initTracking(); // Initialize visitor tracking
   }

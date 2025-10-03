@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Send, Loader2, Bot } from 'lucide-react';
+import { Send, Loader2, Bot, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ActionButtons } from '@/components/chat/ActionButtons';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
@@ -207,10 +207,18 @@ export const PublicChat = () => {
                     <Bot className="h-5 w-5" />
                   </AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                   <h1 className="text-xl font-semibold">{agent.name}</h1>
                   <p className="text-sm text-muted-foreground">{agent.description}</p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => window.parent.postMessage('CHATPOP_CLOSE', '*')}
+                  className="ml-auto"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </CardTitle>
             </CardHeader>
             
