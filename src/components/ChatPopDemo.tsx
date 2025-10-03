@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
@@ -71,20 +72,19 @@ export const ChatPopDemo = () => {
   return (
     <section 
       id="chatpop-demo" 
-      className="relative py-20 px-8 overflow-hidden"
-      style={{ minHeight: '800px' }}
+      className="relative py-20 overflow-hidden bg-muted/10"
     >
-      {/* Dark gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#4F46E5] via-[#6366F1] to-[#14B8A6] opacity-95"></div>
+      {/* Subtle radial gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-radial from-primary/5 via-transparent to-transparent opacity-50"></div>
       
       {/* Content container */}
-      <div className="container mx-auto relative z-10">
+      <div className="container mx-auto px-4 relative z-10">
         {/* Heading Section */}
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
             See ChatPop in Action
           </h2>
-          <p className="text-2xl text-white/80">
+          <p className="text-xl text-muted-foreground">
             Hover over a scenario to trigger the widget demo
           </p>
         </div>
@@ -108,19 +108,19 @@ export const ChatPopDemo = () => {
               }}
             >
               {/* Card */}
-              <div 
-                className="relative bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 h-48 transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+              <Card 
+                className="relative bg-gradient-card border-primary/20 shadow-intelligence p-6 h-48 transition-all duration-300 hover-lift"
                 style={{
                   transform: activeCard === scenario.id ? 'scale(1.05)' : 'scale(1)',
                 }}
               >
-                <h3 className="text-lg font-semibold text-white mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   {scenario.title}
                 </h3>
-                <p className="text-sm text-white/70">
+                <p className="text-sm text-muted-foreground">
                   {scenario.description}
                 </p>
-              </div>
+              </Card>
 
               {/* Chat Widget Overlay */}
               <div 
@@ -134,11 +134,11 @@ export const ChatPopDemo = () => {
                     : 'translateY(10px)',
                 }}
               >
-                <div className="bg-[#14B8A6] rounded-xl p-4 shadow-2xl max-w-xs relative">
+                <div className="bg-primary rounded-xl p-4 shadow-2xl max-w-xs relative">
                   {/* Chat bubble tail */}
-                  <div className="absolute -top-2 right-6 w-4 h-4 bg-[#14B8A6] transform rotate-45"></div>
+                  <div className="absolute -top-2 right-6 w-4 h-4 bg-primary transform rotate-45"></div>
                   
-                  <p className="text-white text-sm leading-relaxed">
+                  <p className="text-primary-foreground text-sm leading-relaxed">
                     {scenario.message}
                   </p>
 
@@ -153,7 +153,7 @@ export const ChatPopDemo = () => {
 
                   {/* Action button for discount scenario */}
                   {scenario.animation === 'discount' && activeCard === scenario.id && (
-                    <button className="mt-3 w-full bg-white text-[#14B8A6] px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors">
+                    <button className="mt-3 w-full bg-primary-foreground text-primary px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-foreground/90 transition-colors">
                       Claim Discount
                     </button>
                   )}
@@ -168,7 +168,7 @@ export const ChatPopDemo = () => {
           <Link to="/auth/signup">
             <Button 
               size="lg"
-              className="text-lg px-8 py-6 h-auto bg-[#F59E0B] hover:bg-[#F59E0B]/90 text-white shadow-2xl animate-pulse hover:animate-none transition-all hover:scale-105"
+              className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary/90 shadow-glow transition-all hover:scale-105"
             >
               Try ChatPop Free
               <ArrowRight className="ml-2 h-5 w-5" />
