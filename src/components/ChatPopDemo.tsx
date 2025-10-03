@@ -124,21 +124,26 @@ export const ChatPopDemo = () => {
 
               {/* Chat Widget Overlay */}
               <div 
-                className="absolute -bottom-4 -right-4 transition-all duration-300 pointer-events-none"
+                className="absolute -bottom-4 -right-4 pointer-events-none"
                 style={{
                   opacity: activeCard === scenario.id ? 1 : 0,
                   transform: activeCard === scenario.id 
-                    ? scenario.animation === 'expand' 
-                      ? 'scale(1) translateY(0)' 
-                      : 'translateY(0)' 
-                    : 'translateY(10px)',
+                    ? 'scale(1) translateY(0) rotate(0deg)' 
+                    : 'scale(0.8) translateY(10px) rotate(-2deg)',
+                  transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
                 }}
               >
-                <div className="bg-primary rounded-xl p-4 shadow-2xl max-w-xs relative">
+                <div 
+                  className="bg-primary rounded-xl p-5 max-w-xs relative ring-4 ring-primary/30 animate-pulse"
+                  style={{
+                    boxShadow: '0 0 30px rgba(132, 204, 22, 0.6), 0 20px 60px rgba(0, 0, 0, 0.5)',
+                    animation: activeCard === scenario.id ? 'float 2s ease-in-out infinite' : 'none',
+                  }}
+                >
                   {/* Chat bubble tail */}
                   <div className="absolute -top-2 right-6 w-4 h-4 bg-primary transform rotate-45"></div>
                   
-                  <p className="text-primary-foreground text-sm leading-relaxed">
+                  <p className="text-primary-foreground text-sm leading-relaxed font-medium">
                     {scenario.message}
                   </p>
 
