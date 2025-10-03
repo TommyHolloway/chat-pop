@@ -103,15 +103,21 @@ export const LeadCaptureConfig: React.FC<LeadCaptureConfigProps> = ({ config, on
           <>
             <div className="space-y-3">
               <Label>When to Show Lead Form</Label>
-              <select
-                className="w-full p-2 border rounded-md"
+              <Select
                 value={config.trigger_type || 'ai_detection'}
-                onChange={(e) => onChange({ ...config, trigger_type: e.target.value as any })}
+                onValueChange={(value: 'immediate' | 'after_messages' | 'ai_detection') => 
+                  onChange({ ...config, trigger_type: value })
+                }
               >
-                <option value="immediate">Immediately when chat opens</option>
-                <option value="after_messages">After X messages</option>
-                <option value="ai_detection">When AI detects interest</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select trigger type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="immediate">Immediately when chat opens</SelectItem>
+                  <SelectItem value="after_messages">After X messages</SelectItem>
+                  <SelectItem value="ai_detection">When AI detects interest</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {config.trigger_type === 'after_messages' && (
