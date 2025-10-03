@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useSiteContent } from '@/hooks/useSiteContent';
 import { 
   Bot, 
   Zap, 
@@ -26,10 +25,9 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { PricingSection } from '@/components/PricingSection';
+import { ChatPopDemo } from '@/components/ChatPopDemo';
 
 export const Landing = () => {
-  const { activeVideo, loading: videoLoading } = useSiteContent("landing_video");
-  
   useEffect(() => {
     // Add chat widget script
     const script = document.createElement('script');
@@ -97,7 +95,7 @@ export const Landing = () => {
                 size="lg" 
                 className="text-lg px-8 py-6 h-auto bg-foreground text-background border-foreground hover:bg-foreground/90"
                 onClick={() => {
-                  const demoSection = document.getElementById('video-demo');
+                  const demoSection = document.getElementById('chatpop-demo');
                   if (demoSection) {
                     demoSection.scrollIntoView({ 
                       behavior: 'smooth', 
@@ -134,42 +132,10 @@ export const Landing = () => {
             </div>
           </div>
         </div>
-
-        {/* Video Demo Section */}
-        <div id="video-demo" className="container mx-auto px-4 pt-16">
-          <div className="max-w-4xl mx-auto">
-            {videoLoading ? (
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center shadow-large">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : activeVideo ? (
-              <div className="relative">
-                <video
-                  controls
-                  className="w-full rounded-lg shadow-large border border-primary/20"
-                  preload="metadata"
-                  poster={activeVideo.thumbnail_url || undefined}
-                >
-                  <source src={activeVideo.file_url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                {activeVideo.title && (
-                  <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
-                    {activeVideo.title}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg flex items-center justify-center border-2 border-dashed border-primary/20 shadow-large">
-                <div className="text-center space-y-3">
-                  <Play className="h-16 w-16 mx-auto text-primary" />
-                  <p className="text-muted-foreground">See AI chat agents in action</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </section>
+
+      {/* Interactive Demo Section */}
+      <ChatPopDemo />
 
       {/* Features Preview */}
       <section className="py-20 bg-muted/10">
