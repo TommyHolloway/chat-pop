@@ -121,7 +121,7 @@ serve(async (req) => {
     // Get agent details, actions, and lead capture settings
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('name, description, instructions, user_id, creativity_level, enable_lead_capture')
+      .select('name, description, instructions, user_id, creativity_level, lead_capture_config')
       .eq('id', agentId)
       .single();
 
@@ -355,7 +355,7 @@ serve(async (req) => {
     }
 
     // Add lead capture tool if enabled
-    if (agent.enable_lead_capture) {
+    if (agent.lead_capture_config?.enabled) {
       tools.push({
         type: 'function',
         function: {
@@ -570,12 +570,15 @@ serve(async (req) => {
           });
         }
         
-        if (toolCall.function.name === 'capture_lead' && agent.enable_lead_capture) {
+        if (toolCall.function.name === 'capture_lead' && agent.lead_capture_config?.enabled) {
+          const leadConfig = agent.lead_capture_config;
           enhancedResponse.actions.push({
             type: 'lead_capture',
             data: {
               prompt: 'I\'d be happy to help you further! Could you please share your contact information?',
-              fields: ['name', 'email', 'phone'],
+              fields: leadConfig.fields || [],
+              button_text: leadConfig.button_text || 'Submit',
+              success_message: leadConfig.success_message || 'Thank you! We will be in touch soon.',
               intent: functionArgs.intent,
               urgency: functionArgs.urgency
             }
