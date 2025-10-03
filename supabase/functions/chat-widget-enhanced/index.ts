@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     widgetScript += '    overlay.innerHTML = \'<div style="display:flex;flex-direction:column;height:100%;background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">\' +\n';
     widgetScript += '      \'<div style="background:linear-gradient(135deg, #84cc16 0%, #65a30d 100%);color:white;padding:20px;display:flex;align-items:center;gap:12px;"><img id="agent-avatar" style="width:48px;height:48px;border-radius:50%;border:3px solid white;" src="https://ui-avatars.com/api/?name=AI&background=84cc16&color=fff"><div><h2 id="agent-name" style="margin:0;font-size:18px;">Loading...</h2><p style="margin:0;font-size:13px;opacity:0.9;">AI Assistant</p></div></div>\' +\n';
     widgetScript += '      \'<div id="messages" style="flex:1;overflow-y:auto;padding:20px;"></div>\' +\n';
-    widgetScript += '      \'<div style="padding:16px;background:white;border-top:1px solid #e5e7eb;"><div style="display:flex;gap:8px;"><input id="chat-input" type="text" placeholder="Type your message..." style="flex:1;padding:12px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;"/><button id="send-btn" style="padding:12px 24px;background:#84cc16;color:white;border:none;border-radius:12px;cursor:pointer;font-weight:600;">Send</button></div></div>\' +\n';
+    widgetScript += '      \'<div style="padding:16px;background:white;border-top:1px solid #e5e7eb;"><div style="display:flex;gap:8px;"><input id="chat-input" type="text" placeholder="Type your message..." style="flex:1;padding:12px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;color:#1f2937;"/><button id="send-btn" style="padding:12px 24px;background:#84cc16;color:white;border:none;border-radius:12px;cursor:pointer;font-weight:600;">Send</button></div></div>\' +\n';
     widgetScript += '      \'<div style="text-align:center;padding:12px;font-size:11px;color:#9ca3af;">Powered by ChatPop</div></div>\';\n';
     widgetScript += '    document.body.appendChild(overlay);\n';
     widgetScript += '    document.getElementById("send-btn").onclick = sendMessage;\n';
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     widgetScript += '    const input = document.getElementById("chat-input");\n';
     widgetScript += '    const btn = document.getElementById("send-btn");\n';
     widgetScript += '    if (input) input.disabled = loading;\n';
-    widgetScript += '    if (btn) btn.disabled = loading;\n';
+    widgetScript += '    if (btn) { btn.disabled = loading; btn.style.opacity = loading ? "0.6" : "1"; }\n';
     widgetScript += '  }\n';
     widgetScript += '\n';
     widgetScript += '  async function sendMessage() {\n';
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     widgetScript += '      if (!response.ok) throw new Error("Failed to send message");\n';
     widgetScript += '      const data = await response.json();\n';
     widgetScript += '      if (!conversationId && data.conversationId) conversationId = data.conversationId;\n';
-    widgetScript += '      if (data.reply) addMessage(data.reply, false);\n';
+    widgetScript += '      if (data.message) addMessage(data.message, false);\n';
     widgetScript += '    } catch (error) { console.error("Error:", error); addMessage("Sorry, I encountered an error. Please try again.", false); }\n';
     widgetScript += '    finally { setLoading(false); }\n';
     widgetScript += '  }\n';
