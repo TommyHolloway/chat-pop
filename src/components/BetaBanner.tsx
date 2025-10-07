@@ -15,7 +15,7 @@ export const BetaBanner = () => {
         <Rocket className="h-4 w-4 text-warning" />
         <div className="flex items-center justify-between w-full">
           <AlertDescription className="text-sm font-medium">
-            🚀 <strong>We're in beta!</strong> Build your agents now, but expect exciting improvements until our official launch on <strong>November 1st</strong>.
+            🚀 <strong>Coming Soon - Winter 2025!</strong> Sign up for the waitlist and we'll install your agent for you when we launch!
           </AlertDescription>
           <Button
             variant="ghost"
