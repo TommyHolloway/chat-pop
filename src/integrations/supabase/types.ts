@@ -1010,6 +1010,39 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          metadata: Json | null
+          opt_in_for_texts: boolean | null
+          phone: string
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          metadata?: Json | null
+          opt_in_for_texts?: boolean | null
+          phone: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          metadata?: Json | null
+          opt_in_for_texts?: boolean | null
+          phone?: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       workspaces: {
         Row: {
           created_at: string

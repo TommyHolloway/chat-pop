@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { WaitlistDialog } from '@/components/WaitlistDialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -28,6 +28,9 @@ import { PricingSection } from '@/components/PricingSection';
 import { ChatPopDemo } from '@/components/ChatPopDemo';
 
 export const Landing = () => {
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [waitlistSource, setWaitlistSource] = useState('unknown');
+
   useEffect(() => {
     // Add chat widget script
     const script = document.createElement('script');
@@ -57,7 +60,23 @@ export const Landing = () => {
     };
   }, []);
 
+  const openWaitlist = (source: string) => {
+    setWaitlistSource(source);
+    setWaitlistOpen(true);
+  };
+
+  const scrollToDemo = () => {
+    const demoSection = document.getElementById('chatpop-demo');
+    if (demoSection) {
+      demoSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
+
   return (
+    <>
     <div className="min-h-screen bg-muted/30">
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
@@ -81,30 +100,21 @@ export const Landing = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-              <Link to="/auth/signup">
-                <Button 
-                  size="lg" 
-                  className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow"
-                >
-                  Start Getting More Customers Today
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow"
+                onClick={() => openWaitlist('hero')}
+              >
+                Join Waitlist
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Button 
                 variant="outline" 
                 size="lg" 
                 className="text-lg px-8 py-6 h-auto bg-foreground text-background border-foreground hover:bg-foreground/90"
-                onClick={() => {
-                  const demoSection = document.getElementById('chatpop-demo');
-                  if (demoSection) {
-                    demoSection.scrollIntoView({ 
-                      behavior: 'smooth', 
-                      block: 'start' 
-                    });
-                  }
-                }}
+                onClick={scrollToDemo}
               >
-                Watch How We Recover Lost Sales
+                See How We Recover Lost Sales
                 <Play className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -113,23 +123,6 @@ export const Landing = () => {
               No credit card required • See results in 24 hours • Cancel anytime
             </p>
 
-            {/* Social Proof Stats Bar */}
-            <div className="pt-12">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto p-8 rounded-xl bg-gradient-card border border-primary/20">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">250%</div>
-                  <div className="text-sm text-muted-foreground">Average Conversion Increase</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">23 min</div>
-                  <div className="text-sm text-muted-foreground">Average Setup Time</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">100+</div>
-                  <div className="text-sm text-muted-foreground">Platform Integrations</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -149,12 +142,15 @@ export const Landing = () => {
               While competitors wait for visitors to ask questions, our AI recovers 30% of lost sales by engaging at exactly the right moment.
             </p>
             <div className="pt-8">
-              <Link to="/auth/signup">
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto">
-                  Start Your Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="text-lg px-8 py-6 h-auto"
+                onClick={() => openWaitlist('features')}
+              >
+                Join Waitlist
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </div>
           </div>
 
@@ -314,7 +310,7 @@ export const Landing = () => {
 
       {/* Pricing */}
       <div id="pricing" data-track="pricing-section">
-        <PricingSection />
+        <PricingSection onWaitlistClick={openWaitlist} />
       </div>
 
       {/* FAQ Section */}
@@ -356,17 +352,14 @@ export const Landing = () => {
               Join 500+ businesses using ChatPop to recover lost revenue. See results in 24 hours or get your money back.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth/signup">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-white text-primary hover:bg-white/90">
-                  Start Your Free Trial - No Credit Card
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-white/30 text-white hover:bg-white/10">
-                  Talk to Our Sales Team
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 h-auto bg-white text-primary hover:bg-white/90"
+                onClick={() => openWaitlist('final-cta')}
+              >
+                Join Waitlist
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </div>
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center text-sm text-white/80 pt-6">
               <div className="flex items-center gap-2">
@@ -386,6 +379,13 @@ export const Landing = () => {
         </div>
       </section>
     </div>
+
+    <WaitlistDialog 
+      open={waitlistOpen} 
+      onOpenChange={setWaitlistOpen}
+      source={waitlistSource}
+    />
+  </>
   );
 };
 

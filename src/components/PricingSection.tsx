@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 interface PricingSectionProps {
   showDescription?: boolean;
   className?: string;
+  onWaitlistClick?: (source: string) => void;
 }
 
 interface PricingCardProps {
@@ -58,40 +59,10 @@ const PricingCard = ({ plan, onButtonClick }: PricingCardProps) => (
   </Card>
 );
 
-export const PricingSection = ({ showDescription = true, className = "" }: PricingSectionProps) => {
-  const { user } = useAuth();
-  const { createCheckout } = useSubscription();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  const handleButtonClick = async (plan: PricingPlan) => {
-    if (plan.name === "Free") {
-      // Redirect to signup for free plan
-      navigate('/auth/signup');
-      return;
-    }
-
-    if (!user) {
-      // Store selected plan and redirect to signup
-      localStorage.setItem('selectedPlan', plan.name);
-      navigate('/auth/signup');
-      return;
-    }
-
-    // Handle paid plans for authenticated users
-    try {
-      const planKey = plan.name === "Hobby" ? "hobby" : "standard";
-      await createCheckout(planKey);
-      toast({
-        title: "Redirecting to checkout",
-        description: "You'll be redirected to Stripe to complete your subscription.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create checkout session. Please try again.",
-        variant: "destructive",
-      });
+export const PricingSection = ({ showDescription = true, className = "", onWaitlistClick }: PricingSectionProps) => {
+  const handleButtonClick = (plan: PricingPlan) => {
+    if (onWaitlistClick) {
+      onWaitlistClick(`pricing-${plan.name.toLowerCase()}`);
     }
   };
 
