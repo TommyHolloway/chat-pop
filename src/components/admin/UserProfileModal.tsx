@@ -76,12 +76,6 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) return;
 
-    console.log('Updating user profile:', {
-      userId: user.id,
-      currentValues: { plan: user.plan, role: user.role },
-      newValues: values
-    });
-
     setLoading(true);
     try {
       // Use atomic update function for transaction safety
@@ -101,11 +95,8 @@ export function UserProfileModal({ user, isOpen, onClose, onUpdate }: UserProfil
       // Type guard and result validation
       const updateResult = result as { success: boolean; error?: string; user_id?: string };
       if (!updateResult || !updateResult.success) {
-        console.error('Update failed:', updateResult);
         throw new Error(updateResult?.error || 'Update operation failed');
       }
-
-      console.log('Profile updated successfully:', updateResult);
 
       // Verify the update was persisted by checking the database
       const { data: verifyData, error: verifyError } = await supabase

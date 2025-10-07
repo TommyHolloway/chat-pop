@@ -45,6 +45,43 @@ export const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Password strength validation
+    if (formData.password.length < 8) {
+      toast({
+        title: "Weak Password",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/[A-Z]/.test(formData.password)) {
+      toast({
+        title: "Weak Password",
+        description: "Password must contain at least one uppercase letter.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/[0-9]/.test(formData.password)) {
+      toast({
+        title: "Weak Password",
+        description: "Password must contain at least one number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      toast({
+        title: "Weak Password",
+        description: "Password must contain at least one special character.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",

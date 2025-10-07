@@ -48,7 +48,6 @@ export const Login = () => {
       }
 
       if (data.user && data.session) {
-        console.log('Login: Success, navigating to dashboard');
         toast({
           title: "Welcome back!",
           description: "You have been signed in successfully.",
