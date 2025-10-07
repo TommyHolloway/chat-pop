@@ -4,10 +4,12 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Moon, Sun, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Logo } from './Logo';
+import { WaitlistDialog } from '@/components/WaitlistDialog';
 
 export const PublicNavbar = () => {
   const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -45,9 +47,7 @@ export const PublicNavbar = () => {
               <Link to="/auth/login">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-              <Link to="/auth/signup">
-                <Button>Get Started</Button>
-              </Link>
+              <Button onClick={() => setWaitlistOpen(true)}>Join Waitlist</Button>
             </div>
 
             {/* Mobile menu button */}
@@ -76,14 +76,18 @@ export const PublicNavbar = () => {
                 <Link to="/auth/login">
                   <Button variant="ghost" className="w-full justify-start">Sign In</Button>
                 </Link>
-                <Link to="/auth/signup">
-                  <Button className="w-full">Get Started</Button>
-                </Link>
+                <Button className="w-full" onClick={() => setWaitlistOpen(true)}>Join Waitlist</Button>
               </div>
             </div>
           </div>
         )}
       </div>
+      
+      <WaitlistDialog 
+        open={waitlistOpen} 
+        onOpenChange={setWaitlistOpen} 
+        source="navbar" 
+      />
     </nav>
   );
 };

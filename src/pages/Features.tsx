@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +15,17 @@ import {
   DollarSign
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { WaitlistDialog } from '@/components/WaitlistDialog';
 
 export const Features = () => {
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [waitlistSource, setWaitlistSource] = useState('');
+
+  const openWaitlist = (source: string) => {
+    setWaitlistSource(source);
+    setWaitlistOpen(true);
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -37,12 +47,10 @@ export const Features = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-              <Link to="/auth/signup">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => openWaitlist('features-hero')}>
+                Join Waitlist
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Link to="/contact">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
                   See Demo
@@ -170,12 +178,10 @@ export const Features = () => {
               Be among the first to use proactive AI technology to engage visitors before they leave and turn browsers into buyers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth/signup">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-white text-primary hover:bg-white/90">
-                  Start Your Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button size="lg" className="text-lg px-8 py-6 h-auto bg-white text-primary hover:bg-white/90" onClick={() => openWaitlist('features-cta')}>
+                Join Waitlist
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Link to="/pricing">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-white/30 text-white hover:bg-white/10">
                   View Pricing
@@ -188,6 +194,12 @@ export const Features = () => {
           </div>
         </div>
       </section>
+
+      <WaitlistDialog 
+        open={waitlistOpen} 
+        onOpenChange={setWaitlistOpen} 
+        source={waitlistSource} 
+      />
     </div>
   );
 };
