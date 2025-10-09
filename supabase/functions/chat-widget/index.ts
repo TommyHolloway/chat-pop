@@ -110,14 +110,10 @@ serve(async (req) => {
     const payload = {
       sessionId: sessionId,
       agentId: agentId,
-      behaviorContext: {
-        pageUrl: window.location.href,
-        timeOnPage: Math.floor((Date.now() - currentPageStartTime) / 1000),
-        totalPageViews: totalPageViews,
-        scrollDepth: Math.floor((window.pageYOffset / (document.body.scrollHeight - window.innerHeight)) * 100),
-        totalTimeSpent: Math.floor((Date.now() - startTime) / 1000),
-        referrer: document.referrer
-      }
+      currentUrl: window.location.href,
+      currentPath: window.location.pathname,
+      currentHash: window.location.hash,
+      timeOnPage: Math.floor((Date.now() - currentPageStartTime) / 1000)
     };
 
     fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
