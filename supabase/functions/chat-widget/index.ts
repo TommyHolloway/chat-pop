@@ -49,8 +49,9 @@ serve(async (req) => {
   let currentPageStartTime = Date.now();
   let totalPageViews = 0;
   let hasTrackedCurrentPage = false;
-  let suggestion = null;
-  let suggestionShown = false;
+  let shownSuggestions = [];
+  let proactivePopup = null;
+  let checkTriggerInterval = null;
 
   // Visitor tracking functions
   function trackBehavior(eventType, data = {}) {
@@ -101,11 +102,148 @@ serve(async (req) => {
     }
   }
 
-  // Automatic proactive suggestions disabled - only user-created triggers should show
+  // Check for proactive triggers
+  function checkProactiveTriggers() {
+    // Don't check if chat is already open or if we've shown too many
+    if (isOpen || shownSuggestions.length >= 3) return;
 
-  // Automatic proactive suggestions disabled - only user-created triggers should show
+    const payload = {
+      sessionId: sessionId,
+      agentId: agentId,
+      behaviorContext: {
+        pageUrl: window.location.href,
+        timeOnPage: Math.floor((Date.now() - currentPageStartTime) / 1000),
+        totalPageViews: totalPageViews,
+        scrollDepth: Math.floor((window.pageYOffset / (document.body.scrollHeight - window.innerHeight)) * 100),
+        totalTimeSpent: Math.floor((Date.now() - startTime) / 1000),
+        referrer: document.referrer
+      }
+    };
 
-  // Automatic proactive suggestions disabled - only user-created triggers should show
+    fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.shouldEngage && data.suggestion && !shownSuggestions.includes(data.suggestion.id)) {
+        showProactivePopup(data.suggestion);
+        shownSuggestions.push(data.suggestion.id);
+      }
+    })
+    .catch(error => console.error('Proactive trigger check error:', error));
+  }
+
+  // Show proactive popup
+  function showProactivePopup(suggestion) {
+    // Remove existing popup if any
+    if (proactivePopup) {
+      proactivePopup.remove();
+    }
+
+    proactivePopup = document.createElement('div');
+    proactivePopup.style.cssText = \`
+      position: fixed !important;
+      \${position.includes('right') ? 'right: 90px !important;' : 'left: 90px !important;'}
+      \${position.includes('bottom') ? 'bottom: 20px !important;' : 'top: 20px !important;'}
+      max-width: 280px !important;
+      background: white !important;
+      border: 1px solid rgba(132, 204, 22, 0.2) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(132, 204, 22, 0.1) !important;
+      z-index: 999998 !important;
+      padding: 16px !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      cursor: pointer !important;
+      animation: slideInPopup 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      transition: all 0.2s ease !important;
+    \`;
+
+    const popupStyles = document.createElement('style');
+    popupStyles.textContent = \`
+      @keyframes slideInPopup {
+        0% {
+          opacity: 0;
+          transform: translateX(\${position.includes('right') ? '20px' : '-20px'}) scale(0.95);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(0) scale(1);
+        }
+      }
+    \`;
+    document.head.appendChild(popupStyles);
+
+    proactivePopup.innerHTML = \`
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+        <div style="flex: 1;">
+          <div style="font-size: 14px; color: #374151; line-height: 1.5; margin-bottom: 8px;">
+            \${suggestion.message}
+          </div>
+          <div style="font-size: 12px; color: #84cc16; font-weight: 500;">
+            Click to chat →
+          </div>
+        </div>
+        <button onclick="event.stopPropagation(); this.parentElement.parentElement.remove();" style="
+          background: none;
+          border: none;
+          color: #9ca3af;
+          cursor: pointer;
+          font-size: 18px;
+          line-height: 1;
+          padding: 0;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">×</button>
+      </div>
+    \`;
+
+    proactivePopup.addEventListener('click', () => {
+      proactivePopup.remove();
+      proactivePopup = null;
+      if (!isOpen) toggleChat();
+      
+      // Mark suggestion as clicked
+      fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          agentId: agentId,
+          suggestionId: suggestion.id,
+          action: 'clicked'
+        })
+      }).catch(err => console.error('Failed to track suggestion click:', err));
+    });
+
+    proactivePopup.addEventListener('mouseenter', () => {
+      proactivePopup.style.transform = 'scale(1.02)';
+      proactivePopup.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(132, 204, 22, 0.15)';
+    });
+
+    proactivePopup.addEventListener('mouseleave', () => {
+      proactivePopup.style.transform = 'scale(1)';
+      proactivePopup.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(132, 204, 22, 0.1)';
+    });
+
+    document.body.appendChild(proactivePopup);
+
+    // Mark suggestion as shown
+    fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/analyze-visitor-behavior', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessionId,
+        agentId: agentId,
+        suggestionId: suggestion.id,
+        action: 'shown'
+      })
+    }).catch(err => console.error('Failed to track suggestion shown:', err));
+  }
 
   // Set up tracking listeners
   function initTracking() {
@@ -138,7 +276,11 @@ serve(async (req) => {
       }
     });
 
-    // Visitor behavior tracking enabled for analytics only
+    // Start proactive trigger checking (every 5 seconds)
+    checkTriggerInterval = setInterval(checkProactiveTriggers, 5000);
+    
+    // Check immediately after 2 seconds
+    setTimeout(checkProactiveTriggers, 2000);
   }
 
   // Listen for readiness and close messages from iframe
