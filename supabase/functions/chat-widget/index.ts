@@ -123,9 +123,26 @@ serve(async (req) => {
     })
     .then(response => response.json())
     .then(data => {
-      if (data.shouldEngage && data.suggestion && !shownSuggestions.includes(data.suggestion.id)) {
-        showProactivePopup(data.suggestion);
-        shownSuggestions.push(data.suggestion.id);
+      console.log('Trigger check response:', data); // Debug logging
+
+      if (data.success && data.analysis && data.analysis.triggered) {
+        // Construct suggestion object from API response
+        const suggestion = {
+          id: data.analysis.triggerName || data.analysis.triggerType || 'unknown',
+          message: data.analysis.suggestedMessage,
+          type: data.analysis.triggerType,
+          reason: data.analysis.reason
+        };
+        
+        // Enforce frequency limit (max 3 suggestions) and prevent duplicates
+        if (shownSuggestions.length < 3 && !shownSuggestions.includes(suggestion.id)) {
+          showProactivePopup(suggestion);
+          shownSuggestions.push(suggestion.id);
+          
+          console.log('✅ Showing proactive popup:', suggestion);
+        } else {
+          console.log('⏭️ Skipping popup - already shown or limit reached');
+        }
       }
     })
     .catch(error => console.error('Proactive trigger check error:', error));
