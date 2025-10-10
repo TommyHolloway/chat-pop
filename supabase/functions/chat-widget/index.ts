@@ -559,8 +559,17 @@ serve(async (req) => {
     }
   }
 
+  // Helper to convert HEX to RGBA
+  function hexToRGBA(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return \`rgba(\${r}, \${g}, \${b}, \${alpha})\`;
+  }
+
   // Create widget button
-  function createWidget() {
+  function createWidget(primaryColor) {
+    const darkerColor = adjustColorBrightness(primaryColor, -20);
     widget = document.createElement('div');
     widget.style.cssText = \`
       position: fixed !important;
@@ -568,10 +577,10 @@ serve(async (req) => {
       \${position.includes('bottom') ? 'bottom: 20px !important;' : 'top: 20px !important;'}
       width: 60px !important;
       height: 60px !important;
-      background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%) !important;
+      background: linear-gradient(135deg, \${primaryColor} 0%, \${darkerColor} 100%) !important;
       border: none !important;
       border-radius: 50% !important;
-      box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 8px 32px \${hexToRGBA(primaryColor, 0.4)}, 0 4px 16px rgba(0, 0, 0, 0.1) !important;
       cursor: pointer !important;
       z-index: 999999 !important;
       display: flex !important;
@@ -589,11 +598,11 @@ serve(async (req) => {
     styleSheet.textContent = \`
       @keyframes pulseGlow {
         0%, 100% { 
-          box-shadow: 0 8px 32px rgba(132, 204, 22, 0.4), 0 4px 16px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 8px 32px \${hexToRGBA(primaryColor, 0.4)}, 0 4px 16px rgba(0, 0, 0, 0.1);
           transform: scale(1);
         }
         50% { 
-          box-shadow: 0 12px 40px rgba(132, 204, 22, 0.6), 0 6px 20px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 12px 40px \${hexToRGBA(primaryColor, 0.6)}, 0 6px 20px rgba(0, 0, 0, 0.15);
           transform: scale(1.02);
         }
       }
@@ -605,7 +614,7 @@ serve(async (req) => {
       
       .chat-widget-button:hover {
         transform: scale(1.05) !important;
-        box-shadow: 0 16px 48px rgba(132, 204, 22, 0.6), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+        box-shadow: 0 16px 48px \${hexToRGBA(primaryColor, 0.6)}, 0 8px 24px rgba(0, 0, 0, 0.2) !important;
         animation: none !important;
       }
       
@@ -682,7 +691,7 @@ serve(async (req) => {
       border-radius: 16px !important;
       box-shadow: 
         0 20px 60px rgba(0, 0, 0, 0.15),
-        0 8px 32px rgba(132, 204, 22, 0.1),
+        0 8px 32px \${hexToRGBA(agentData?.message_bubble_color || '#84cc16', 0.1)},
         inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
       z-index: 999998 !important;
       display: none !important;
@@ -835,8 +844,13 @@ serve(async (req) => {
   }
 
   // Initialize widget
-  function init() {
-    createWidget();
+  async function init() {
+    // Fetch agent data first to get the color
+    const data = await fetchAgentData();
+    agentData = data;
+    const primaryColor = data?.message_bubble_color || '#84cc16';
+    
+    createWidget(primaryColor);
     createBackdrop();
     // Don't create overlay until user clicks
     initTracking(); // Initialize visitor tracking
