@@ -40,8 +40,14 @@ serve(async (req) => {
   let widget = null;
   let overlay = null;
   let backdrop = null;
-  let iframe = null;
-  let iframeReady = false;
+  let conversationId = null;
+  let isLoading = false;
+  let messageCount = 0;
+  let leadCaptured = false;
+  let leadConfig = null;
+  let agentData = null;
+  const supabaseUrl = 'https://etwjtxqjcwyxdamlcorf.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM';
 
   // Visitor tracking
   const sessionId = 'vis_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -296,16 +302,262 @@ serve(async (req) => {
     setTimeout(checkProactiveTriggers, 2000);
   }
 
-  // Listen for readiness and close messages from iframe
-  window.addEventListener('message', (event) => {
-    if (event && event.data === 'CHATPOP_READY') {
-      iframeReady = true;
-      console.log('ChatPop iframe ready');
+  // Helper functions for chat UI
+  function adjustColorBrightness(hex, percent) {
+    const num = parseInt(hex.replace('#',''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+    const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+    return '#' + (0x1000000 + R*0x10000 + G*0x100 + B).toString(16).slice(1);
+  }
+
+  function getAvatarUrl(data, isUser) {
+    if (isUser) {
+      const color = (data?.message_bubble_color || '#3B82F6').replace('#', '');
+      return 'https://ui-avatars.com/api/?name=You&background=' + color + '&color=fff';
     }
-    if (event && event.data === 'CHATPOP_CLOSE') {
-      if (isOpen) toggleChat();
+    if (data?.profile_image_url) return data.profile_image_url;
+    const name = data?.name || 'AI';
+    const color = (data?.message_bubble_color || '#3B82F6').replace('#', '');
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=' + color + '&color=fff';
+  }
+
+  async function fetchAgentData() {
+    try {
+      const configRes = await fetch(supabaseUrl + '/functions/v1/get-widget-config?agentId=' + agentId, {
+        headers: { 'apikey': supabaseKey }
+      });
+      if (configRes.ok) {
+        const configData = await configRes.json();
+        if (configData.agent?.lead_capture_config) {
+          leadConfig = configData.agent.lead_capture_config;
+        }
+      }
+      
+      const response = await fetch(supabaseUrl + '/rest/v1/rpc/get_public_agent_data?agent_uuid=' + agentId, {
+        headers: { 'apikey': supabaseKey, 'Content-Type': 'application/json' }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          agentData = data[0];
+          checkProactiveLeadCapture();
+          return agentData;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching agent:', error);
     }
-  });
+    return null;
+  }
+
+  function addMessage(content, isUser) {
+    const messages = document.getElementById('messages');
+    if (!messages) return;
+    
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;' + (isUser ? 'flex-direction:row-reverse;' : '');
+    
+    const avatar = document.createElement('img');
+    avatar.src = getAvatarUrl(agentData, isUser);
+    avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.textContent = content;
+    messageDiv.style.cssText = 'padding:12px 16px;border-radius:16px;max-width:70%;word-wrap:break-word;background:' + 
+      (isUser ? (overlay?.dataset?.primaryColor || '#3B82F6') : '#f3f4f6') + 
+      ';color:' + (isUser ? 'white' : '#1f2937') + ';';
+    
+    div.appendChild(avatar);
+    div.appendChild(messageDiv);
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    
+    if (isUser) {
+      messageCount++;
+      checkProactiveLeadCapture();
+    }
+  }
+
+  function checkProactiveLeadCapture() {
+    if (!leadConfig || !leadConfig.enabled || leadCaptured) return;
+    
+    const triggerType = leadConfig.trigger_type || 'ai_detection';
+    if (triggerType === 'immediate' && messageCount === 0) {
+      renderLeadCaptureForm({
+        prompt: leadConfig.prompt,
+        fields: leadConfig.fields,
+        button_text: leadConfig.button_text
+      });
+    } else if (triggerType === 'after_messages' && messageCount >= (leadConfig.trigger_after_messages || 2)) {
+      renderLeadCaptureForm({
+        prompt: leadConfig.prompt,
+        fields: leadConfig.fields,
+        button_text: leadConfig.button_text
+      });
+    }
+  }
+
+  function renderLeadCaptureForm(actionData) {
+    if (leadCaptured) return;
+    
+    const formDiv = document.createElement('div');
+    formDiv.style.cssText = 'background:#f8fafc;padding:16px;border-radius:12px;margin-top:8px;';
+    
+    let formHTML = '<div style="margin-bottom:12px;"><p style="margin:0 0 12px 0;font-weight:600;color:#1f2937;">' + 
+      (actionData.prompt || 'Please share your information') + '</p>';
+    
+    actionData.fields.forEach(field => {
+      formHTML += '<div style="margin-bottom:12px;"><label style="display:block;margin-bottom:4px;font-size:13px;color:#4b5563;">' + 
+        field.label + (field.required ? ' *' : '') + '</label>';
+      
+      if (field.type === 'textarea') {
+        formHTML += '<textarea id="lead-' + field.key + '" placeholder="' + field.placeholder + 
+          '" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1f2937;" rows="3"></textarea>';
+      } else if (field.type === 'select') {
+        formHTML += '<select id="lead-' + field.key + 
+          '" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1f2937;">';
+        formHTML += '<option value="">' + field.placeholder + '</option>';
+        if (field.options) {
+          field.options.forEach(opt => {
+            formHTML += '<option value="' + opt + '">' + opt + '</option>';
+          });
+        }
+        formHTML += '</select>';
+      } else {
+        formHTML += '<input type="' + field.type + '" id="lead-' + field.key + '" placeholder="' + field.placeholder + 
+          '" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#1f2937;" />';
+      }
+      formHTML += '</div>';
+    });
+    
+    formHTML += '<button id="submit-lead-btn" style="width:100%;padding:10px;background:' + 
+      (overlay?.dataset?.primaryColor || '#3B82F6') + 
+      ';color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">' + 
+      (actionData.button_text || 'Submit') + '</button></div>';
+    
+    formDiv.innerHTML = formHTML;
+    document.getElementById('messages').appendChild(formDiv);
+    document.getElementById('submit-lead-btn').onclick = () => handleLeadSubmit(actionData.fields, actionData.success_message);
+  }
+
+  async function handleLeadSubmit(fields, successMessage) {
+    const leadData = {};
+    let hasError = false;
+    
+    fields.forEach(field => {
+      const input = document.getElementById('lead-' + field.key);
+      const value = input?.value.trim();
+      
+      if (field.required && !value) {
+        hasError = true;
+        input.style.borderColor = '#ef4444';
+        return;
+      }
+      
+      if (value) leadData[field.key] = value;
+    });
+    
+    if (hasError) {
+      addMessage('Please fill in all required fields.', false);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await fetch(supabaseUrl + '/functions/v1/capture-lead', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey
+        },
+        body: JSON.stringify({
+          agentId: agentId,
+          conversationId: conversationId,
+          leadData: leadData
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to submit');
+      
+      const data = await response.json();
+      leadCaptured = true;
+      addMessage(successMessage || leadConfig?.success_message || data.message || 'Thank you! We will be in touch soon.', false);
+      
+      document.getElementById('submit-lead-btn').disabled = true;
+      document.getElementById('submit-lead-btn').textContent = 'Submitted!';
+    } catch (error) {
+      console.error('Lead submit error:', error);
+      addMessage('Sorry, there was an error submitting your information.', false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function setLoading(loading) {
+    isLoading = loading;
+    const input = document.getElementById('chat-input');
+    const btn = document.getElementById('send-btn');
+    
+    if (input) input.disabled = loading;
+    if (btn) {
+      btn.disabled = loading;
+      btn.style.opacity = loading ? '0.6' : '1';
+    }
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input?.value.trim();
+    
+    if (!message || isLoading) return;
+    
+    addMessage(message, true);
+    input.value = '';
+    setLoading(true);
+    
+    try {
+      const response = await fetch(supabaseUrl + '/functions/v1/chat-completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey
+        },
+        body: JSON.stringify({
+          agentId: agentId,
+          message: message,
+          conversationId: conversationId,
+          sessionId: sessionId
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to send message');
+      
+      const data = await response.json();
+      
+      if (!conversationId && data.conversationId) {
+        conversationId = data.conversationId;
+      }
+      
+      if (data.message) {
+        addMessage(data.message, false);
+      }
+      
+      if (data.actions && data.actions.length > 0) {
+        data.actions.forEach(action => {
+          if (action.type === 'lead_capture') {
+            renderLeadCaptureForm(action.data);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      addMessage('Sorry, I encountered an error. Please try again.', false);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Create widget button
   function createWidget() {
@@ -415,7 +667,7 @@ serve(async (req) => {
     document.body.appendChild(backdrop);
   }
 
-  // Create chat overlay
+  // Create chat overlay with direct embedding
   function createOverlay() {
     overlay = document.createElement('div');
     overlay.style.cssText = \`
@@ -466,103 +718,73 @@ serve(async (req) => {
     \`;
     document.head.appendChild(overlayStyles);
 
-    iframe = document.createElement('iframe');
-    iframe.sandbox = 'allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin';
-    iframe.allow = 'fullscreen';
-    iframe.style.cssText = \`
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 20px;
-      background: transparent;
-    \`;
-
-    // Fetch HTML content and use srcdoc to force proper rendering
-    console.log('Fetching chat HTML content...');
-    const chatUrlWithSession = chatUrl + '&sessionId=' + encodeURIComponent(sessionId);
-    fetch(chatUrlWithSession)
-      .then(response => {
-        console.log('Chat fetch response status:', response.status);
-        console.log('Chat fetch content-type:', response.headers.get('content-type'));
-        return response.text();
-      })
-      .then(html => {
-        console.log('Chat HTML fetched successfully, length:', html.length);
-        iframe.srcdoc = html;
-        console.log('Chat HTML injected via srcdoc');
-      })
-      .catch(error => {
-        console.error('Failed to fetch chat HTML, falling back to src:', error);
-        iframe.src = chatUrlWithSession;
-      });
-
-    iframe.addEventListener('load', function() {
-      console.log('ChatPop iframe loaded successfully');
-    });
-
-    iframe.addEventListener('error', function() {
-      console.error('ChatPop iframe failed to load');
-      showErrorFallback();
-    });
-
-    overlay.appendChild(iframe);
-    document.body.appendChild(overlay);
-  }
-
-  // Show error fallback
-  function showErrorFallback() {
-    if (overlay) {
+    // Fetch agent data and build UI
+    fetchAgentData().then(data => {
+      if (!data) {
+        console.error('Failed to fetch agent data');
+        return;
+      }
+      
+      agentData = data;
+      const primaryColor = data?.message_bubble_color || '#84cc16';
+      const gradientEnd = adjustColorBrightness(primaryColor, -20);
+      
+      overlay.dataset.primaryColor = primaryColor;
+      
+      // Build chat UI directly (no iframe)
       overlay.innerHTML = \`
-        <div style="
-          padding: 32px; 
-          text-align: center; 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          border-radius: 20px;
-        ">
-          <div style="
-            width: 60px; 
-            height: 60px; 
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin-bottom: 20px;
-            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
-          ">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/>
-              <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
+        <div style="display:flex;flex-direction:column;height:100%;background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+          <div style="background:linear-gradient(135deg, \${primaryColor} 0%, \${gradientEnd} 100%);color:white;padding:20px;display:flex;align-items:center;gap:12px;">
+            <img id="agent-avatar" style="width:48px;height:48px;border-radius:50%;border:3px solid white;" src="\${getAvatarUrl(agentData, false)}">
+            <div>
+              <h2 id="agent-name" style="margin:0;font-size:18px;">\${agentData?.name || 'AI Assistant'}</h2>
+              <p style="margin:0;font-size:13px;opacity:0.9;">AI Assistant</p>
+            </div>
           </div>
-          <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 20px; font-weight: 600;">Chat Unavailable</h3>
-          <p style="margin: 0 0 24px 0; font-size: 15px; color: #6b7280; line-height: 1.5;">
-            We're having trouble loading the chat. Please try again in a moment.
-          </p>
-          <button onclick="location.reload()" style="
-            padding: 12px 24px; 
-            background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 16px rgba(132, 204, 22, 0.3);
-            transition: all 0.2s ease;
-          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(132, 204, 22, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(132, 204, 22, 0.3)'">
-            Retry Connection
-          </button>
+          <div id="messages" style="flex:1;overflow-y:auto;padding:20px;"></div>
+          <div style="padding:16px;background:white;border-top:1px solid #e5e7eb;">
+            <div style="display:flex;gap:8px;">
+              <input 
+                id="chat-input" 
+                type="text" 
+                placeholder="Type your message..." 
+                style="flex:1;padding:12px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;color:#1f2937 !important;background:#ffffff;-webkit-text-fill-color:#1f2937;"
+              />
+              <button 
+                id="send-btn" 
+                style="padding:12px 24px;background:\${primaryColor};color:white;border:none;border-radius:12px;cursor:pointer;font-weight:600;"
+              >Send</button>
+            </div>
+          </div>
+          <div style="text-align:center;padding:12px;font-size:11px;color:#9ca3af;">Powered by ChatPop</div>
         </div>
       \`;
-    }
+      
+      // Attach event listeners directly
+      const sendBtn = document.getElementById('send-btn');
+      const chatInput = document.getElementById('chat-input');
+      
+      if (sendBtn) {
+        sendBtn.onclick = sendMessage;
+        console.log('✅ Send button click listener attached');
+      }
+      
+      if (chatInput) {
+        chatInput.onkeypress = (e) => {
+          if (e.key === 'Enter') sendMessage();
+        };
+        console.log('✅ Chat input enter listener attached');
+      }
+      
+      // Show initial message
+      if (agentData?.initial_message) {
+        addMessage(agentData.initial_message, false);
+      }
+    }).catch(error => {
+      console.error('Error initializing chat overlay:', error);
+    });
+
+    document.body.appendChild(overlay);
   }
 
   // Toggle chat
@@ -570,6 +792,10 @@ serve(async (req) => {
     isOpen = !isOpen;
     
     if (isOpen) {
+      if (!overlay) {
+        console.log('Creating overlay for first time');
+        createOverlay();
+      }
       backdrop.style.display = 'block';
       overlay.style.display = 'block';
       overlay.style.animation = 'slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -612,7 +838,7 @@ serve(async (req) => {
   function init() {
     createWidget();
     createBackdrop();
-    createOverlay();
+    // Don't create overlay until user clicks
     initTracking(); // Initialize visitor tracking
   }
 
