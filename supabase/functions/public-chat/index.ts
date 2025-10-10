@@ -611,13 +611,22 @@ serve(async (req) => {
     <script>
     ` + jsVariables + `
         
-        // Wrap all function definitions in comprehensive try-catch to ensure they get defined
-        try {
-            console.log('🔧 Defining chat functions...');
-            
-            const messagesContainer = document.getElementById('messages');
-            const messageInput = document.getElementById('messageInput');
-            const sendButton = document.getElementById('sendButton');
+        // Initialize chat widget with DOM ready handling
+        function initializeChatWidget() {
+            try {
+                console.log('🔧 Initializing chat widget...');
+                console.log('📊 Document ready state:', document.readyState);
+                console.log('📊 Document body:', document.body);
+                
+                const messagesContainer = document.getElementById('messages');
+                const messageInput = document.getElementById('messageInput');
+                const sendButton = document.getElementById('sendButton');
+                
+                console.log('📊 All elements:', {
+                    messages: !!messagesContainer,
+                    input: !!messageInput,
+                    button: !!sendButton
+                });
             
             if (!messagesContainer || !messageInput || !sendButton) {
                 throw new Error('Required DOM elements not found');
@@ -893,14 +902,27 @@ serve(async (req) => {
             
             console.log('✅ Chat widget initialized successfully');
 
-        } catch (error) {
-            console.error('❌ Critical script error:', error);
-            document.body.innerHTML = 
-                '<div style="padding: 20px; color: red; font-family: Arial; text-align: center; background: white;">' +
-                    '<h3>Chat Loading Error</h3>' +
-                    '<p>Unable to initialize chat: ' + error.message + '</p>' +
-                    '<button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px; cursor: pointer;">Retry</button>' +
-                '</div>';
+            } catch (error) {
+                console.error('❌ Critical initialization error:', error);
+                document.body.innerHTML = 
+                    '<div style="padding: 20px; color: red; font-family: Arial; text-align: center; background: white;">' +
+                        '<h3>Chat Loading Error</h3>' +
+                        '<p>Unable to initialize chat: ' + error.message + '</p>' +
+                        '<button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px; cursor: pointer;">Retry</button>' +
+                    '</div>';
+            }
+        }
+        
+        // Smart initialization that handles both loading states
+        if (document.readyState === 'loading') {
+            console.log('⏳ Document still loading, waiting for DOMContentLoaded...');
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('✅ DOMContentLoaded fired, initializing now');
+                initializeChatWidget();
+            });
+        } else {
+            console.log('✅ Document already ready (state: ' + document.readyState + '), initializing immediately');
+            initializeChatWidget();
         }
     </script>
 </body>
