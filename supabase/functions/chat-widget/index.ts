@@ -137,7 +137,8 @@ serve(async (req) => {
           id: data.analysis.triggerName || data.analysis.triggerType || 'unknown',
           message: data.analysis.suggestedMessage,
           type: data.analysis.triggerType,
-          reason: data.analysis.reason
+          reason: data.analysis.reason,
+          displayDuration: data.messageDisplayDuration || 15000
         };
         
         // Enforce frequency limit (max 3 suggestions) and prevent duplicates
@@ -198,7 +199,7 @@ serve(async (req) => {
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
         <div style="flex: 1;">
           <div style="font-size: 14px; color: #374151; line-height: 1.5; margin-bottom: 8px;">
-            \${suggestion.message}
+            \${(suggestion.message || '').replace(/^["']|["']$/g, '').trim()}
           </div>
           <div style="font-size: 12px; color: #84cc16; font-weight: 500;">
             Click to chat →
@@ -262,6 +263,18 @@ serve(async (req) => {
         action: 'shown'
       })
     }).catch(err => console.error('Failed to track suggestion shown:', err));
+
+    // Auto-dismiss popup after configured duration
+    const displayDuration = suggestion.displayDuration || 15000;
+    console.log(`Popup will auto-dismiss in ${displayDuration}ms`);
+
+    setTimeout(() => {
+      if (proactivePopup && proactivePopup.parentElement) {
+        console.log('Auto-dismissing proactive popup');
+        proactivePopup.remove();
+        proactivePopup = null;
+      }
+    }, displayDuration);
   }
 
   // Set up tracking listeners
