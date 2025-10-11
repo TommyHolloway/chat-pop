@@ -143,10 +143,20 @@ serve(async (req) => {
         
         // Enforce frequency limit (max 3 suggestions) and prevent duplicates
         if (shownSuggestions.length < 3 && !shownSuggestions.includes(suggestion.id)) {
-          showProactivePopup(suggestion);
-          shownSuggestions.push(suggestion.id);
+          // Apply timing delay before showing popup
+          const timingDelay = data.timingDelay || 5000;
+          console.log('Trigger met! Waiting ' + timingDelay + 'ms before showing popup...');
           
-          console.log('✅ Showing proactive popup:', suggestion);
+          setTimeout(() => {
+            // Double-check user hasn't opened chat in the meantime
+            if (!isOpen && shownSuggestions.length < 3) {
+              showProactivePopup(suggestion);
+              shownSuggestions.push(suggestion.id);
+              console.log('✅ Showing proactive popup:', suggestion);
+            } else {
+              console.log('⏭️ Skipping popup - chat already open or limit reached');
+            }
+          }, timingDelay);
         } else {
           console.log('⏭️ Skipping popup - already shown or limit reached');
         }
@@ -308,11 +318,11 @@ serve(async (req) => {
       }
     });
 
-    // Start proactive trigger checking (every 5 seconds)
-    checkTriggerInterval = setInterval(checkProactiveTriggers, 5000);
+    // Start proactive trigger checking (every 1 second for precise timing)
+    checkTriggerInterval = setInterval(checkProactiveTriggers, 1000);
     
-    // Check immediately after 2 seconds
-    setTimeout(checkProactiveTriggers, 2000);
+    // Check first time after 5 seconds
+    setTimeout(checkProactiveTriggers, 5000);
   }
 
   // Helper functions for chat UI

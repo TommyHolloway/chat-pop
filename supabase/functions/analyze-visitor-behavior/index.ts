@@ -108,7 +108,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         analysis: analysis,
-        messageDisplayDuration: config.message_display_duration || 15000
+        messageDisplayDuration: config.message_display_duration || 15000,
+        timingDelay: config.timing_delay || 5000
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
