@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Moon, Sun, Menu } from 'lucide-react';
+import { Moon, Sun, Menu, Home } from 'lucide-react';
 import { useState } from 'react';
 import { Logo } from './Logo';
 import { WaitlistDialog } from '@/components/WaitlistDialog';
@@ -20,6 +20,12 @@ export const PublicNavbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
+            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              <span className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Home
+              </span>
+            </Link>
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
             </Link>
@@ -66,6 +72,10 @@ export const PublicNavbar = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <div className="flex flex-col space-y-4">
+              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Home
+              </Link>
               <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
               </Link>
