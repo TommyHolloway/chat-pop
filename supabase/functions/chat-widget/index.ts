@@ -266,7 +266,7 @@ serve(async (req) => {
 
     // Auto-dismiss popup after configured duration
     const displayDuration = suggestion.displayDuration || 15000;
-    console.log(`Popup will auto-dismiss in ${displayDuration}ms`);
+    console.log('Popup will auto-dismiss in ' + displayDuration + 'ms');
 
     setTimeout(() => {
       if (proactivePopup && proactivePopup.parentElement) {
