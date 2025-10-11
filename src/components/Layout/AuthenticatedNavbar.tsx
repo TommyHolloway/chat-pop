@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Moon, Sun, Settings, LogOut, User, Home } from 'lucide-react';
+import { Moon, Sun, Settings, LogOut, User } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Logo } from './Logo';
 
@@ -29,12 +29,6 @@ export const AuthenticatedNavbar = () => {
         <div className="flex items-center space-x-4">
           <SidebarTrigger />
           <Logo to="/dashboard" />
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Home className="h-4 w-4" />
-              <span className="hidden sm:inline">Home</span>
-            </Button>
-          </Link>
         </div>
 
         {/* Right side - Theme toggle and User menu */}

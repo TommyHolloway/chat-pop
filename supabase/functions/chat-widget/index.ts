@@ -143,21 +143,18 @@ serve(async (req) => {
         
         // Enforce frequency limit (max 3 suggestions) and prevent duplicates
         if (shownSuggestions.length < 3 && !shownSuggestions.includes(suggestion.id)) {
+          // Apply timing delay before showing popup
           const timingDelay = data.timingDelay || 5000;
           console.log('Trigger met! Waiting ' + timingDelay + 'ms before showing popup...');
           
-          // Mark as shown IMMEDIATELY to prevent duplicates
-          shownSuggestions.push(suggestion.id);
-          
           setTimeout(() => {
+            // Double-check user hasn't opened chat in the meantime
             if (!isOpen && shownSuggestions.length < 3) {
               showProactivePopup(suggestion);
+              shownSuggestions.push(suggestion.id);
               console.log('✅ Showing proactive popup:', suggestion);
             } else {
               console.log('⏭️ Skipping popup - chat already open or limit reached');
-              // Remove from array if we didn't show it
-              const index = shownSuggestions.indexOf(suggestion.id);
-              if (index > -1) shownSuggestions.splice(index, 1);
             }
           }, timingDelay);
         } else {
