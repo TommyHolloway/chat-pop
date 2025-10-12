@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toUTCStart, toUTCEnd } from '@/lib/dateUtils';
 
 interface AnalyticsData {
   totalConversations: number;
@@ -8,7 +9,7 @@ interface AnalyticsData {
   isLoading: boolean;
 }
 
-export const useAnalytics = (agentId: string) => {
+export const useAnalytics = (agentId: string, dateRange?: { from: Date; to: Date }) => {
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalConversations: 0,
     resolutionRate: 0,
@@ -20,26 +21,42 @@ export const useAnalytics = (agentId: string) => {
     if (agentId) {
       fetchAnalytics();
     }
-  }, [agentId]);
+  }, [agentId, dateRange]);
 
   const fetchAnalytics = async () => {
     try {
       setAnalytics(prev => ({ ...prev, isLoading: true }));
 
-      // Get total conversations for this agent
-      const { count: conversationsCount } = await supabase
+      // Get total conversations for this agent with date filtering
+      let countQuery = supabase
         .from('conversations')
         .select('id', { count: 'exact', head: true })
         .eq('agent_id', agentId);
 
+      if (dateRange?.from && dateRange?.to) {
+        countQuery = countQuery
+          .gte('created_at', toUTCStart(dateRange.from))
+          .lte('created_at', toUTCEnd(dateRange.to));
+      }
+
+      const { count: conversationsCount } = await countQuery;
+
       // Calculate real response rate from conversations with messages
-      const { data: conversations } = await supabase
+      let conversationsQuery = supabase
         .from('conversations')
         .select(`
           id,
           messages(count)
         `)
         .eq('agent_id', agentId);
+
+      if (dateRange?.from && dateRange?.to) {
+        conversationsQuery = conversationsQuery
+          .gte('created_at', toUTCStart(dateRange.from))
+          .lte('created_at', toUTCEnd(dateRange.to));
+      }
+
+      const { data: conversations } = await conversationsQuery;
 
       let resolutionRate = 0;
       let avgResponseTime = 0;

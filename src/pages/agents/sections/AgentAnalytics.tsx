@@ -1,18 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useVisitorBehavior } from '@/hooks/useVisitorBehavior';
-import { Users, MessageCircle, Clock, TrendingUp, Eye } from 'lucide-react';
+import { Users, MessageCircle, Clock, TrendingUp, Eye, AlertCircle } from 'lucide-react';
 import { subDays, format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
+import { supabase } from '@/integrations/supabase/client';
+import { toUTCStart, toUTCEnd } from '@/lib/dateUtils';
 
 export const AgentAnalytics = ({ agent }: { agent: any }) => {
   const { id } = useParams();
-  const { analytics } = useAnalytics(id!);
   
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
@@ -26,6 +29,8 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
     } : undefined;
   }, [dateRange?.from, dateRange?.to]);
 
+  const { analytics } = useAnalytics(id!, memoizedDateRange);
+  
   const { 
     visitorSessions, 
     behaviorEvents, 
@@ -35,6 +40,54 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
     error: visitorError,
     refreshData 
   } = useVisitorBehavior(id!, memoizedDateRange);
+
+  const [trueConversionRate, setTrueConversionRate] = useState<number>(0);
+  const [loadingConversion, setLoadingConversion] = useState(true);
+
+  // Calculate true visitor-to-conversation conversion rate
+  useEffect(() => {
+    const calculateConversionRate = async () => {
+      if (!id || !memoizedDateRange) {
+        setLoadingConversion(false);
+        return;
+      }
+
+      try {
+        setLoadingConversion(true);
+        
+        // Get conversation count for date range
+        let conversationsQuery = supabase
+          .from('conversations')
+          .select('id', { count: 'exact', head: true })
+          .eq('agent_id', id);
+
+        if (memoizedDateRange.from && memoizedDateRange.to) {
+          conversationsQuery = conversationsQuery
+            .gte('created_at', toUTCStart(memoizedDateRange.from))
+            .lte('created_at', toUTCEnd(memoizedDateRange.to));
+        }
+
+        const { count: conversationCount } = await conversationsQuery;
+
+        // Get visitor sessions count (already filtered by date in hook)
+        const totalSessions = visitorAnalytics.totalSessions;
+
+        // Calculate conversion rate
+        const rate = totalSessions > 0 
+          ? Math.round(((conversationCount || 0) / totalSessions) * 100)
+          : 0;
+
+        setTrueConversionRate(rate);
+      } catch (error) {
+        console.error('Error calculating conversion rate:', error);
+        setTrueConversionRate(0);
+      } finally {
+        setLoadingConversion(false);
+      }
+    };
+
+    calculateConversionRate();
+  }, [id, memoizedDateRange, visitorAnalytics.totalSessions]);
 
   if (visitorError) {
     return (
@@ -68,11 +121,26 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
         </div>
       </div>
       
+      {/* Data Limit Warnings */}
+      {visitorSessions.length >= 200 && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Showing 200 most recent sessions. Narrow your date range for complete data.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Essential Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Conversations</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Total Conversations
+              <Badge variant="secondary" className="text-xs font-normal">
+                {dateRange ? 'Date Range' : 'All Time'}
+              </Badge>
+            </CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -85,7 +153,12 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolution Rate</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Resolution Rate
+              <Badge variant="secondary" className="text-xs font-normal">
+                {dateRange ? 'Date Range' : 'All Time'}
+              </Badge>
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -98,7 +171,12 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Avg Response Time
+              <Badge variant="secondary" className="text-xs font-normal">
+                {dateRange ? 'Date Range' : 'All Time'}
+              </Badge>
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -111,7 +189,12 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Total Sessions
+              <Badge variant="secondary" className="text-xs font-normal">
+                Date Range
+              </Badge>
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -124,7 +207,12 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Page Views</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Page Views
+              <Badge variant="secondary" className="text-xs font-normal">
+                Date Range
+              </Badge>
+            </CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -137,7 +225,12 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Time</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Avg Time
+              <Badge variant="secondary" className="text-xs font-normal">
+                Date Range
+              </Badge>
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -150,12 +243,17 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Conversion Rate
+              <Badge variant="secondary" className="text-xs font-normal">
+                Date Range
+              </Badge>
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {visitorLoading ? <Skeleton className="h-8 w-12" /> : `${visitorAnalytics.conversionRate}%`}
+              {loadingConversion ? <Skeleton className="h-8 w-12" /> : `${trueConversionRate}%`}
             </div>
             <p className="text-xs text-muted-foreground">Visitors to conversations</p>
           </CardContent>

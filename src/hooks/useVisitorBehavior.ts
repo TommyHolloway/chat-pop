@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format, subDays } from 'date-fns';
+import { toUTCStart, toUTCEnd } from '@/lib/dateUtils';
 
 interface VisitorSession {
   id: string;
@@ -78,8 +79,8 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
 
         if (dateRange?.from && dateRange?.to) {
           query = query
-            .gte('created_at', startOfDay(dateRange.from).toISOString())
-            .lte('created_at', endOfDay(dateRange.to).toISOString());
+            .gte('created_at', toUTCStart(dateRange.from))
+            .lte('created_at', toUTCEnd(dateRange.to));
         }
 
         const { data: sessions, error: sessionsError } = await query
@@ -105,8 +106,8 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
 
           if (dateRange?.from && dateRange?.to) {
             eventsQuery = eventsQuery
-              .gte('created_at', startOfDay(dateRange.from).toISOString())
-              .lte('created_at', endOfDay(dateRange.to).toISOString());
+              .gte('created_at', toUTCStart(dateRange.from))
+              .lte('created_at', toUTCEnd(dateRange.to));
           }
 
           const { data: events, error: eventsError } = await eventsQuery
@@ -128,8 +129,8 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
 
         if (dateRange?.from && dateRange?.to) {
           suggestionsQuery = suggestionsQuery
-            .gte('created_at', startOfDay(dateRange.from).toISOString())
-            .lte('created_at', endOfDay(dateRange.to).toISOString());
+            .gte('created_at', toUTCStart(dateRange.from))
+            .lte('created_at', toUTCEnd(dateRange.to));
         }
 
         const { data: suggestions, error: suggestionsError } = await suggestionsQuery
@@ -186,8 +187,8 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
 
       if (dateRange?.from && dateRange?.to) {
         query = query
-          .gte('created_at', startOfDay(dateRange.from).toISOString())
-          .lte('created_at', endOfDay(dateRange.to).toISOString());
+          .gte('created_at', toUTCStart(dateRange.from))
+          .lte('created_at', toUTCEnd(dateRange.to));
       }
 
       const { data: sessions, error: sessionsError } = await query
@@ -213,8 +214,8 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
 
         if (dateRange?.from && dateRange?.to) {
           eventsQuery = eventsQuery
-            .gte('created_at', startOfDay(dateRange.from).toISOString())
-            .lte('created_at', endOfDay(dateRange.to).toISOString());
+            .gte('created_at', toUTCStart(dateRange.from))
+            .lte('created_at', toUTCEnd(dateRange.to));
         }
 
         const { data: events, error: eventsError } = await eventsQuery
@@ -236,8 +237,8 @@ export const useVisitorBehavior = (agentId: string, dateRange?: { from: Date; to
 
       if (dateRange?.from && dateRange?.to) {
         suggestionsQuery = suggestionsQuery
-          .gte('created_at', startOfDay(dateRange.from).toISOString())
-          .lte('created_at', endOfDay(dateRange.to).toISOString());
+          .gte('created_at', toUTCStart(dateRange.from))
+          .lte('created_at', toUTCEnd(dateRange.to));
       }
 
       const { data: suggestions, error: suggestionsError } = await suggestionsQuery
