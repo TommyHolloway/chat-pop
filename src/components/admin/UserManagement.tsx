@@ -37,6 +37,14 @@ export function UserManagement() {
   return (
     <>
       <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Showing {users.length} total users
+            </p>
+          </div>
+        </div>
+        
         <div className="flex items-center space-x-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />

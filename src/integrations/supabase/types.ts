@@ -1336,6 +1336,13 @@ export type Database = {
           plan: string
         }[]
       }
+      sync_auth_users_to_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          orphaned_users: Json
+          synced_count: number
+        }[]
+      }
       update_storage_usage: {
         Args: { p_size_change: number; p_user_id: string }
         Returns: undefined

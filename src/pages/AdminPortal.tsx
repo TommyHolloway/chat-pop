@@ -7,6 +7,7 @@ import { RoleManagement } from '@/components/admin/RoleManagement';
 import { ActivityLogs } from '@/components/admin/ActivityLogs';
 import { PlanLimitTracking } from '@/components/admin/PlanLimitTracking';
 import { SiteContentManagement } from '@/components/admin/SiteContentManagement';
+import { UserDiagnostics } from '@/components/admin/UserDiagnostics';
 
 export default function AdminPortal() {
   const [activeTab, setActiveTab] = useState('users');
@@ -22,10 +23,14 @@ export default function AdminPortal() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="diagnostics" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              User Sync
             </TabsTrigger>
             <TabsTrigger value="roles" className="flex items-center gap-2">
               <UserCog className="h-4 w-4" />
@@ -57,6 +62,10 @@ export default function AdminPortal() {
                 <UserManagement />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="diagnostics" className="space-y-6">
+            <UserDiagnostics />
           </TabsContent>
 
           <TabsContent value="roles" className="space-y-6">
