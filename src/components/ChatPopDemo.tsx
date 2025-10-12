@@ -17,21 +17,21 @@ const scenarios: Scenario[] = [
     id: 1,
     title: "Pricing Page Visitor",
     description: "Visitor browsing pricing page for 30 seconds",
-    message: "Need pricing help? Let's chat!",
+    message: "Looking at pricing? I can show you which plan saves you the most based on what you need. Want help? 💡",
     animation: 'typing'
   },
   {
     id: 2,
     title: "High Engagement User",
     description: "High-engagement user on site for 2 minutes",
-    message: "Loving our features? Schedule a demo! 🚀",
+    message: "I see you've been exploring for a bit - want me to give you a personalized walkthrough of exactly how this works for you?",
     animation: 'emoji'
   },
   {
     id: 3,
     title: "Features Page Browser",
     description: "User viewing features/services section",
-    message: "Questions about our services? I'm here to answer!",
+    message: "Checking out features? I can show you a real example of how ChatPop would work on your website in 30 seconds. Interested?",
     animation: 'expand'
   },
   {
