@@ -23,7 +23,7 @@ export const PublicNavbar = () => {
             <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
               <span className="flex items-center gap-2">
                 <Home className="h-4 w-4" />
-                Home
+                Solution
               </span>
             </Link>
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -74,7 +74,7 @@ export const PublicNavbar = () => {
             <div className="flex flex-col space-y-4">
               <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                 <Home className="h-4 w-4" />
-                Home
+                Solution
               </Link>
               <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
