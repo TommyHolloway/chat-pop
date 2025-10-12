@@ -23,10 +23,12 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
   });
   
   const memoizedDateRange = useMemo(() => {
-    return dateRange && dateRange.from && dateRange.to ? {
+    if (!dateRange?.from) return undefined;
+    
+    return {
       from: dateRange.from,
-      to: dateRange.to
-    } : undefined;
+      to: dateRange.to || dateRange.from
+    };
   }, [dateRange?.from, dateRange?.to]);
 
   const { analytics } = useAnalytics(id!, memoizedDateRange);
