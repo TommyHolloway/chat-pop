@@ -37,10 +37,20 @@ serve(async (req) => {
     
     const agent = agentData[0];
 
-    // Escape agent data to prevent XSS
-    const safeName = agent.name?.replace(/'/g, "\\'").replace(/"/g, '\\"') || 'Agent';
-    const safeInitialMessage = agent.initial_message?.replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r') || '';
-    const safeProfileImageUrl = agent.profile_image_url?.replace(/"/g, '\\"') || '';
+    // SECURITY: Proper HTML escaping to prevent XSS attacks
+    function escapeHtml(unsafe: string): string {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Escape all dynamic agent data
+    const safeName = escapeHtml(agent.name || 'Agent');
+    const safeInitialMessage = escapeHtml(agent.initial_message || '');
+    const safeProfileImageUrl = escapeHtml(agent.profile_image_url || '');
     const hasProfileImage = !!agent.profile_image_url;
     const avatarFallback = safeName.charAt(0).toUpperCase();
 

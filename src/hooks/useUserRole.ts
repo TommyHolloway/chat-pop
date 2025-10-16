@@ -1,3 +1,9 @@
+/**
+ * SECURITY NOTE: This hook provides client-side role information for UX purposes only.
+ * Real authorization is enforced server-side via Row Level Security (RLS) policies.
+ * The role data comes from a secure database function that cannot be manipulated client-side.
+ * All sensitive operations are protected by RLS regardless of what this hook returns.
+ */
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';

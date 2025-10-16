@@ -81,6 +81,20 @@ export const sanitizeInput = (input: string): string => {
   return input.replace(/[<>&'"]/g, '').trim();
 };
 
+/**
+ * CLIENT-SIDE RATE LIMITING (UX Only - Not a Security Control)
+ * 
+ * SECURITY NOTE: This provides immediate user feedback but can be bypassed by clearing
+ * localStorage or disabling JavaScript. Real rate limiting is enforced server-side via:
+ * 
+ * 1. Database function: enhanced_rate_limit_check() in Supabase
+ * 2. RLS policies that call this function before allowing operations
+ * 3. Edge function validation (validate_edge_function_request)
+ * 
+ * This client-side check is purely for UX to prevent accidental spam and provide
+ * immediate feedback to users before they hit the server-side rate limits.
+ */
+
 // Enhanced rate limiting utility with IP tracking
 const rateLimitStore = new Map<string, { count: number; resetTime: number; ips: Set<string> }>();
 

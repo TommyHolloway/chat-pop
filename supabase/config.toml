@@ -28,7 +28,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.crawl-url]
-verify_jwt = false
+verify_jwt = true
 
 [functions.train-agent]
 verify_jwt = false
@@ -56,3 +56,6 @@ verify_jwt = true
 
 [functions.security-monitor]
 verify_jwt = true
+
+[functions.capture-lead]
+verify_jwt = false

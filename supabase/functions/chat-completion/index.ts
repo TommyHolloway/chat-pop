@@ -426,8 +426,10 @@ serve(async (req) => {
     });
 
     if (!openAIResponse.ok) {
+      // SECURITY: Log detailed error server-side, return generic message to client
       const errorData = await openAIResponse.json();
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      console.error('OpenAI API error details:', errorData);
+      throw new Error('Unable to generate response. Please try again.');
     }
 
     // Handle streaming responses

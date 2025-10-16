@@ -75,6 +75,10 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   }
 
   return (
+    // SECURITY: This uses dangerouslySetInnerHTML for CSS custom properties only.
+    // The content is controlled and generated from config (no user input).
+    // This is necessary for dynamic theming with CSS variables.
+    // All values are sanitized through the config system.
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)

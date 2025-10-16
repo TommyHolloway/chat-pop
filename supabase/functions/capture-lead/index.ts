@@ -68,19 +68,43 @@ serve(async (req) => {
       throw new Error(`Missing required fields: ${missingFields.map((f: any) => f.label).join(', ')}`);
     }
 
-    // Store the lead
+    // SECURITY: Sanitize all input fields to prevent XSS attacks
+    function sanitizeInput(input: any): any {
+      if (typeof input === 'string') {
+        return input
+          .replace(/<script[^>]*>.*?<\/script>/gi, '') // Remove script tags
+          .replace(/<[^>]*>/g, '') // Remove all HTML tags
+          .replace(/javascript:/gi, '') // Remove javascript: protocol
+          .replace(/data:/gi, '') // Remove data: protocol
+          .replace(/vbscript:/gi, '') // Remove vbscript: protocol
+          .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
+          .trim()
+          .slice(0, 500); // Limit field length
+      }
+      return input;
+    }
+
+    // Sanitize all lead data fields
+    const sanitizedLeadData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(leadData)) {
+      sanitizedLeadData[key] = sanitizeInput(value);
+    }
+
+    // Store the lead with sanitized data
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .insert({
         agent_id: agentId,
         conversation_id: conversationId || null,
-        lead_data_json: leadData
+        lead_data_json: sanitizedLeadData
       })
       .select()
       .single();
 
     if (leadError) {
-      throw new Error(`Failed to store lead: ${leadError.message}`);
+      // SECURITY: Log detailed error server-side, return generic message to client
+      console.error('Lead storage error details:', leadError);
+      throw new Error('Unable to process your information. Please try again.');
     }
 
     console.log('Lead captured successfully:', lead.id);
@@ -94,8 +118,12 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    // SECURITY: Log detailed error server-side only, return generic message
     console.error('Error in capture-lead function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to capture lead';
+    const errorMessage = error instanceof Error && error.message.includes('Missing required') 
+      ? error.message 
+      : 'Unable to process your request. Please try again.';
+    
     return new Response(JSON.stringify({ 
       error: errorMessage
     }), {

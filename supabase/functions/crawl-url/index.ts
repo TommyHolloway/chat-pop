@@ -190,14 +190,16 @@ serve(async (req) => {
     }
 
   } catch (error) {
+    // SECURITY: Log detailed error server-side only, return generic message to client
     console.error('Error in crawl-url function:', error);
     if (error instanceof Error) {
       console.error('Error stack:', error.stack);
+      console.error('Error details:', error.message);
     }
+    
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      details: error instanceof Error ? (error.stack?.split('\n')[0] || 'No additional details') : 'No additional details'
+      error: 'An error occurred while processing your request. Please try again.'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
