@@ -3,15 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import { pricingPlans, type PricingPlan } from '@/config/pricing';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 interface PricingSectionProps {
   showDescription?: boolean;
   className?: string;
-  onWaitlistClick?: (source: string) => void;
 }
 
 interface PricingCardProps {
@@ -59,11 +55,12 @@ const PricingCard = ({ plan, onButtonClick }: PricingCardProps) => (
   </Card>
 );
 
-export const PricingSection = ({ showDescription = true, className = "", onWaitlistClick }: PricingSectionProps) => {
+export const PricingSection = ({ showDescription = true, className = "" }: PricingSectionProps) => {
+  const navigate = useNavigate();
+  
   const handleButtonClick = (plan: PricingPlan) => {
-    if (onWaitlistClick) {
-      onWaitlistClick(`pricing-${plan.name.toLowerCase()}`);
-    }
+    localStorage.setItem('selectedPlan', plan.name);
+    navigate('/auth/signup');
   };
 
   return (

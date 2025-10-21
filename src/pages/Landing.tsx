@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { WaitlistDialog } from '@/components/WaitlistDialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -28,8 +28,7 @@ import { PricingSection } from '@/components/PricingSection';
 import { ChatPopDemo } from '@/components/ChatPopDemo';
 
 export const Landing = () => {
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
-  const [waitlistSource, setWaitlistSource] = useState('unknown');
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Add chat widget script
@@ -60,10 +59,6 @@ export const Landing = () => {
     };
   }, []);
 
-  const openWaitlist = (source: string) => {
-    setWaitlistSource(source);
-    setWaitlistOpen(true);
-  };
 
   const scrollToDemo = () => {
     const demoSection = document.getElementById('chatpop-demo');
@@ -103,9 +98,9 @@ export const Landing = () => {
               <Button 
                 size="lg" 
                 className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary-hover text-primary-foreground shadow-glow"
-                onClick={() => openWaitlist('hero')}
+                onClick={() => navigate('/auth/signup')}
               >
-                Join Waitlist
+                Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 
@@ -146,9 +141,9 @@ export const Landing = () => {
                 size="lg" 
                 variant="outline" 
                 className="text-lg px-8 py-6 h-auto"
-                onClick={() => openWaitlist('features')}
+                onClick={() => navigate('/auth/signup')}
               >
-                Join Waitlist
+                Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -310,7 +305,7 @@ export const Landing = () => {
 
       {/* Pricing */}
       <div id="pricing" data-track="pricing-section">
-        <PricingSection onWaitlistClick={openWaitlist} />
+        <PricingSection />
       </div>
 
       {/* FAQ Section */}
@@ -355,9 +350,9 @@ export const Landing = () => {
               <Button 
                 size="lg" 
                 className="text-lg px-8 py-6 h-auto bg-white text-primary hover:bg-white/90"
-                onClick={() => openWaitlist('final-cta')}
+                onClick={() => navigate('/auth/signup')}
               >
-                Join Waitlist
+                Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -379,12 +374,6 @@ export const Landing = () => {
         </div>
       </section>
     </div>
-
-    <WaitlistDialog 
-      open={waitlistOpen} 
-      onOpenChange={setWaitlistOpen}
-      source={waitlistSource}
-    />
   </>
   );
 };

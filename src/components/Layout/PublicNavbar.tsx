@@ -1,15 +1,14 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Moon, Sun, Menu, Home } from 'lucide-react';
 import { useState } from 'react';
 import { Logo } from './Logo';
-import { WaitlistDialog } from '@/components/WaitlistDialog';
 
 export const PublicNavbar = () => {
   const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -53,7 +52,7 @@ export const PublicNavbar = () => {
               <Link to="/auth/login">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-              <Button onClick={() => setWaitlistOpen(true)}>Join Waitlist</Button>
+              <Button onClick={() => navigate('/auth/signup')}>Get Started</Button>
             </div>
 
             {/* Mobile menu button */}
@@ -86,18 +85,12 @@ export const PublicNavbar = () => {
                 <Link to="/auth/login">
                   <Button variant="ghost" className="w-full justify-start">Sign In</Button>
                 </Link>
-                <Button className="w-full" onClick={() => setWaitlistOpen(true)}>Join Waitlist</Button>
+                <Button className="w-full" onClick={() => navigate('/auth/signup')}>Get Started</Button>
               </div>
             </div>
           </div>
         )}
       </div>
-      
-      <WaitlistDialog 
-        open={waitlistOpen} 
-        onOpenChange={setWaitlistOpen} 
-        source="navbar" 
-      />
     </nav>
   );
 };
