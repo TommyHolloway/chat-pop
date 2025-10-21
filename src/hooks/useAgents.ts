@@ -92,7 +92,7 @@ export const useAgents = () => {
         {
           ...agentData,
           user_id: user.id,
-          status: 'draft',
+          status: 'active', // Default to active
         },
       ])
       .select()

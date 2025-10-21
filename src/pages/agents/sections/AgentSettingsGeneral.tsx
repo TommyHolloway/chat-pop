@@ -22,6 +22,7 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
     description: agent?.description || '',
     status: agent?.status || 'active',
     profile_image_url: agent?.profile_image_url || '',
+    instructions: agent?.instructions || '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +33,7 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
         description: agent.description || '',
         status: agent.status || 'active',
         profile_image_url: agent.profile_image_url || '',
+        instructions: agent.instructions || '',
       });
     }
   }, [agent]);
@@ -53,7 +55,7 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
         description: formData.description.trim() || null,
         status: formData.status,
         profile_image_url: formData.profile_image_url || null,
-        instructions: agent.instructions, // Keep existing instructions
+        instructions: formData.instructions.trim() || null,
       });
 
       toast({
@@ -232,6 +234,29 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
             </Select>
           </div>
 
+        </CardContent>
+      </Card>
+
+      {/* AI Instructions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Instructions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="instructions">System Instructions</Label>
+            <Textarea
+              id="instructions"
+              value={formData.instructions}
+              onChange={(e) => setFormData(prev => ({ ...prev, instructions: e.target.value }))}
+              rows={8}
+              placeholder="You are a helpful assistant that..."
+            />
+            <p className="text-sm text-muted-foreground">
+              Define your agent's personality, role, and behavior guidelines.
+            </p>
+          </div>
+          
           <Button onClick={handleSave} disabled={loading || !formData.name.trim()}>
             <Save className="mr-2 h-4 w-4" />
             {loading ? 'Saving...' : 'Save Changes'}

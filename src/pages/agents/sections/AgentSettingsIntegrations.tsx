@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Share2, Link2, Twitter, Linkedin, Mail } from 'lucide-react';
+import { Webhook, Slack, Mail, Zap } from 'lucide-react';
 
-export const AgentDeployShare = ({ agent }: { agent: any }) => {
+export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Share Agent</h2>
+        <h2 className="text-2xl font-bold mb-2">Integrations</h2>
         <p className="text-muted-foreground">
-          Generate public links to share your agent with others
+          Connect your agent with external services and platforms
         </p>
       </div>
 
@@ -15,55 +15,55 @@ export const AgentDeployShare = ({ agent }: { agent: any }) => {
         <CardHeader>
           <CardTitle>Coming Soon</CardTitle>
           <CardDescription>
-            We're building powerful sharing features to help you distribute your agent
+            We're working on bringing you powerful integrations to extend your agent's capabilities
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="p-4 border rounded-lg space-y-2">
               <div className="flex items-center gap-2">
-                <Link2 className="h-5 w-5 text-muted-foreground" />
-                <h4 className="font-medium">Public Links</h4>
+                <Webhook className="h-5 w-5 text-muted-foreground" />
+                <h4 className="font-medium">Webhooks</h4>
               </div>
               <p className="text-sm text-muted-foreground">
-                Generate shareable links with custom URLs and access controls
+                Send conversation data to your server in real-time
               </p>
             </div>
 
             <div className="p-4 border rounded-lg space-y-2">
               <div className="flex items-center gap-2">
-                <Share2 className="h-5 w-5 text-muted-foreground" />
-                <h4 className="font-medium">Social Sharing</h4>
+                <Slack className="h-5 w-5 text-muted-foreground" />
+                <h4 className="font-medium">Slack</h4>
               </div>
               <p className="text-sm text-muted-foreground">
-                Share your agent directly to social platforms
+                Get notifications in your Slack workspace
               </p>
             </div>
 
             <div className="p-4 border rounded-lg space-y-2">
               <div className="flex items-center gap-2">
-                <Twitter className="h-5 w-5 text-muted-foreground" />
-                <h4 className="font-medium">Twitter Cards</h4>
+                <Mail className="h-5 w-5 text-muted-foreground" />
+                <h4 className="font-medium">Email Notifications</h4>
               </div>
               <p className="text-sm text-muted-foreground">
-                Rich preview cards when sharing on Twitter
+                Receive email alerts for important events
               </p>
             </div>
 
             <div className="p-4 border rounded-lg space-y-2">
               <div className="flex items-center gap-2">
-                <Linkedin className="h-5 w-5 text-muted-foreground" />
-                <h4 className="font-medium">LinkedIn Integration</h4>
+                <Zap className="h-5 w-5 text-muted-foreground" />
+                <h4 className="font-medium">Zapier</h4>
               </div>
               <p className="text-sm text-muted-foreground">
-                Professional sharing for business networks
+                Connect with 5000+ apps via Zapier
               </p>
             </div>
           </div>
 
           <div className="mt-6 p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">
-              Want to share your agent now? Use the Embed section to add it to your website, or contact us for early access to sharing features.
+              Want early access to integrations? Contact our support team to learn more about upcoming features.
             </p>
           </div>
         </CardContent>

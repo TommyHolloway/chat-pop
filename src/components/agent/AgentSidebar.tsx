@@ -432,14 +432,7 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                           <Link to={`/workspace/${workspaceId}/agents/${id}/deploy/share`}>
                             <Share className="h-4 w-4" />
                             <span>Share</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/deploy/integrations`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/deploy/integrations`}>
-                            <Link2 className="h-4 w-4" />
-                            <span>Integrations</span>
+                            <Badge variant="outline" className="ml-auto text-xs">Soon</Badge>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -472,14 +465,6 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/ai`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/ai`}>
-                            <Settings className="h-4 w-4" />
-                            <span>AI Configuration</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/chat`)}>
                           <Link to={`/workspace/${workspaceId}/agents/${id}/settings/chat`}>
                             <Palette className="h-4 w-4" />
@@ -492,6 +477,15 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                           <Link to={`/workspace/${workspaceId}/agents/${id}/settings/leads`}>
                             <UserPlus className="h-4 w-4" />
                             <span>Lead Capture</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/integrations`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/integrations`}>
+                            <Link2 className="h-4 w-4" />
+                            <span>Integrations</span>
+                            <Badge variant="outline" className="ml-auto text-xs">Soon</Badge>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
