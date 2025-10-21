@@ -72,7 +72,13 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+    // Log detailed error server-side only
+    console.error('Checkout creation error:', error);
+    
+    // Return generic error to client
+    return new Response(JSON.stringify({ 
+      error: 'Unable to create checkout session. Please try again.' 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

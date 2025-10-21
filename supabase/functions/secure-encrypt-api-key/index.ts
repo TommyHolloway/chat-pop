@@ -216,7 +216,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       success: false,
-      error: error instanceof Error ? error.message : 'Encryption failed'
+      error: 'Unable to securely store API key. Please try again.'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

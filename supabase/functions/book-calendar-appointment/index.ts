@@ -37,8 +37,8 @@ serve(async (req) => {
       throw new Error('No encrypted API key found for this integration');
     }
 
-    // Decrypt API key using decryption service
-    const { data: decryptData, error: decryptError } = await supabase.functions.invoke('decrypt-api-key', {
+    // Decrypt API key using secure decryption service
+    const { data: decryptData, error: decryptError } = await supabase.functions.invoke('secure-decrypt-api-key', {
       body: { encrypted_key: integration.api_key_encrypted }
     });
     
@@ -79,10 +79,13 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Log detailed error server-side only
+    console.error('Calendar booking error:', error);
+    
+    // Return generic error to client
     return new Response(JSON.stringify({ 
       success: false,
-      error: errorMessage 
+      error: 'Unable to book appointment. Please try again or contact support.' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

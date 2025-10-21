@@ -130,10 +130,13 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    // Log detailed error server-side only
     console.error('Error in train-agent function:', error);
+    
+    // Return generic error to client
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Unable to complete training. Please try again later.'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

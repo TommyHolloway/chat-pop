@@ -46,8 +46,13 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    // Log detailed error server-side only
+    console.error('Customer portal error:', error);
+    
+    // Return generic error to client
+    return new Response(JSON.stringify({ 
+      error: 'Unable to access customer portal. Please try again.' 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
