@@ -25,6 +25,7 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
 
       try {
         // Server-side admin verification
+        // @ts-ignore - Type will be available after migration approval
         const { data, error } = await supabase.rpc('verify_admin_route_access');
         
         if (error) {

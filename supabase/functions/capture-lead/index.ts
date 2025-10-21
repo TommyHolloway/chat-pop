@@ -69,7 +69,7 @@ serve(async (req) => {
     }
 
     // SECURITY: Sanitize all input fields to prevent XSS attacks
-    function sanitizeInput(input: any): any {
+    function sanitizeInput(input: any, maxLength: number = 500): any {
       if (typeof input === 'string') {
         return input
           .replace(/<script[^>]*>.*?<\/script>/gi, '') // Remove script tags
@@ -79,9 +79,57 @@ serve(async (req) => {
           .replace(/vbscript:/gi, '') // Remove vbscript: protocol
           .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
           .trim()
-          .slice(0, 500); // Limit field length
+          .slice(0, maxLength);
       }
       return input;
+    }
+
+    // Email validation function
+    function validateEmail(email: string): boolean {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email) && email.length <= 255;
+    }
+
+    // Phone validation function  
+    function validatePhone(phone: string): boolean {
+      // International format: +[country][number]
+      const phoneRegex = /^\+?[1-9]\d{6,14}$/;
+      return phoneRegex.test(phone.replace(/[\s()-]/g, ''));
+    }
+
+    // Comprehensive lead data validation
+    function validateLeadData(leadData: any): { valid: boolean; errors: string[] } {
+      const errors: string[] = [];
+      
+      // Validate email if provided
+      if (leadData.email) {
+        if (typeof leadData.email !== 'string') {
+          errors.push('Email must be a text value');
+        } else if (!validateEmail(leadData.email)) {
+          errors.push('Invalid email format');
+        }
+      }
+      
+      // Validate phone if provided
+      if (leadData.phone) {
+        if (typeof leadData.phone !== 'string') {
+          errors.push('Phone must be a text value');
+        } else if (!validatePhone(leadData.phone)) {
+          errors.push('Invalid phone format');
+        }
+      }
+      
+      // Validate name length
+      if (leadData.name && leadData.name.length > 100) {
+        errors.push('Name must be less than 100 characters');
+      }
+      
+      // Validate message length
+      if (leadData.message && leadData.message.length > 1000) {
+        errors.push('Message must be less than 1000 characters');
+      }
+      
+      return { valid: errors.length === 0, errors };
     }
 
     // Sanitize all lead data fields
@@ -89,6 +137,23 @@ serve(async (req) => {
     for (const [key, value] of Object.entries(leadData)) {
       sanitizedLeadData[key] = sanitizeInput(value);
     }
+
+    console.log('Lead data sanitized successfully');
+
+    // Validate sanitized data
+    const validation = validateLeadData(sanitizedLeadData);
+    if (!validation.valid) {
+      console.warn('Lead validation failed:', validation.errors);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Invalid information provided. Please check your entries.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Lead data validated successfully');
 
     // Store the lead with sanitized data
     const { data: lead, error: leadError } = await supabase
