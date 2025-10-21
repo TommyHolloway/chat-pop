@@ -49,6 +49,10 @@ serve(async (req) => {
   const supabaseUrl = 'https://etwjtxqjcwyxdamlcorf.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM';
 
+  // Viewport detection
+  const isMobile = () => window.innerWidth < 768;
+  const isTablet = () => window.innerWidth >= 768 && window.innerWidth < 1024;
+
   // Visitor tracking
   const sessionId = 'vis_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   let startTime = Date.now();
@@ -189,7 +193,7 @@ serve(async (req) => {
       border: 1px solid rgba(132, 204, 22, 0.2) !important;
       border-radius: 12px !important;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(132, 204, 22, 0.1) !important;
-      z-index: 999998 !important;
+      z-index: 9998 !important;
       padding: 16px !important;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
       cursor: pointer !important;
@@ -612,7 +616,7 @@ serve(async (req) => {
       border-radius: 50% !important;
       box-shadow: 0 8px 32px \${hexToRGBA(primaryColor, 0.4)}, 0 4px 16px rgba(0, 0, 0, 0.1) !important;
       cursor: pointer !important;
-      z-index: 999999 !important;
+      z-index: 9999 !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -696,8 +700,8 @@ serve(async (req) => {
       width: 100% !important;
       height: 100% !important;
       background: rgba(0, 0, 0, 0.3) !important;
-      z-index: 999997 !important;
-      display: none !important;
+      z-index: 9997 !important;
+      display: \${isMobile() ? 'none' : 'none'} !important;
       backdrop-filter: blur(2px) !important;
       transition: opacity 0.3s ease !important;
     \`;
@@ -709,26 +713,41 @@ serve(async (req) => {
   // Create chat overlay with direct embedding
   function createOverlay() {
     overlay = document.createElement('div');
-    overlay.style.cssText = \`
-      position: fixed !important;
-      \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
-      \${position.includes('bottom') ? 'bottom: 90px !important;' : 'top: 90px !important;'}
-      width: 360px !important;
-      height: 500px !important;
-      background: rgba(255, 255, 255, 0.98) !important;
-      backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      border-radius: 16px !important;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.15),
-        0 8px 32px \${hexToRGBA(agentData?.message_bubble_color || '#84cc16', 0.1)},
-        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-      z-index: 999998 !important;
-      display: none !important;
-      overflow: hidden !important;
-      animation: slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      transform-origin: \${position.includes('right') ? 'bottom right' : 'bottom left'} !important;
-    \`;
+    
+    function updateOverlayStyles() {
+      overlay.style.cssText = \`
+        position: fixed !important;
+        \${isMobile() ? \`
+          right: 0 !important;
+          left: 0 !important;
+          bottom: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          border-radius: 0 !important;
+        \` : \`
+          \${position.includes('right') ? 'right: 20px !important;' : 'left: 20px !important;'}
+          \${position.includes('bottom') ? 'bottom: 90px !important;' : 'top: 90px !important;'}
+          width: \${isTablet() ? '420px' : '360px'} !important;
+          height: \${isTablet() ? '580px' : '500px'} !important;
+          border-radius: 16px !important;
+        \`}
+        background: rgba(255, 255, 255, 0.98) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 
+          0 20px 60px rgba(0, 0, 0, 0.15),
+          0 8px 32px \${hexToRGBA(agentData?.message_bubble_color || '#84cc16', 0.1)},
+          inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        z-index: 9998 !important;
+        display: \${overlay?.style.display === 'block' ? 'block' : 'none'} !important;
+        overflow: hidden !important;
+        animation: slideInChat 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        transform-origin: \${position.includes('right') ? 'bottom right' : 'bottom left'} !important;
+      \`;
+    }
+    
+    updateOverlayStyles();
 
     // Add overlay animation styles
     const overlayStyles = document.createElement('style');
@@ -773,6 +792,26 @@ serve(async (req) => {
       // Build chat UI directly (no iframe)
       overlay.innerHTML = \`
         <div style="display:flex;flex-direction:column;height:100%;background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+          \${isMobile() ? \`
+            <button onclick="window.ChatPopWidget.close()" style="
+              position: absolute;
+              top: 20px;
+              right: 20px;
+              background: rgba(0, 0, 0, 0.3);
+              border: none;
+              color: white;
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              font-size: 24px;
+              cursor: pointer;
+              z-index: 10;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              backdrop-filter: blur(5px);
+            ">×</button>
+          \` : ''}
           <div style="background:linear-gradient(135deg, \${primaryColor} 0%, \${gradientEnd} 100%);color:white;padding:20px;display:flex;align-items:center;gap:12px;">
             <img id="agent-avatar" style="width:48px;height:48px;border-radius:50%;border:3px solid white;" src="\${getAvatarUrl(agentData, false)}">
             <div>
@@ -824,6 +863,17 @@ serve(async (req) => {
     });
 
     document.body.appendChild(overlay);
+    
+    // Add viewport resize handler
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (overlay && isOpen) {
+          updateOverlayStyles();
+        }
+      }, 150);
+    });
   }
 
   // Toggle chat
