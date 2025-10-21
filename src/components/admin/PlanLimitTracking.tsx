@@ -70,29 +70,29 @@ export function PlanLimitTracking() {
       // Get current month
       const currentMonth = new Date().toISOString().slice(0, 7) + '-01';
 
-      // Fetch usage data and profiles separately, then join manually
-      const [usageResult, profilesResult, agentResult] = await Promise.all([
+      // Fetch profiles first, then join with usage data
+      const [profilesResult, usageResult, agentResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('user_id, email, display_name, plan'),
         supabase
           .from('usage_tracking')
           .select('user_id, message_credits_used, storage_used_bytes')
           .eq('month', currentMonth),
-        supabase
-          .from('profiles')
-          .select('user_id, email, display_name, plan'),
         supabase
           .from('agents')
           .select('user_id')
           .eq('status', 'active')
       ]);
 
-      if (usageResult.error) {
-        console.error('Error fetching usage data:', usageResult.error);
-        throw usageResult.error;
-      }
-
       if (profilesResult.error) {
         console.error('Error fetching profiles:', profilesResult.error);
         throw profilesResult.error;
+      }
+
+      if (usageResult.error) {
+        console.error('Error fetching usage data:', usageResult.error);
+        throw usageResult.error;
       }
 
       if (agentResult.error) {
@@ -100,9 +100,9 @@ export function PlanLimitTracking() {
         throw agentResult.error;
       }
 
-      // Create profiles lookup map
-      const profilesMap = profilesResult.data?.reduce((acc, profile) => {
-        acc[profile.user_id] = profile;
+      // Create usage lookup map
+      const usageMap = usageResult.data?.reduce((acc, usage) => {
+        acc[usage.user_id] = usage;
         return acc;
       }, {} as Record<string, any>) || {};
 
@@ -112,14 +112,9 @@ export function PlanLimitTracking() {
         return acc;
       }, {} as Record<string, number>) || {};
 
-      // Process usage data by joining with profiles
-      const processedUsages: UserUsage[] = usageResult.data?.map(usage => {
-        const profile = profilesMap[usage.user_id];
-        if (!profile) {
-          console.warn(`No profile found for user_id: ${usage.user_id}`);
-          return null;
-        }
-
+      // Process all profiles (not just those with usage)
+      const processedUsages: UserUsage[] = profilesResult.data?.map(profile => {
+        const usage = usageMap[profile.user_id];
         const plan = profile.plan || 'free';
         
         // Define plan limits
@@ -136,16 +131,16 @@ export function PlanLimitTracking() {
         }
 
         return {
-          user_id: usage.user_id,
+          user_id: profile.user_id,
           email: profile.email,
           display_name: profile.display_name,
           plan,
-          message_credits_used: usage.message_credits_used || 0,
-          storage_used_bytes: usage.storage_used_bytes || 0,
-          agent_count: agentCountMap[usage.user_id] || 0,
+          message_credits_used: usage?.message_credits_used || 0,
+          storage_used_bytes: usage?.storage_used_bytes || 0,
+          agent_count: agentCountMap[profile.user_id] || 0,
           limits,
         };
-      }).filter(Boolean) || [];
+      }) || [];
 
       setUserUsages(processedUsages);
 
