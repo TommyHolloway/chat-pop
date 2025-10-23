@@ -28,6 +28,7 @@ import { SecureSignup } from "./pages/auth/SecureSignup";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import { WorkspaceOverview } from "./pages/WorkspaceOverview";
+import { Dashboard } from "./pages/Dashboard";
 import { Agents } from "./pages/Agents";
 import { Billing } from "./pages/Billing";
 import { Settings } from "./pages/Settings";
@@ -124,7 +125,7 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <WorkspaceLayout>
-                    <WorkspaceOverview />
+                    <Dashboard />
                   </WorkspaceLayout>
                 </ProtectedRoute>
               } />
