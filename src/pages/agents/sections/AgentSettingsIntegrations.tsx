@@ -12,16 +12,20 @@ declare const shopify: {
 export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
-  const isShopifyConnected = false; // TODO: Check Shopify connection status
+  const isShopifyConnected = agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token;
 
   const handleConnectShopify = async () => {
     setIsConnecting(true);
     try {
       if (typeof shopify !== 'undefined' && shopify.manually_set_shopify_credentials) {
         await shopify.manually_set_shopify_credentials();
+        
+        // After successful connection, refresh to show updated status
+        window.location.reload();
+        
         toast({
           title: "Success",
-          description: "Shopify store connected successfully",
+          description: "Shopify store connected! Your agent can now search products and make recommendations.",
         });
       }
     } catch (error) {
@@ -86,19 +90,13 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
               <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                 <div>
                   <p className="text-sm font-medium">Store Domain</p>
-                  <p className="text-sm text-muted-foreground">example.myshopify.com</p>
+                  <p className="text-sm text-muted-foreground">{agent.shopify_config?.store_domain}</p>
                 </div>
-                <Button variant="outline" size="sm">Disconnect</Button>
+                <Button variant="outline" size="sm" disabled>Connected</Button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-xs text-muted-foreground">Products Synced</p>
-                  <p className="text-2xl font-bold">120</p>
-                </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-xs text-muted-foreground">Last Sync</p>
-                  <p className="text-2xl font-bold">2h ago</p>
-                </div>
+              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-sm font-medium text-green-700 dark:text-green-400">✓ Product Search Enabled</p>
+                <p className="text-xs text-muted-foreground mt-1">Your agent can now search and recommend products from your store</p>
               </div>
             </div>
           )}

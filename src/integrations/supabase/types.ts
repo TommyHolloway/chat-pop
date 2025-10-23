@@ -449,6 +449,7 @@ export type Database = {
           name: string
           proactive_config: Json | null
           profile_image_url: string | null
+          shopify_config: Json | null
           status: string | null
           updated_at: string
           user_id: string
@@ -470,6 +471,7 @@ export type Database = {
           name: string
           proactive_config?: Json | null
           profile_image_url?: string | null
+          shopify_config?: Json | null
           status?: string | null
           updated_at?: string
           user_id: string
@@ -491,6 +493,7 @@ export type Database = {
           name?: string
           proactive_config?: Json | null
           profile_image_url?: string | null
+          shopify_config?: Json | null
           status?: string | null
           updated_at?: string
           user_id?: string

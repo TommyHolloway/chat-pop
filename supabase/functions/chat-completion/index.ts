@@ -44,8 +44,48 @@ function mapCreativityToTemperature(creativityLevel: number | null): number {
   return Math.max(0.1, Math.min(0.9, creativityLevel * 0.08 + 0.02));
 }
 
+// Shopify product search helper
+async function searchShopifyProducts(query: string, shopifyConfig: any) {
+  if (!shopifyConfig?.store_domain || !shopifyConfig?.admin_api_token) {
+    console.log('Shopify not configured for product search');
+    return null;
+  }
+  
+  try {
+    const shopifyUrl = `https://${shopifyConfig.store_domain}/admin/api/2024-01/products.json`;
+    const response = await fetch(`${shopifyUrl}?limit=5&title=${encodeURIComponent(query)}`, {
+      headers: {
+        'X-Shopify-Access-Token': shopifyConfig.admin_api_token,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      console.error('Shopify API error:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    return data.products?.slice(0, 5).map((p: any) => ({
+      id: p.id.toString(),
+      title: p.title,
+      price: p.variants?.[0]?.price || '0',
+      currency: 'USD',
+      url: `https://${shopifyConfig.store_domain.replace('.myshopify.com', '')}.myshopify.com/products/${p.handle}`,
+      image: p.images?.[0]?.src,
+      description: p.body_html?.replace(/<[^>]*>/g, '').slice(0, 200),
+      available: p.variants?.[0]?.inventory_quantity > 0,
+      type: p.product_type,
+      vendor: p.vendor
+    })) || [];
+  } catch (error) {
+    console.error('Error searching Shopify products:', error);
+    return null;
+  }
+}
+
 // Generate system prompt based on creativity level and visitor behavior
-function generateSystemPrompt(agent: any, knowledgeContext: string, visitorContext?: any): string {
+function generateSystemPrompt(agent: any, knowledgeContext: string, visitorContext?: any, hasShopify?: boolean): string {
   const creativityLevel = agent.creativity_level || 5;
   
   let visitorContextPrompt = '';
@@ -100,13 +140,31 @@ You have access to a capture_lead tool. Use it proactively when you detect ANY u
 Be aggressive - it's better to offer lead capture too early than miss the opportunity. When you detect interest, call the capture_lead tool immediately before continuing the conversation. Don't wait for explicit permission - the user's interest IS permission.`;
   }
 
+  let ecommerceInstruction = '';
+  if (hasShopify) {
+    ecommerceInstruction = `
+
+PRODUCT SEARCH INSTRUCTIONS:
+You have access to a search_products tool that searches the store's product catalog. Use it when:
+- Users ask about specific products or categories
+- Users need product recommendations based on their needs
+- Users ask about pricing or availability
+- Users describe what they're looking for (e.g., "red dress", "wireless headphones")
+- Users compare products or ask for alternatives
+
+After searching, present products naturally in conversation. Format product recommendations using this syntax:
+[PRODUCT_CARD:{"id":"123","title":"Product Name","price":"29.99","currency":"USD","image":"url","url":"product-url","available":true,"type":"category","vendor":"brand"}]
+
+Be proactive - if someone mentions a product type or need, search for it!`;
+  }
+
   return `You are ${agent.name}, an AI assistant. 
 
 ${agent.description}
 
 Instructions: ${agent.instructions}
 
-${visitorContextPrompt}${knowledgeInstruction}${leadCaptureInstruction}
+${visitorContextPrompt}${knowledgeInstruction}${leadCaptureInstruction}${ecommerceInstruction}
 
 Be helpful, accurate, and follow the instructions provided. Keep responses conversational and engaging.`;
 }
@@ -133,10 +191,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get agent details, actions, and lead capture settings
+    // Get agent details, actions, lead capture settings, and Shopify config
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('name, description, instructions, user_id, creativity_level, lead_capture_config')
+      .select('name, description, instructions, user_id, creativity_level, lead_capture_config, shopify_config')
       .eq('id', agentId)
       .single();
 
@@ -388,8 +446,30 @@ serve(async (req) => {
       });
     }
 
+    // Add product search tool if Shopify is connected
+    const hasShopify = agent.shopify_config?.store_domain && agent.shopify_config?.admin_api_token;
+    if (hasShopify) {
+      tools.push({
+        type: 'function',
+        function: {
+          name: 'search_products',
+          description: 'Search for products in the store catalog. Use this when users ask about products, prices, availability, or need product recommendations.',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: { 
+                type: 'string', 
+                description: 'Search query (e.g., "red dress", "running shoes size 10", "wireless headphones")' 
+              }
+            },
+            required: ['query']
+          }
+        }
+      });
+    }
+
     // Build system prompt based on creativity level and visitor context
-    const systemPrompt = generateSystemPrompt(agent, knowledgeContext, visitorContext);
+    const systemPrompt = generateSystemPrompt(agent, knowledgeContext, visitorContext, hasShopify);
     
     // Map creativity level to temperature
     const temperature = mapCreativityToTemperature(agent.creativity_level);
@@ -600,6 +680,23 @@ serve(async (req) => {
               urgency: functionArgs.urgency
             }
           });
+        }
+        
+        if (toolCall.function.name === 'search_products' && hasShopify) {
+          console.log('Searching products:', functionArgs.query);
+          const products = await searchShopifyProducts(functionArgs.query, agent.shopify_config);
+          
+          if (products && products.length > 0) {
+            console.log(`Found ${products.length} products`);
+            enhancedResponse.products = products;
+            // Add product info to the message for better context
+            const productSummary = products.map(p => 
+              `[PRODUCT_CARD:${JSON.stringify(p)}]`
+            ).join('\n\n');
+            enhancedResponse.message = assistantMessage + '\n\n' + productSummary;
+          } else {
+            console.log('No products found for query:', functionArgs.query);
+          }
         }
       }
     }
