@@ -32,7 +32,7 @@ export const Pricing = () => {
       </section>
 
       {/* Pricing Plans */}
-      <PricingSection showDescription={false} />
+      <PricingSection />
 
       {/* Features Comparison */}
       <section className="py-20 bg-muted/30">
