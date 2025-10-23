@@ -69,7 +69,7 @@ export const InteractiveTriggerDemo = () => {
             setIsMessageVisible(true);
           }, 100);
         }, 300);
-      }, 5000); // Rotate every 5 seconds
+      }, 10000); // Rotate every 10 seconds
       
       return () => clearInterval(interval);
     }
@@ -132,7 +132,7 @@ export const InteractiveTriggerDemo = () => {
           
           {/* Mockup Area */}
           <div 
-            className="relative rounded-2xl overflow-hidden shadow-elegant bg-white"
+            className="relative rounded-2xl overflow-hidden shadow-elegant bg-white max-h-[500px] md:max-h-[600px]"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
@@ -140,7 +140,7 @@ export const InteractiveTriggerDemo = () => {
             <img 
               src="/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"
               alt="E-commerce store interface"
-              className="w-full h-auto"
+              className="w-full h-full object-cover object-top"
             />
             
             {/* Chatbot Widget Overlay (bottom right) */}
