@@ -29,6 +29,12 @@ export default {
 					foreground: 'hsl(var(--primary-foreground))',
 					hover: 'hsl(var(--primary-hover))'
 				},
+				coral: {
+					light: 'hsl(var(--coral-light))'
+				},
+				peach: {
+					bg: 'hsl(var(--peach-bg))'
+				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'

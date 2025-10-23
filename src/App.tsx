@@ -17,7 +17,7 @@ import { Footer } from "@/components/Layout/Footer";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 // Pages
-import { Landing } from "./pages/Landing";
+import Landing from "./pages/Landing";
 import { Contact } from "./pages/Contact";
 import { TermsOfService } from "./pages/TermsOfService";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy";

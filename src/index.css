@@ -6,7 +6,7 @@
 
 @layer base {
 :root {
-    /* Dark theme - Modern visitor intelligence platform */
+    /* Dark theme - Coral/Peach e-commerce design */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
 
@@ -16,10 +16,10 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary - Lime/Green for intelligence theme */
-    --primary: 84 81% 44%;
-    --primary-foreground: 240 10% 3.9%;
-    --primary-hover: 84 81% 38%;
+    /* Primary - Coral/Orange for e-commerce warmth */
+    --primary: 16 100% 66%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 16 100% 60%;
 
     /* Secondary - Dark gray */
     --secondary: 240 3.7% 15.9%;
@@ -29,9 +29,9 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    /* Accent - Lime accent */
-    --accent: 84 81% 44%;
-    --accent-foreground: 240 10% 3.9%;
+    /* Accent - Coral accent */
+    --accent: 16 100% 66%;
+    --accent-foreground: 0 0% 100%;
 
     /* Success - Green for positive actions */
     --success: 142 71% 45%;
@@ -47,20 +47,24 @@
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 84 81% 44%;
+    --ring: 16 100% 66%;
 
-    /* Gradients - Intelligence platform aesthetic */
-    --gradient-primary: linear-gradient(135deg, hsl(84 81% 44%), hsl(84 81% 38%));
-    --gradient-hero: linear-gradient(135deg, hsl(84 81% 44%), hsl(84 81% 38%));
+    /* Coral color palette */
+    --coral-light: 16 100% 80%;
+    --peach-bg: 16 100% 97%;
+
+    /* Gradients - Coral/Peach e-commerce aesthetic */
+    --gradient-primary: linear-gradient(135deg, hsl(16 100% 66%), hsl(16 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(16 100% 66%), hsl(16 100% 60%));
     --gradient-card: linear-gradient(145deg, hsl(240 10% 3.9%), hsl(240 3.7% 15.9%));
-    --gradient-intelligence: linear-gradient(135deg, hsl(84 81% 44% / 0.8), hsl(84 81% 38% / 0.6));
+    --gradient-coral-pink: linear-gradient(135deg, hsl(16 100% 66%), hsl(16 100% 80%), hsl(16 100% 90%));
 
-    /* Shadows - Elevated dark theme */
+    /* Shadows - Elevated dark theme with coral glow */
     --shadow-soft: 0 2px 10px hsl(0 0% 0% / 0.3);
     --shadow-medium: 0 8px 25px hsl(0 0% 0% / 0.4);
     --shadow-large: 0 25px 50px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 50px hsl(84 81% 44% / 0.4);
-    --shadow-intelligence: 0 0 40px hsl(84 81% 44% / 0.2);
+    --shadow-elegant: 0 10px 30px hsl(16 100% 66% / 0.2);
+    --shadow-glow: 0 0 50px hsl(16 100% 66% / 0.3);
 
     --radius: 0.75rem;
 
@@ -75,7 +79,7 @@
   }
 
   :root:not(.dark) {
-    /* Light mode override - for toggle functionality */
+    /* Light mode override - Coral/Peach theme */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
 
@@ -85,10 +89,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    /* Primary - Lime/Green for consistency */
-    --primary: 84 81% 44%;
+    /* Primary - Coral/Orange for consistency */
+    --primary: 16 100% 66%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 84 81% 38%;
+    --primary-hover: 16 100% 60%;
 
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
@@ -96,10 +100,10 @@
     --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 84 81% 44%;
+    --accent: 16 100% 66%;
     --accent-foreground: 0 0% 100%;
 
-    /* Success - Brighter green for light mode */
+    /* Success - Green for light mode */
     --success: 142 71% 55%;
     --success-foreground: 220 27% 8%;
 
@@ -112,20 +116,24 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 84 81% 44%;
+    --ring: 16 100% 66%;
+
+    /* Coral color palette */
+    --coral-light: 16 100% 80%;
+    --peach-bg: 16 100% 97%;
 
     /* Light theme gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(84 81% 44%), hsl(84 81% 38%));
-    --gradient-hero: linear-gradient(135deg, hsl(84 81% 44%), hsl(84 81% 38%));
+    --gradient-primary: linear-gradient(135deg, hsl(16 100% 66%), hsl(16 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(16 100% 66%), hsl(16 100% 60%));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 40% 96%));
-    --gradient-intelligence: linear-gradient(135deg, hsl(84 81% 44% / 0.8), hsl(84 81% 38% / 0.6));
+    --gradient-coral-pink: linear-gradient(135deg, hsl(16 100% 66%), hsl(16 100% 80%), hsl(16 100% 90%));
 
     /* Light theme shadows */
     --shadow-soft: 0 2px 10px hsl(240 10% 3.9% / 0.1);
     --shadow-medium: 0 8px 25px hsl(240 10% 3.9% / 0.15);
     --shadow-large: 0 25px 50px hsl(240 10% 3.9% / 0.25);
-    --shadow-glow: 0 0 50px hsl(84 81% 44% / 0.3);
-    --shadow-intelligence: 0 0 40px hsl(84 81% 44% / 0.15);
+    --shadow-elegant: 0 10px 30px hsl(16 100% 66% / 0.15);
+    --shadow-glow: 0 0 50px hsl(16 100% 66% / 0.2);
     
     /* Light sidebar colors */
     --sidebar-background: 0 0% 98%;
@@ -190,6 +198,33 @@
     background: var(--gradient-intelligence);
   }
 
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+  }
+  
+  .gradient-coral-pink {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--coral-light)) 50%, hsl(16 100% 90%) 100%);
+  }
+  
+  .gradient-coral-blob {
+    background: radial-gradient(circle at 30% 50%, hsl(var(--primary) / 0.15) 0%, transparent 60%);
+  }
+  
+  .gradient-peach-blob {
+    background: radial-gradient(circle at 70% 50%, hsl(var(--coral-light) / 0.2) 0%, transparent 60%);
+  }
+  
+  .gradient-card {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+  }
+  
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--coral-light)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   /* Custom shadows */
   .shadow-soft {
     box-shadow: var(--shadow-soft);
@@ -201,6 +236,10 @@
 
   .shadow-large {
     box-shadow: var(--shadow-large);
+  }
+
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
   }
 
   .shadow-glow {

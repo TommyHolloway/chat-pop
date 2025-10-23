@@ -1,94 +1,87 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import { pricingPlans, type PricingPlan } from '@/config/pricing';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 interface PricingSectionProps {
-  showDescription?: boolean;
+  title?: string;
+  description?: string;
   className?: string;
 }
 
 interface PricingCardProps {
   plan: PricingPlan;
-  onButtonClick: (plan: PricingPlan) => void;
+  onSelect: (planName: string) => void;
 }
 
-const PricingCard = ({ plan, onButtonClick }: PricingCardProps) => (
-  <Card className={`relative ${plan.highlighted ? 'border-primary shadow-lg scale-105' : ''}`}>
+const PricingCard = ({ plan, onSelect }: PricingCardProps) => (
+  <div className={cn(
+    "relative flex flex-col h-full p-8 bg-card rounded-2xl border transition-all duration-300 hover:-translate-y-1",
+    plan.highlighted
+      ? "border-primary shadow-elegant scale-105"
+      : "border-border hover:shadow-lg"
+  )}>
     {plan.highlighted && (
-      <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-6 py-1.5 rounded-full text-sm font-semibold shadow-lg">
         Most Popular
-      </Badge>
-    )}
-    <CardHeader className="text-center">
-      <CardTitle className="text-2xl">{plan.name}</CardTitle>
-      <div className="space-y-1">
-        <div className="text-3xl font-bold">
-          {plan.price}
-          <span className="text-base font-normal text-muted-foreground">
-            /{plan.period}
-          </span>
-        </div>
-        <CardDescription>{plan.description}</CardDescription>
       </div>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <ul className="space-y-2">
-        {plan.features.map((feature, index) => (
-          <li key={index} className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-primary" />
-            <span className="text-sm">{feature}</span>
-          </li>
-        ))}
-      </ul>
-      <Button 
-        className="w-full" 
-        variant={plan.buttonVariant}
-        size="lg"
-        onClick={() => onButtonClick(plan)}
-      >
-        {plan.buttonText}
-      </Button>
-    </CardContent>
-  </Card>
+    )}
+    <div className="mb-8">
+      <h3 className="text-2xl font-bold mb-4 text-foreground">{plan.name}</h3>
+      <div className="flex items-baseline mb-3">
+        <span className="text-5xl font-bold text-foreground">{plan.price}</span>
+        <span className="text-muted-foreground ml-2 text-lg">/{plan.period}</span>
+      </div>
+      <p className="text-muted-foreground text-lg">{plan.description}</p>
+    </div>
+    <ul className="flex-1 space-y-4 mb-8">
+      {plan.features.map((feature, index) => (
+        <li key={index} className="flex items-start gap-3 text-foreground">
+          <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+          <span className="text-base">{feature}</span>
+        </li>
+      ))}
+    </ul>
+    <Button 
+      variant={plan.buttonVariant}
+      size="lg"
+      className="w-full"
+      onClick={() => onSelect(plan.name)}
+    >
+      {plan.buttonText}
+    </Button>
+  </div>
 );
 
-export const PricingSection = ({ showDescription = true, className = "" }: PricingSectionProps) => {
+export const PricingSection = ({ title = "Pricing Plans", description, className = "" }: PricingSectionProps) => {
   const navigate = useNavigate();
   
-  const handleButtonClick = (plan: PricingPlan) => {
-    localStorage.setItem('selectedPlan', plan.name);
-    navigate('/auth/signup');
+  const handleButtonClick = (planName: string) => {
+    localStorage.setItem('selectedPlan', planName);
+    navigate('/signup');
   };
 
   return (
-    <section className={`py-20 bg-background ${className}`}>
-      <div className="container mx-auto px-4">
-        {showDescription && (
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">
-              Pricing That Pays For Itself
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our customers average 250% increase in conversions. Most plans pay for themselves with just a few recovered customers.
-            </p>
-          </div>
-        )}
-        
-        <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
-          {pricingPlans.map((plan, index) => (
-            <PricingCard key={index} plan={plan} onButtonClick={handleButtonClick} />
+    <section className={`py-24 px-4 bg-background ${className}`}>
+      <div className="container mx-auto max-w-6xl">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">{title}</h2>
+          {description && (
+            <p className="text-xl text-muted-foreground">{description}</p>
+          )}
+        </div>
+        <div className="grid md:grid-cols-3 gap-8">
+          {pricingPlans.map((plan) => (
+            <PricingCard key={plan.name} plan={plan} onSelect={handleButtonClick} />
           ))}
         </div>
-        
-        <div className="text-center mt-12">
-          <p className="text-muted-foreground mb-4">
-            Need unlimited conversations or custom integrations for your enterprise?
+        <div className="mt-16 text-center">
+          <p className="text-muted-foreground text-lg mb-4">
+            Need more than 5 assistants or custom features?
           </p>
-          <Button variant="outline" size="lg" onClick={() => window.location.href = '/contact'}>
-            Talk to Our Sales Team
+          <Button variant="outline" size="lg" onClick={() => navigate('/contact')}>
+            Contact Sales
           </Button>
         </div>
       </div>
