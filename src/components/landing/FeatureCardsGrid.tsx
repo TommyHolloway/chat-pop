@@ -45,10 +45,10 @@ export const FeatureCardsGrid = () => {
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-            Everything Your Store Needs to Convert
+            Innovative AI Solutions That Drive Sales
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Powerful AI features that turn browsers into buyers
+            Powerful features that turn browsers into buyers
           </p>
         </div>
 

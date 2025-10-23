@@ -2,13 +2,12 @@ import { useEffect } from 'react';
 import { Navbar } from '@/components/Layout/Navbar';
 import { Footer } from '@/components/Layout/Footer';
 import { HeroWithStoreInput } from '@/components/landing/HeroWithStoreInput';
+import { LargeProductMockup } from '@/components/landing/LargeProductMockup';
 import { FeatureShowcaseSection } from '@/components/landing/FeatureShowcaseSection';
 import { FeatureCardsGrid } from '@/components/landing/FeatureCardsGrid';
 import { MetricsSection } from '@/components/landing/MetricsSection';
 import { GradientCTABanner } from '@/components/landing/GradientCTABanner';
 import { PricingSection } from '@/components/PricingSection';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { faqItems } from '@/config/pricing';
 import { ChatPopDemo } from '@/components/ChatPopDemo';
 
 export default function Landing() {
@@ -28,39 +27,28 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero Section with Store Input */}
+      {/* 1. Hero Section with Store Input */}
       <HeroWithStoreInput />
 
-      {/* Interactive Demo */}
-      <section id="demo-section" className="py-24 px-4">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-            See ChatPop in Action
-          </h2>
-          <p className="text-xl text-muted-foreground mb-12">
-            Try our AI shopping assistant now - ask about products, get recommendations
-          </p>
-          <ChatPopDemo />
-        </div>
-      </section>
+      {/* 2. Large Product Mockup */}
+      <LargeProductMockup />
 
-      {/* Metrics Section */}
-      <MetricsSection />
-
-      {/* Recover Revenue Section */}
+      {/* 3. Beat Competition Section */}
       <FeatureShowcaseSection
-        title="Recover 30% of Abandoned Carts Automatically"
-        description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
+        title="Outperform Your Competition with AI"
+        description="While competitors lose 70% of potential sales to abandoned carts, ChatPop automatically engages shoppers at the perfect moment—answering questions, addressing concerns, and closing deals 24/7."
         imageSrc="/lovable-uploads/6dc6879a-ad3c-479e-b8c4-99b7af2ab3ec.png"
-        imageAlt="Cart Recovery Chat"
-        imagePosition="right"
-        gradient={true}
+        imageAlt="AI Chat Assistant"
+        imagePosition="left"
       />
 
-      {/* Feature Cards Grid */}
+      {/* 4. Metrics Section */}
+      <MetricsSection />
+
+      {/* 5. Feature Cards Grid */}
       <FeatureCardsGrid />
 
-      {/* Analytics Dashboard Showcase */}
+      {/* 6. Analytics Dashboard Showcase */}
       <section className="py-24 px-4 gradient-peach-blob">
         <div className="container mx-auto max-w-6xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
@@ -74,22 +62,41 @@ export default function Landing() {
             <img
               src="/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"
               alt="Analytics Dashboard"
-              className="relative rounded-2xl shadow-2xl w-full"
+              className="relative rounded-2xl shadow-2xl w-full border border-border/50"
             />
           </div>
         </div>
       </section>
 
-      {/* AI Product Recommendations */}
+      {/* 7. AI Product Recommendations */}
       <FeatureShowcaseSection
         title="AI That Understands Your Products"
         description="Our AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and preferences. Increase average order value by 40% with smart upsells and cross-sells."
         imageSrc="/lovable-uploads/3d616246-b965-46e7-ac41-1c080309fd9d.png"
         imageAlt="Product Recommendations"
-        imagePosition="left"
+        imagePosition="right"
       />
 
-      {/* Integration Ecosystem */}
+      {/* 8. Cart Recovery Feature */}
+      <FeatureShowcaseSection
+        title="Recover 30% of Abandoned Carts Automatically"
+        description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
+        imageSrc="/lovable-uploads/6dc6879a-ad3c-479e-b8c4-99b7af2ab3ec.png"
+        imageAlt="Cart Recovery Chat"
+        imagePosition="left"
+        gradient={true}
+      />
+
+      {/* 9. Real-Time Assistance */}
+      <FeatureShowcaseSection
+        title="Real-Time Shopping Assistance"
+        description="Engage customers with intelligent conversations that understand context, product details, and customer intent. Provide instant answers to questions about sizing, compatibility, shipping, and more."
+        imageSrc="/lovable-uploads/3d616246-b965-46e7-ac41-1c080309fd9d.png"
+        imageAlt="Real-time Chat"
+        imagePosition="right"
+      />
+
+      {/* 10. Integration Ecosystem */}
       <section className="py-24 px-4 bg-background">
         <div className="container mx-auto max-w-6xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
@@ -108,37 +115,26 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* 11. Pricing Section */}
       <PricingSection 
         title="Pricing That Pays For Itself"
         description="Average customers recover 250% of plan cost in abandoned carts"
       />
 
-      {/* FAQ Section */}
-      <section className="py-24 px-4 bg-background">
-        <div className="container mx-auto max-w-3xl">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center text-foreground">
-            Frequently Asked Questions
+      {/* 12. Interactive Demo */}
+      <section id="demo-section" className="py-24 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+            See ChatPop in Action
           </h2>
-          <p className="text-xl text-muted-foreground text-center mb-12">
-            Everything you need to know about ChatPop
+          <p className="text-xl text-muted-foreground mb-12">
+            Try our AI shopping assistant now - ask about products, get recommendations
           </p>
-          <Accordion type="single" collapsible className="w-full">
-            {faqItems.map((item, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left text-lg">
-                  {item.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-base">
-                  {item.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <ChatPopDemo />
         </div>
       </section>
 
-      {/* Gradient CTA Banner */}
+      {/* 13. Gradient CTA Banner */}
       <GradientCTABanner />
 
       <Footer />

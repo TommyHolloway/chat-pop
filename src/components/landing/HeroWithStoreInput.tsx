@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Store } from 'lucide-react';
+import { ArrowRight, Store, Shield, Clock, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const HeroWithStoreInput = () => {
@@ -13,19 +13,19 @@ export const HeroWithStoreInput = () => {
   };
 
   return (
-    <section className="relative pt-32 pb-20 px-4 overflow-hidden">
+    <section className="relative py-32 pb-20 px-4 overflow-hidden">
       {/* Gradient background blobs */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] gradient-coral-blob opacity-60 blur-3xl" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] gradient-peach-blob opacity-50 blur-3xl" />
       
       <div className="container mx-auto max-w-6xl relative z-10">
-        <div className="text-center mb-12">
+        <div className="text-center">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 text-foreground leading-tight">
             Turn Online Shoppers Into
             <br />
-            <span className="gradient-text">Paying Customers</span> with AI
+            <span className="gradient-text">Paying Customers</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto">
             AI shopping assistants that recover abandoned carts and recommend products 24/7
           </p>
           
@@ -56,26 +56,20 @@ export const HeroWithStoreInput = () => {
           </div>
 
           {/* Trust Badges */}
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
             <span className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary" />
-              500+ E-commerce Stores
+              <Shield className="w-4 h-4 text-primary" />
+              No credit card required
             </span>
             <span className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary" />
-              $2M+ Recovered
+              <Clock className="w-4 h-4 text-primary" />
+              Setup in 5 minutes
+            </span>
+            <span className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" />
+              Instant results
             </span>
           </div>
-        </div>
-
-        {/* Hero Product Mockup */}
-        <div className="relative">
-          <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-3xl" />
-          <img
-            src="/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"
-            alt="ChatPop Dashboard"
-            className="relative rounded-2xl shadow-2xl w-full"
-          />
         </div>
       </div>
     </section>
