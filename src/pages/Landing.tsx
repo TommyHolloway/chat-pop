@@ -86,7 +86,7 @@ export const Landing = () => {
             </Badge>
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight text-foreground">
-              Turn 3X More Website Visitors{' '}
+              Turn Website Visitors{' '}
               <span className="text-primary">Into Paying Customers</span>
             </h1>
             
