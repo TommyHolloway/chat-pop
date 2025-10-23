@@ -372,48 +372,47 @@ export const Playground = () => {
           </div>
         </div>
 
-        {/* Chat Interface */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Chat Header */}
-          <div className="bg-card border-b p-4 flex-shrink-0">
-            <div className="flex items-center justify-between">
+        {/* Chat Interface - Widget Style */}
+        <div className="flex-1 flex items-center justify-center bg-muted/30 p-8">
+          <div className="w-full max-w-[500px] h-[700px] flex flex-col bg-background rounded-2xl shadow-2xl border overflow-hidden">
+            {/* Chat Header */}
+            <div className="bg-background border-b p-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-10 w-10">
                   <AvatarFallback 
                     style={{ 
                       backgroundColor: agent?.message_bubble_color + '20' || '#3B82F620',
                       color: agent?.message_bubble_color || '#3B82F6'
                     }}
                   >
-                    <Bot className="h-4 w-4" />
+                    <Bot className="h-5 w-5" />
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-semibold">{agent?.name || 'Loading...'}</h2>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <h2 className="font-semibold text-base">{agent?.name || 'Loading...'}</h2>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span>Online</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground mr-2">
                   {messages.length > 0 ? messages.length - 1 : 0} messages
-                </Badge>
-                <Button variant="outline" size="sm" onClick={resetChat}>
+                </span>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={resetChat}>
                   <RefreshCw className="h-4 w-4" />
                 </Button>
                 <Link to={`/agents/${id}/edit`}>
-                  <Button variant="outline" size="sm">
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
                     <Settings className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </div>
-          </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-background">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -484,29 +483,29 @@ export const Playground = () => {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
+              <div ref={messagesEndRef} />
+            </div>
 
-          {/* Input */}
-          <div className="border-t p-4 flex-shrink-0">
-            <div className="flex gap-2">
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button 
-                onClick={() => {
-                  console.log('🖱️ [Playground] Send button clicked');
-                  handleSendMessage();
-                }} 
-                disabled={isLoading || !inputValue.trim()}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+            {/* Message Input */}
+            <div className="border-t bg-background p-4 flex-shrink-0">
+              <div className="flex gap-2 items-center">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  disabled={isLoading}
+                  className="flex-1 bg-muted/50 border-muted"
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={isLoading || !inputValue.trim()}
+                  className="bg-green-500 hover:bg-green-600 h-10 w-10 p-0"
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
