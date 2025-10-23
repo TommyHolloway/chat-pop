@@ -39,9 +39,25 @@ export const SecureSignup = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard', { replace: true });
-    }
+    const checkFirstTimeUser = async () => {
+      if (user) {
+        // Check if user has any agents
+        const { data: agents } = await supabase
+          .from('agents')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1);
+        
+        if (!agents || agents.length === 0) {
+          // First-time user - redirect to onboarding
+          navigate('/agents/onboarding', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      }
+    };
+    
+    checkFirstTimeUser();
   }, [user, navigate]);
 
   const handleSubmit = async (data: SignupFormData) => {

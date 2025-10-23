@@ -12,7 +12,8 @@ import {
   Trash2,
   ExternalLink,
   Settings,
-  Calendar
+  Calendar,
+  Rocket
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -132,17 +133,23 @@ export function AgentCard({ agent, onDelete, variant = 'dashboard' }: AgentCardP
             <div className="font-semibold">{format(new Date(agent.created_at), 'MMM d')}</div>
           </div>
         </div>
-        <div className="flex gap-2 mt-4">
-          <Link to={testLink} className="flex-1">
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <Link to={testLink}>
             <Button variant="outline" size="sm" className="w-full">
-              <Play className="mr-2 h-3 w-3" />
+              <Play className="h-3 w-3 mr-1" />
               Test
             </Button>
           </Link>
-          <Link to={primaryLink} className="flex-1">
-            <Button size="sm" className="w-full">
-              <PrimaryIcon className="mr-2 h-3 w-3" />
-              {primaryAction}
+          <Link to={`/workspace/${workspaceId}/agents/${agent.id}/deploy/embed`}>
+            <Button variant="outline" size="sm" className="w-full">
+              <Rocket className="h-3 w-3 mr-1" />
+              Deploy
+            </Button>
+          </Link>
+          <Link to={primaryLink}>
+            <Button variant="outline" size="sm" className="w-full">
+              <Settings className="h-3 w-3 mr-1" />
+              Edit
             </Button>
           </Link>
         </div>
