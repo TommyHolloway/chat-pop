@@ -1,6 +1,4 @@
 import { useEffect } from 'react';
-import { Navbar } from '@/components/Layout/Navbar';
-import { Footer } from '@/components/Layout/Footer';
 import { HeroWithStoreInput } from '@/components/landing/HeroWithStoreInput';
 import { LargeProductMockup } from '@/components/landing/LargeProductMockup';
 import { FeatureShowcaseSection } from '@/components/landing/FeatureShowcaseSection';
@@ -25,8 +23,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      
       {/* 1. Hero Section with Store Input */}
       <HeroWithStoreInput />
 
@@ -49,7 +45,7 @@ export default function Landing() {
       <FeatureCardsGrid />
 
       {/* 6. Analytics Dashboard Showcase */}
-      <section className="py-24 px-4 gradient-peach-blob">
+      <section className="py-20 px-4 gradient-peach-blob">
         <div className="container mx-auto max-w-6xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
             Track Every Dollar Your AI Recovers
@@ -97,7 +93,7 @@ export default function Landing() {
       />
 
       {/* 10. Integration Ecosystem */}
-      <section className="py-24 px-4 bg-background">
+      <section className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-6xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Works on Every E-commerce Platform
@@ -122,7 +118,7 @@ export default function Landing() {
       />
 
       {/* 12. Interactive Demo */}
-      <section id="demo-section" className="py-24 px-4 bg-muted/30">
+      <section id="demo-section" className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
             See ChatPop in Action
@@ -136,8 +132,6 @@ export default function Landing() {
 
       {/* 13. Gradient CTA Banner */}
       <GradientCTABanner />
-
-      <Footer />
     </div>
   );
 }

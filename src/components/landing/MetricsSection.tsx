@@ -19,7 +19,7 @@ const metrics = [
 
 export const MetricsSection = () => {
   return (
-    <section className="py-20 px-4 bg-card border-y border-border">
+    <section className="py-16 px-4 bg-card border-y border-border">
       <div className="container mx-auto max-w-6xl">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {metrics.map((metric, index) => (

@@ -1,6 +1,6 @@
 export const LargeProductMockup = () => {
   return (
-    <section className="py-16 px-4 bg-background relative overflow-hidden">
+    <section className="py-20 px-4 bg-background relative overflow-hidden">
       <div className="absolute inset-0 gradient-peach-blob opacity-40" />
       
       <div className="container mx-auto max-w-7xl relative z-10">
