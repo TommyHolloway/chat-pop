@@ -31,6 +31,9 @@ interface PlanEnforcement {
   canCreateAgent: boolean;
   canSendMessage: boolean;
   canViewVisitorAnalytics: boolean;
+  canUseShopify: boolean;
+  canUseCartRecovery: boolean;
+  canViewEcommerceAnalytics: boolean;
   canAddLink: (agentId: string) => Promise<boolean>;
   canUploadFile: (fileSize: number) => Promise<boolean>;
   remainingCredits: number;
@@ -48,6 +51,9 @@ export const usePlanEnforcement = () => {
     canCreateAgent: true,
     canSendMessage: true,
     canViewVisitorAnalytics: false,
+    canUseShopify: false,
+    canUseCartRecovery: false,
+    canViewEcommerceAnalytics: false,
     canAddLink: async () => true,
     canUploadFile: async () => true,
     remainingCredits: 100,
@@ -136,6 +142,9 @@ export const usePlanEnforcement = () => {
       const canCreateAgent = agentCheck?.can_perform || false;
       const canSendMessage = messageCheck?.can_perform || false;
       const canViewVisitorAnalytics = currentPlan === 'standard';
+      const canUseShopify = currentPlan !== 'free';
+      const canUseCartRecovery = currentPlan !== 'free';
+      const canViewEcommerceAnalytics = currentPlan !== 'free';
       
       const canUploadFile = (fileSize: number) => {
         return new Promise<boolean>(async (resolve) => {
@@ -163,6 +172,9 @@ export const usePlanEnforcement = () => {
         canCreateAgent,
         canSendMessage,
         canViewVisitorAnalytics,
+        canUseShopify,
+        canUseCartRecovery,
+        canViewEcommerceAnalytics,
         canAddLink,
         canUploadFile,
         remainingCredits: limits.messageCredits === -1 ? -1 : Math.max(0, limits.messageCredits - currentUsage.currentMessageCredits),

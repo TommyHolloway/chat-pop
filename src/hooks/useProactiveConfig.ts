@@ -65,6 +65,16 @@ const quickTriggerTemplates: CustomTrigger[] = [
     message: "I see you're exploring our features. Want to learn more about how they can benefit you?",
     url_patterns: ['/features', '/product', '/demo'],
     isQuickTrigger: true
+  },
+  {
+    id: 'quick_cart_abandonment',
+    name: 'Cart Abandonment Recovery',
+    trigger_type: 'time_based',
+    enabled: false,
+    time_threshold: 300,
+    message: "I noticed you left items in your cart! Can I help answer any questions or apply a discount code?",
+    url_patterns: ['/cart', '/checkout'],
+    isQuickTrigger: true
   }
 ];
 

@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          agent_id: string
+          cart_items: Json
+          cart_total: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          recovered: boolean | null
+          recovered_at: string | null
+          recovery_attempted: boolean | null
+          recovery_message_sent_at: string | null
+          session_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          cart_items: Json
+          cart_total: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          recovered?: boolean | null
+          recovered_at?: string | null
+          recovery_attempted?: boolean | null
+          recovery_message_sent_at?: string | null
+          session_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          cart_items?: Json
+          cart_total?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          recovered?: boolean | null
+          recovered_at?: string | null
+          recovery_attempted?: boolean | null
+          recovery_message_sent_at?: string | null
+          session_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abandoned_carts_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_logs: {
         Row: {
           action: string
@@ -82,6 +135,63 @@ export type Database = {
           },
         ]
       }
+      agent_conversions: {
+        Row: {
+          agent_id: string
+          attributed_revenue: number | null
+          conversation_id: string | null
+          conversion_type: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          order_id: string | null
+          order_total: number | null
+          products_purchased: Json | null
+          session_id: string
+        }
+        Insert: {
+          agent_id: string
+          attributed_revenue?: number | null
+          conversation_id?: string | null
+          conversion_type: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          order_id?: string | null
+          order_total?: number | null
+          products_purchased?: Json | null
+          session_id: string
+        }
+        Update: {
+          agent_id?: string
+          attributed_revenue?: number | null
+          conversation_id?: string | null
+          conversion_type?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          order_id?: string | null
+          order_total?: number | null
+          products_purchased?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_conversions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_conversions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_crawl_pages: {
         Row: {
           agent_link_id: string
@@ -125,6 +235,59 @@ export type Database = {
             columns: ["agent_link_id"]
             isOneToOne: false
             referencedRelation: "agent_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_ecommerce_metrics: {
+        Row: {
+          agent_id: string
+          average_order_value: number | null
+          carts_recovered: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          product_recommendations_shown: number | null
+          products_clicked: number | null
+          recovery_revenue: number | null
+          total_orders: number | null
+          total_revenue: number | null
+        }
+        Insert: {
+          agent_id: string
+          average_order_value?: number | null
+          carts_recovered?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          product_recommendations_shown?: number | null
+          products_clicked?: number | null
+          recovery_revenue?: number | null
+          total_orders?: number | null
+          total_revenue?: number | null
+        }
+        Update: {
+          agent_id?: string
+          average_order_value?: number | null
+          carts_recovered?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          product_recommendations_shown?: number | null
+          products_clicked?: number | null
+          recovery_revenue?: number | null
+          total_orders?: number | null
+          total_revenue?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_ecommerce_metrics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
             referencedColumns: ["id"]
           },
         ]
@@ -335,6 +498,47 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: []
+      }
+      cart_events: {
+        Row: {
+          agent_id: string
+          cart_total: number | null
+          created_at: string | null
+          currency: string | null
+          event_type: string
+          id: string
+          product_data: Json | null
+          session_id: string
+        }
+        Insert: {
+          agent_id: string
+          cart_total?: number | null
+          created_at?: string | null
+          currency?: string | null
+          event_type: string
+          id?: string
+          product_data?: Json | null
+          session_id: string
+        }
+        Update: {
+          agent_id?: string
+          cart_total?: number | null
+          created_at?: string | null
+          currency?: string | null
+          event_type?: string
+          id?: string
+          product_data?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {
