@@ -14,10 +14,9 @@ import { AgentActionsCalendar } from './sections/AgentActionsCalendar';
 import { AgentActionsCustom } from './sections/AgentActionsCustom';
 import { AgentDeployEmbed } from './sections/AgentDeployEmbed';
 import { AgentDeployShare } from './sections/AgentDeployShare';
-import { AgentDeployIntegrations } from './sections/AgentDeployIntegrations';
 import { AgentSettingsGeneral } from './sections/AgentSettingsGeneral';
-import { AgentSettingsAI } from './sections/AgentSettingsAI';
 import { AgentSettingsChat } from './sections/AgentSettingsChat';
+import { AgentSettingsIntegrations } from './sections/AgentSettingsIntegrations';
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
 import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
 import { AgentCompletionProgress } from '@/components/agent/AgentCompletionProgress';
@@ -88,14 +87,13 @@ export const AgentLayout = () => {
           {/* Deploy */}
           <Route path="deploy/embed" element={<AgentDeployEmbed agent={agent} />} />
           <Route path="deploy/share" element={<AgentDeployShare agent={agent} />} />
-          <Route path="deploy/integrations" element={<AgentDeployIntegrations agent={agent} />} />
           
           {/* Settings */}
           <Route path="settings/general" element={<AgentSettingsGeneral agent={agent} />} />
-          <Route path="settings/ai" element={<AgentSettingsAI agent={agent} />} />
           <Route path="settings/chat" element={<AgentSettingsChat agent={agent} />} />
           <Route path="settings/leads" element={<AgentSettingsLeads agent={agent} />} />
           <Route path="settings/proactive" element={<AgentSettingsProactive agent={agent} />} />
+          <Route path="settings/integrations" element={<AgentSettingsIntegrations agent={agent} />} />
           
           {/* Default */}
           <Route index element={<AgentPlayground agent={agent} />} />
