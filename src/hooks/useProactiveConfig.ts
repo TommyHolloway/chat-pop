@@ -41,7 +41,7 @@ const quickTriggerTemplates: CustomTrigger[] = [
     trigger_type: 'time_based',
     enabled: false,
     time_threshold: 45,
-    message: "Hi! I noticed you're checking out this product. Any questions about sizing, materials, shipping, or anything else?",
+    message: "👋 Still deciding? I can help with sizing, shipping times, or answer any questions about this product!",
     url_patterns: ['/products/*', '/product/*', '/shop/*'],
     isQuickTrigger: true
   },
@@ -51,7 +51,7 @@ const quickTriggerTemplates: CustomTrigger[] = [
     trigger_type: 'time_based',
     enabled: false,
     page_views_threshold: 3,
-    message: "I see you're comparing a few options! Would you like help narrowing down the perfect choice for you?",
+    message: "Comparing options? 🤔 I can help you find the perfect match based on your needs!",
     url_patterns: ['/products/*', '/product/*', '/shop/*'],
     isQuickTrigger: true
   },
@@ -61,7 +61,7 @@ const quickTriggerTemplates: CustomTrigger[] = [
     trigger_type: 'time_based',
     enabled: false,
     time_threshold: 60,
-    message: "Wait! Before you go - is there anything I can help with? Shipping concerns? Sizing questions? I'm here to help!",
+    message: "Need help completing your order? I can answer questions about shipping, returns, or apply a discount code! 💬",
     url_patterns: ['/checkout', '/cart', '/basket'],
     isQuickTrigger: true
   },
@@ -71,7 +71,7 @@ const quickTriggerTemplates: CustomTrigger[] = [
     trigger_type: 'time_based',
     enabled: false,
     time_threshold: 300,
-    message: "I noticed you left items in your cart! Can I help answer any questions or apply a discount code?",
+    message: "Your cart is waiting! 🛒 Got questions about your items? Or I can help apply a discount code to complete your order.",
     url_patterns: ['/cart', '/checkout'],
     isQuickTrigger: true
   }
