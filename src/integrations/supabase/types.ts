@@ -20,7 +20,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -29,7 +29,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -38,7 +38,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -336,72 +336,6 @@ export type Database = {
         }
         Relationships: []
       }
-      api_key_storage: {
-        Row: {
-          agent_id: string
-          created_at: string | null
-          encrypted_key: string
-          id: string
-          key_hash: string
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          agent_id: string
-          created_at?: string | null
-          encrypted_key: string
-          id?: string
-          key_hash: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          agent_id?: string
-          created_at?: string | null
-          encrypted_key?: string
-          id?: string
-          key_hash?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      calendar_integrations: {
-        Row: {
-          agent_id: string
-          api_key_encrypted: string | null
-          configuration_json: Json
-          created_at: string
-          id: string
-          integration_mode: string
-          is_active: boolean
-          provider: string
-          updated_at: string
-        }
-        Insert: {
-          agent_id: string
-          api_key_encrypted?: string | null
-          configuration_json?: Json
-          created_at?: string
-          id?: string
-          integration_mode?: string
-          is_active?: boolean
-          provider: string
-          updated_at?: string
-        }
-        Update: {
-          agent_id?: string
-          api_key_encrypted?: string | null
-          configuration_json?: Json
-          created_at?: string
-          id?: string
-          integration_mode?: string
-          is_active?: boolean
-          provider?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       conversations: {
         Row: {
           agent_id: string
@@ -684,51 +618,6 @@ export type Database = {
           },
         ]
       }
-      security_audit_logs: {
-        Row: {
-          audit_date: string
-          created_at: string | null
-          critical_events: number | null
-          id: string
-          lead_operations: number | null
-          pii_access_events: number | null
-          security_events: number | null
-          service_role_ops: number | null
-          total_operations: number | null
-          unique_ips: number | null
-          updated_at: string | null
-          visitor_operations: number | null
-        }
-        Insert: {
-          audit_date?: string
-          created_at?: string | null
-          critical_events?: number | null
-          id?: string
-          lead_operations?: number | null
-          pii_access_events?: number | null
-          security_events?: number | null
-          service_role_ops?: number | null
-          total_operations?: number | null
-          unique_ips?: number | null
-          updated_at?: string | null
-          visitor_operations?: number | null
-        }
-        Update: {
-          audit_date?: string
-          created_at?: string | null
-          critical_events?: number | null
-          id?: string
-          lead_operations?: number | null
-          pii_access_events?: number | null
-          security_events?: number | null
-          service_role_ops?: number | null
-          total_operations?: number | null
-          unique_ips?: number | null
-          updated_at?: string | null
-          visitor_operations?: number | null
-        }
-        Relationships: []
-      }
       site_content: {
         Row: {
           content_type: string
@@ -962,7 +851,7 @@ export type Database = {
           current_page_url: string | null
           first_page_url: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           referrer: string | null
           session_id: string
           total_page_views: number | null
@@ -977,7 +866,7 @@ export type Database = {
           current_page_url?: string | null
           first_page_url?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           referrer?: string | null
           session_id: string
           total_page_views?: number | null
@@ -992,7 +881,7 @@ export type Database = {
           current_page_url?: string | null
           first_page_url?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           referrer?: string | null
           session_id?: string
           total_page_views?: number | null
@@ -1009,39 +898,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      waitlist: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: string
-          metadata: Json | null
-          opt_in_for_texts: boolean | null
-          phone: string
-          source: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          id?: string
-          metadata?: Json | null
-          opt_in_for_texts?: boolean | null
-          phone: string
-          source?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          id?: string
-          metadata?: Json | null
-          opt_in_for_texts?: boolean | null
-          phone?: string
-          source?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       workspaces: {
         Row: {
@@ -1072,18 +928,7 @@ export type Database = {
       }
     }
     Views: {
-      security_audit_summary: {
-        Row: {
-          audit_date: string | null
-          lead_operations: number | null
-          security_events: number | null
-          service_role_ops: number | null
-          total_operations: number | null
-          unique_ips: number | null
-          visitor_operations: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_access_profile_data: {
@@ -1110,26 +955,17 @@ export type Database = {
           user_id: string
         }[]
       }
-      anonymize_ip_address: {
-        Args: { ip_addr: unknown }
-        Returns: unknown
-      }
+      anonymize_ip_address: { Args: { ip_addr: unknown }; Returns: unknown }
       anonymize_pii_for_analytics: {
         Args: { email_input?: string; phone_input?: string }
         Returns: Json
       }
-      automated_security_maintenance: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      automated_security_maintenance: { Args: never; Returns: undefined }
       automated_security_maintenance_enhanced: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: undefined
       }
-      automated_security_maintenance_v2: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      automated_security_maintenance_v2: { Args: never; Returns: undefined }
       check_user_plan_limits: {
         Args: {
           p_agent_id?: string
@@ -1139,54 +975,21 @@ export type Database = {
         }
         Returns: Json
       }
-      cleanup_empty_conversations: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_expired_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_visitor_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_visitor_privacy_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      comprehensive_security_maintenance: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      comprehensive_security_scan: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      detect_profile_data_breach: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      detect_rapid_login_attempts: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      detect_suspicious_pii_access: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      encrypt_pii_data: {
-        Args: { data_text: string }
-        Returns: string
-      }
+      cleanup_empty_conversations: { Args: never; Returns: undefined }
+      cleanup_expired_cache: { Args: never; Returns: undefined }
+      cleanup_old_visitor_data: { Args: never; Returns: undefined }
+      cleanup_visitor_privacy_data: { Args: never; Returns: undefined }
+      comprehensive_security_maintenance: { Args: never; Returns: undefined }
+      comprehensive_security_scan: { Args: never; Returns: Json }
+      detect_profile_data_breach: { Args: never; Returns: undefined }
+      detect_rapid_login_attempts: { Args: never; Returns: undefined }
+      detect_suspicious_pii_access: { Args: never; Returns: undefined }
+      encrypt_pii_data: { Args: { data_text: string }; Returns: string }
       encrypt_pii_field: {
         Args: { data_text: string; field_type: string }
         Returns: string
       }
-      enforce_data_retention: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      enforce_data_retention: { Args: never; Returns: undefined }
       enhanced_ip_anonymization: {
         Args: { ip_addr: unknown }
         Returns: unknown
@@ -1195,19 +998,7 @@ export type Database = {
         Args: { data_fields: Json; operation_type?: string }
         Returns: boolean
       }
-      enhanced_privacy_data_cleanup: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      enhanced_rate_limit_check: {
-        Args: {
-          max_operations?: number
-          operation_key: string
-          should_log?: boolean
-          window_minutes?: number
-        }
-        Returns: boolean
-      }
+      enhanced_privacy_data_cleanup: { Args: never; Returns: undefined }
       enhanced_rate_limit_check_readonly: {
         Args: {
           max_operations?: number
@@ -1216,18 +1007,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      enhanced_security_scan: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      enhanced_visitor_privacy_cleanup: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      generate_daily_security_audit: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      enhanced_security_scan: { Args: never; Returns: Json }
+      enhanced_visitor_privacy_cleanup: { Args: never; Returns: undefined }
+      generate_daily_security_audit: { Args: never; Returns: undefined }
       get_public_agent_data: {
         Args: { agent_uuid: string }
         Returns: {
@@ -1241,7 +1023,7 @@ export type Database = {
         }[]
       }
       get_security_audit_summary_secure: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           audit_date: string
           lead_operations: number
@@ -1303,10 +1085,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      parse_client_ip: {
-        Args: { ip_header: string }
-        Returns: unknown
-      }
+      parse_client_ip: { Args: { ip_header: string }; Returns: unknown }
       rate_limit_check: {
         Args: {
           max_operations?: number
@@ -1315,18 +1094,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      sanitize_text_input: {
-        Args: { input_text: string }
-        Returns: string
-      }
-      schedule_visitor_cleanup: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      security_health_check: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      sanitize_text_input: { Args: { input_text: string }; Returns: string }
+      schedule_visitor_cleanup: { Args: never; Returns: undefined }
+      security_health_check: { Args: never; Returns: Json }
       support_access_profile_basic: {
         Args: { target_user_id: string; ticket_number: string }
         Returns: {
@@ -1337,7 +1107,7 @@ export type Database = {
         }[]
       }
       sync_auth_users_to_profiles: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           orphaned_users: Json
           synced_count: number
@@ -1368,20 +1138,9 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
-      validate_authenticated_user: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      validate_authenticated_user: { Args: never; Returns: string }
       validate_edge_function_request: {
         Args: { client_ip?: unknown; function_name: string; request_data: Json }
-        Returns: boolean
-      }
-      validate_email: {
-        Args: { email_input: string }
-        Returns: boolean
-      }
-      validate_phone: {
-        Args: { phone_input: string }
         Returns: boolean
       }
       validate_profile_input: {
@@ -1412,10 +1171,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      verify_admin_route_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      verify_admin_route_access: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
