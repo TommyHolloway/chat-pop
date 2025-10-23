@@ -6,7 +6,7 @@ import { FeatureCardsGrid } from '@/components/landing/FeatureCardsGrid';
 import { MetricsSection } from '@/components/landing/MetricsSection';
 import { GradientCTABanner } from '@/components/landing/GradientCTABanner';
 import { PricingSection } from '@/components/PricingSection';
-import { ChatPopDemo } from '@/components/ChatPopDemo';
+import { InteractiveTriggerDemo } from '@/components/landing/InteractiveTriggerDemo';
 
 export default function Landing() {
   useEffect(() => {
@@ -117,18 +117,8 @@ export default function Landing() {
         description="Average customers recover 250% of plan cost in abandoned carts"
       />
 
-      {/* 12. Interactive Demo */}
-      <section id="demo-section" className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-            See ChatPop in Action
-          </h2>
-          <p className="text-xl text-muted-foreground mb-12">
-            Try our AI shopping assistant now - ask about products, get recommendations
-          </p>
-          <ChatPopDemo />
-        </div>
-      </section>
+      {/* 12. Interactive Trigger Demo */}
+      <InteractiveTriggerDemo />
 
       {/* 13. Gradient CTA Banner */}
       <GradientCTABanner />
