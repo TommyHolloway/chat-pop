@@ -26,8 +26,8 @@ export default function Landing() {
       {/* 1. Hero Section with Store Input */}
       <HeroWithStoreInput />
 
-      {/* 2. Large Product Mockup */}
-      <LargeProductMockup />
+      {/* 2. Interactive Trigger Demo */}
+      <InteractiveTriggerDemo />
 
       {/* 3. Beat Competition Section */}
       <FeatureShowcaseSection
@@ -117,8 +117,6 @@ export default function Landing() {
         description="Average customers recover 250% of plan cost in abandoned carts"
       />
 
-      {/* 12. Interactive Trigger Demo */}
-      <InteractiveTriggerDemo />
 
       {/* 13. Gradient CTA Banner */}
       <GradientCTABanner />
