@@ -618,45 +618,6 @@ export type Database = {
           },
         ]
       }
-      site_content: {
-        Row: {
-          content_type: string
-          created_at: string
-          description: string | null
-          display_order: number
-          file_url: string
-          id: string
-          is_active: boolean
-          thumbnail_url: string | null
-          title: string | null
-          updated_at: string
-        }
-        Insert: {
-          content_type: string
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          file_url: string
-          id?: string
-          is_active?: boolean
-          thumbnail_url?: string | null
-          title?: string | null
-          updated_at?: string
-        }
-        Update: {
-          content_type?: string
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          file_url?: string
-          id?: string
-          is_active?: boolean
-          thumbnail_url?: string | null
-          title?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       subscribers: {
         Row: {
           created_at: string
@@ -1104,13 +1065,6 @@ export type Database = {
           display_name: string
           id: string
           plan: string
-        }[]
-      }
-      sync_auth_users_to_profiles: {
-        Args: never
-        Returns: {
-          orphaned_users: Json
-          synced_count: number
         }[]
       }
       update_storage_usage: {
