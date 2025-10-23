@@ -115,54 +115,22 @@ export const useProactiveConfig = (agent: any) => {
   const [configLoading, setConfigLoading] = useState(true);
   const [config, setConfig] = useState<ProactiveConfig>(defaultConfig);
 
-  // Migration function to convert old predefined triggers to Quick Triggers
+  // Always use the latest e-commerce quick triggers for all agents
   const migrateToQuickTriggers = (config: ProactiveConfig): ProactiveConfig => {
     const existingCustomTriggers = config.custom_triggers || [];
-    const migratedTriggers = [...existingCustomTriggers];
     
-    // Check if Quick Triggers already exist
-    const hasQuickTriggers = existingCustomTriggers.some(t => t.isQuickTrigger);
+    // Filter out ALL existing quick triggers (we'll replace them with latest templates)
+    const nonQuickTriggers = existingCustomTriggers.filter(t => !t.isQuickTrigger);
     
-    if (!hasQuickTriggers && config.triggers) {
-      // Convert old predefined triggers to Quick Triggers
-      if (config.triggers.pricing_concern) {
-        migratedTriggers.push({
-          ...quickTriggerTemplates[0],
-          enabled: config.triggers.pricing_concern.enabled,
-          message: config.triggers.pricing_concern.message,
-          time_threshold: config.triggers.pricing_concern.time_threshold,
-          url_patterns: config.triggers.pricing_concern.url_patterns
-        });
-      }
-      
-      if (config.triggers.high_engagement) {
-        migratedTriggers.push({
-          ...quickTriggerTemplates[1],
-          enabled: config.triggers.high_engagement.enabled,
-          message: config.triggers.high_engagement.message,
-          time_threshold: config.triggers.high_engagement.time_threshold,
-          page_views_threshold: config.triggers.high_engagement.page_views_threshold,
-          url_patterns: config.triggers.high_engagement.url_patterns
-        });
-      }
-      
-      if (config.triggers.feature_exploration) {
-        migratedTriggers.push({
-          ...quickTriggerTemplates[2],
-          enabled: config.triggers.feature_exploration.enabled,
-          message: config.triggers.feature_exploration.message,
-          page_threshold: config.triggers.feature_exploration.page_threshold,
-          url_patterns: config.triggers.feature_exploration.url_patterns
-        });
-      }
-    } else if (!hasQuickTriggers) {
-      // Add default Quick Triggers if none exist
-      migratedTriggers.push(...quickTriggerTemplates);
-    }
+    // Always add the latest e-commerce quick trigger templates
+    const updatedTriggers = [
+      ...nonQuickTriggers,  // Keep user's custom triggers
+      ...quickTriggerTemplates  // Always use latest e-commerce templates
+    ];
     
     return {
       ...config,
-      custom_triggers: migratedTriggers
+      custom_triggers: updatedTriggers
     };
   };
 
