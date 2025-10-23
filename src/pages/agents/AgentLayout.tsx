@@ -20,7 +20,8 @@ import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
 import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
 import { AgentCompletionProgress } from '@/components/agent/AgentCompletionProgress';
 import { AgentEcommerceAnalytics } from './sections/AgentEcommerceAnalytics';
-
+import { AgentAbandonedCarts } from './sections/AgentAbandonedCarts';
+ 
 export const AgentLayout = () => {
   const { id, workspaceId } = useParams();
   const location = useLocation();
@@ -70,6 +71,7 @@ export const AgentLayout = () => {
           <Route path="playground" element={<AgentPlayground agent={agent} />} />
           <Route path="analytics" element={<AgentAnalytics agent={agent} />} />
           <Route path="analytics/ecommerce" element={<AgentEcommerceAnalytics agent={agent} />} />
+          <Route path="analytics/abandoned-carts" element={<AgentAbandonedCarts agent={agent} />} />
           
           {/* Activity */}
           <Route path="activity/conversations" element={<AgentConversations agent={agent} />} />

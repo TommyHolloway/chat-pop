@@ -26,7 +26,9 @@ import {
   ChevronDown,
   Plus,
   Eye,
-  Target
+  Target,
+  ShoppingCart,
+  ShoppingBag
 } from 'lucide-react';
 import {
   Sidebar,
@@ -308,6 +310,22 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                             <Eye className="h-4 w-4" />
                             <span>Visitor Intelligence</span>
                             <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics/ecommerce`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/ecommerce`}>
+                            <ShoppingCart className="h-4 w-4" />
+                            <span>E-commerce</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics/abandoned-carts`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/abandoned-carts`}>
+                            <ShoppingBag className="h-4 w-4" />
+                            <span>Abandoned Carts</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
