@@ -54,16 +54,16 @@ export const Dashboard = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
+              <h1 className="text-3xl font-bold">Store Dashboard</h1>
               <p className="text-muted-foreground">
-                Welcome back, {user?.email?.split('@')[0]}! Here's what's happening with your AI agents.
+                Welcome back, {user?.email?.split('@')[0]}! Here's what's happening with your AI shopping assistants.
               </p>
             </div>
             <PlanEnforcementWrapper feature="agent">
               <Link to="/agents/new">
                 <Button size="lg">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create New Agent
+                  Create Shopping Assistant
                 </Button>
               </Link>
             </PlanEnforcementWrapper>
@@ -76,27 +76,27 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="hover-lift">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
+              <CardTitle className="text-sm font-medium">Shopping Assistants</CardTitle>
               <Bot className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {analytics.isLoading ? "..." : analytics.totalAgents}
               </div>
-              <p className="text-xs text-muted-foreground">Active agents</p>
+              <p className="text-xs text-muted-foreground">Active assistants</p>
             </CardContent>
           </Card>
 
           <Card className="hover-lift">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conversations</CardTitle>
+              <CardTitle className="text-sm font-medium">Customer Interactions</CardTitle>
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {analytics.isLoading ? "..." : analytics.totalConversations}
               </div>
-              <p className="text-xs text-muted-foreground">Total conversations</p>
+              <p className="text-xs text-muted-foreground">Total interactions</p>
             </CardContent>
           </Card>
 
@@ -115,14 +115,14 @@ export const Dashboard = () => {
 
           <Card className="hover-lift">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+              <CardTitle className="text-sm font-medium">Shopper Sessions</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {analytics.isLoading ? "..." : analytics.totalSessions}
               </div>
-              <p className="text-xs text-muted-foreground">Unique chat sessions</p>
+              <p className="text-xs text-muted-foreground">Unique shoppers</p>
             </CardContent>
           </Card>
         </div>
@@ -131,9 +131,9 @@ export const Dashboard = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-semibold">Your AI Agents</h2>
+              <h2 className="text-2xl font-semibold">Your AI Shopping Assistants</h2>
               <p className="text-muted-foreground">
-                Manage and monitor your deployed chatbots
+                Manage and monitor your deployed shopping assistants
               </p>
             </div>
           </div>
@@ -141,15 +141,15 @@ export const Dashboard = () => {
           {agents.length === 0 ? (
             <Card className="p-12 text-center">
               <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No agents yet</h3>
+              <h3 className="text-xl font-semibold mb-2">No shopping assistants yet</h3>
               <p className="text-muted-foreground mb-6">
-                Create your first AI agent to get started with automated customer support.
+                Create your first AI shopping assistant to start recommending products and recovering abandoned carts.
               </p>
               <PlanEnforcementWrapper feature="agent">
                 <Link to="/agents/new">
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Your First Agent
+                    Create Your First Assistant
                   </Button>
                 </Link>
               </PlanEnforcementWrapper>

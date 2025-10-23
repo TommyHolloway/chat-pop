@@ -36,34 +36,33 @@ export interface ProactiveConfig {
 
 const quickTriggerTemplates: CustomTrigger[] = [
   {
-    id: 'quick_pricing_helper',
-    name: 'Pricing Page Helper',
+    id: 'product_page_hesitation',
+    name: 'Product Page Hesitation',
     trigger_type: 'time_based',
     enabled: false,
-    time_threshold: 30,
-    message: "Hi! I noticed you're looking at our pricing. I'd be happy to help you find the perfect plan for your needs!",
-    url_patterns: ['/pricing', '/plans', '/cost'],
+    time_threshold: 45,
+    message: "Hi! I noticed you're checking out this product. Any questions about sizing, materials, shipping, or anything else?",
+    url_patterns: ['/products/*', '/product/*', '/shop/*'],
     isQuickTrigger: true
   },
   {
-    id: 'quick_engagement_booster',
-    name: 'Engagement Booster',
+    id: 'compare_products',
+    name: 'Comparing Multiple Products',
     trigger_type: 'time_based',
     enabled: false,
-    time_threshold: 120,
-    page_views_threshold: 5,
-    message: "You seem really interested in what we offer! Would you like to chat about how we can help you?",
-    url_patterns: [],
+    page_views_threshold: 3,
+    message: "I see you're comparing a few options! Would you like help narrowing down the perfect choice for you?",
+    url_patterns: ['/products/*', '/product/*', '/shop/*'],
     isQuickTrigger: true
   },
   {
-    id: 'quick_feature_guide',
-    name: 'Feature Guide',
+    id: 'checkout_exit',
+    name: 'About to Leave Checkout',
     trigger_type: 'time_based',
     enabled: false,
-    page_threshold: 3,
-    message: "I see you're exploring our features. Want to learn more about how they can benefit you?",
-    url_patterns: ['/features', '/product', '/demo'],
+    time_threshold: 60,
+    message: "Wait! Before you go - is there anything I can help with? Shipping concerns? Sizing questions? I'm here to help!",
+    url_patterns: ['/checkout', '/cart', '/basket'],
     isQuickTrigger: true
   },
   {

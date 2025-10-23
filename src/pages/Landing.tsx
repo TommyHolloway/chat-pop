@@ -86,12 +86,12 @@ export const Landing = () => {
             </Badge>
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight text-foreground">
-              Turn Website Visitors{' '}
+              Turn Online Shoppers{' '}
               <span className="text-primary">Into Paying Customers</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              AI chat agents that start conversations at the perfect moment - before visitors leave. Turn browsers into buyers while you sleep.
+              AI shopping assistants that recommend products, recover abandoned carts, and answer questions 24/7. Built specifically for e-commerce stores.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
@@ -131,10 +131,10 @@ export const Landing = () => {
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
               Stop Losing Revenue to{' '}
-              <span className="text-gradient-primary">Abandoned Visitors</span>
+              <span className="text-gradient-primary">Abandoned Carts</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              While competitors wait for visitors to ask questions, our AI recovers 30% of lost sales by engaging at exactly the right moment.
+              While other stores watch shoppers leave, our AI recovers 30% of abandoned carts by engaging at exactly the right moment with personalized product recommendations.
             </p>
             <div className="pt-8">
               <Button 
@@ -244,7 +244,7 @@ export const Landing = () => {
                     <div className="text-sm text-muted-foreground">Conversion Rate Improvement</div>
                   </div>
                 </div>
-                <p className="text-lg italic">"ChatPop generated $47K in additional revenue in our first 60 days. The AI starts conversations we never would have had and recovers visitors we thought were lost."</p>
+                <p className="text-lg italic">"ChatPop recovered $47K in abandoned carts in our first 60 days. The AI recommends products we never thought to suggest and recovers shoppers we thought were lost."</p>
                 <p className="text-sm text-muted-foreground">– Sarah Chen, E-commerce Director at TechStyle Co.</p>
               </div>
             </Card>
@@ -260,7 +260,7 @@ export const Landing = () => {
                     <div className="text-sm text-muted-foreground">Revenue Growth</div>
                   </div>
                 </div>
-                <p className="text-lg italic">"We went from 2% to 7% conversion rate in 90 days. The AI knows exactly when to engage and what to say. It's like having a perfect salesperson on every page, 24/7."</p>
+                <p className="text-lg italic">"We went from 2% to 7% conversion rate in 90 days. The AI knows exactly when to engage shoppers and what products to recommend. It's like having a perfect sales associate on every page, 24/7."</p>
                 <p className="text-sm text-muted-foreground">– Marcus Rodriguez, VP of Sales at GrowthLabs</p>
               </div>
             </Card>
@@ -281,9 +281,9 @@ export const Landing = () => {
       <section className="py-16 bg-muted/10">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8">
-            <h3 className="text-2xl font-semibold text-muted-foreground">Join 500+ Businesses Already Increasing Conversions</h3>
+            <h3 className="text-2xl font-semibold text-muted-foreground">Join 500+ E-commerce Stores Increasing Revenue</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From e-commerce stores to SaaS companies, businesses are recovering lost revenue with proactive AI chat agents.
+              From Shopify stores to enterprise retailers, e-commerce brands are recovering abandoned carts and boosting sales with AI shopping assistants.
             </p>
             <div className="flex flex-wrap justify-center gap-8 mt-8 items-center">
               <Badge variant="outline" className="text-base px-4 py-2">
@@ -344,7 +344,7 @@ export const Landing = () => {
               Ready to 3X Your Conversion Rate?
             </h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Join 500+ businesses using ChatPop to recover lost revenue. See results in 24 hours or get your money back.
+              Join 500+ e-commerce stores using ChatPop to recover abandoned carts and boost revenue. See results in 24 hours or get your money back.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -381,50 +381,50 @@ export const Landing = () => {
 const intelligenceFeatures = [
   {
     icon: Brain,
-    title: 'Catch Visitors Before They Bounce',
-    description: 'Recovers 30% of lost sales by detecting exit intent and starting conversations at exactly the right moment - before visitors abandon your site.'
+    title: 'Smart Product Recommendations',
+    description: 'AI learns your catalog and recommends perfect products based on customer questions and browsing behavior. Increases average order value by 40%.'
   },
   {
     icon: Target,
-    title: 'Turn Browsers Into Scheduled Calls',
-    description: 'Automatically qualifies leads and books appointments while you sleep. Increases qualified leads by 2-3X without adding sales headcount.'
+    title: 'Cart Abandonment Recovery',
+    description: 'Detects when shoppers are about to leave and starts conversations at the perfect moment. Recovers 30% of abandoned carts by addressing concerns instantly.'
   },
   {
     icon: MessageSquare,
-    title: 'Answer Questions Instantly',
-    description: "Handles customer questions 24/7 so your team can focus on closing deals. Reduces support costs while increasing customer satisfaction."
+    title: 'Size & Fit Assistant',
+    description: "Answers sizing questions, provides measurements, and helps customers find the perfect fit. Reduces returns by 25% and increases purchase confidence."
   },
   {
     icon: Eye,
-    title: 'Identify High-Intent Buyers',
-    description: 'Detects when visitors are ready to purchase and engages immediately. Captures contact info from visitors who would have left anonymous.'
+    title: 'Order Tracking & Support',
+    description: 'Handles "Where is my order?" questions automatically, provides tracking updates, and resolves common post-purchase inquiries 24/7.'
   },
   {
     icon: BarChart3,
-    title: "See What's Working",
-    description: "Track which messages and timing drive the most conversions. Optimize your approach based on real revenue data, not vanity metrics."
+    title: 'Revenue Attribution Analytics',
+    description: "Track which conversations drive sales, measure ROI, and see exactly how the AI impacts your bottom line. Optimize based on real revenue data."
   },
   {
     icon: Settings,
-    title: 'Works With Your Stack',
-    description: 'Integrates seamlessly with Shopify, HubSpot, Salesforce, and 100+ platforms. Syncs leads directly to your CRM automatically.'
+    title: 'Shopify Integration',
+    description: 'Seamlessly integrates with Shopify, syncing your product catalog, inventory, and customer data automatically. Setup takes minutes.'
   }
 ];
 
 const proactiveSteps = [
   {
-    title: 'Add Widget to Your Site',
-    description: 'Copy and paste one line of code. Works on any website - Shopify, WordPress, custom sites. Takes 23 minutes on average.',
+    title: 'Connect Your Store',
+    description: 'Integrate with Shopify or add our widget to any e-commerce platform. AI automatically syncs your product catalog and inventory.',
     icon: Settings
   },
   {
-    title: 'AI Learns Your Business',
-    description: 'Upload your content and the AI automatically learns your products, services, and best responses. No technical setup required.',
+    title: 'AI Learns Your Products',
+    description: 'Our AI studies your catalog, product descriptions, and customer data to provide accurate recommendations and answers.',
     icon: Brain
   },
   {
-    title: 'Start Converting More Visitors',
-    description: 'AI engages visitors at the perfect moment and handles conversations 24/7. Most customers see results within 24 hours.',
+    title: 'Start Converting Shoppers',
+    description: 'AI engages shoppers at perfect moments, answers questions, recommends products, and recovers abandoned carts - automatically.',
     icon: Target
   }
 ];

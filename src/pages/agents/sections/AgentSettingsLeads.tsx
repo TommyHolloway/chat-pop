@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LeadCaptureConfig } from '@/components/agent/LeadCaptureConfig';
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { LeadCaptureConfig as LeadCaptureConfigComponent } from '@/components/agent/LeadCaptureConfig';
 import type { LeadCaptureConfig as ILeadCaptureConfig } from '@/types/leadCapture';
+import { ECOMMERCE_LEAD_FIELDS } from '@/types/leadCapture';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { ShoppingBag } from "lucide-react";
 
 export const AgentSettingsLeads = ({ agent }: { agent: any }) => {
   const { id } = useParams();
@@ -109,16 +113,47 @@ export const AgentSettingsLeads = ({ agent }: { agent: any }) => {
     }
   };
 
+  const applyEcommercePreset = () => {
+    setLeadCaptureConfig(prev => ({
+      ...prev,
+      fields: ECOMMERCE_LEAD_FIELDS
+    }));
+    toast({
+      title: "E-commerce preset applied",
+      description: "Lead capture fields updated with e-commerce-specific questions.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Lead Capture</h2>
+        <div className="flex items-center gap-3 mb-2">
+          <h2 className="text-2xl font-bold">Lead Capture</h2>
+          <Badge variant="secondary" className="bg-primary/10 text-primary">
+            <ShoppingBag className="h-3 w-3 mr-1" />
+            E-commerce Optimized
+          </Badge>
+        </div>
         <p className="text-muted-foreground">
-          Configure how your agent collects visitor information and generates leads.
+          Capture customer information with e-commerce-specific fields like budget range, product interests, and purchase timeline
         </p>
       </div>
 
-      <LeadCaptureConfig 
+      <Card className="p-4 bg-muted/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium mb-1">E-commerce Lead Capture Preset</h3>
+            <p className="text-sm text-muted-foreground">
+              Apply pre-configured fields optimized for online stores: budget range, product interests, purchase timeline, and style preferences
+            </p>
+          </div>
+          <Button onClick={applyEcommercePreset} variant="outline">
+            Apply Preset
+          </Button>
+        </div>
+      </Card>
+
+      <LeadCaptureConfigComponent 
         config={leadCaptureConfig}
         onChange={setLeadCaptureConfig}
       />
