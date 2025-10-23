@@ -87,6 +87,26 @@ serve(async (req) => {
     }).catch(error => console.error('Tracking error:', error));
   }
 
+  // Cart tracking helper
+  function trackCartEvent(eventType, productData = null, cartTotal = null) {
+    const payload = {
+      sessionId: sessionId,
+      agentId: agentId,
+      eventType: eventType,
+      productData: productData,
+      cartTotal: cartTotal,
+      currency: 'USD'
+    };
+
+    fetch('https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/track-cart-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(error => console.error('Cart tracking error:', error));
+    
+    console.log('🛒 Cart event tracked:', eventType, productData);
+  }
+
   function trackPageView() {
     if (!hasTrackedCurrentPage) {
       totalPageViews++;
@@ -334,6 +354,109 @@ serve(async (req) => {
     
     // Check first time after 5 seconds
     setTimeout(checkProactiveTriggers, 5000);
+    
+    // Initialize cart tracking if Shopify detected
+    setTimeout(initShopifyCartTracking, 2000);
+  }
+
+  // Shopify cart tracking (if Shopify.js is detected)
+  function initShopifyCartTracking() {
+    // Check if Shopify is available on the page
+    if (typeof window.Shopify === 'undefined' && typeof window.theme === 'undefined') {
+      console.log('⚠️ Shopify not detected, cart tracking disabled');
+      return;
+    }
+    
+    console.log('✅ Shopify detected, enabling cart tracking');
+    
+    // Method 1: Listen for Shopify Ajax API calls
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      const url = args[0];
+      
+      // Track Add to Cart
+      if (typeof url === 'string' && url.includes('/cart/add')) {
+        originalFetch.apply(this, args)
+          .then(response => {
+            if (response.ok) {
+              response.clone().json().then(data => {
+                trackCartEvent('add_to_cart', {
+                  product_id: data.product_id || data.id,
+                  variant_id: data.variant_id,
+                  title: data.product_title || data.title,
+                  price: data.price,
+                  quantity: data.quantity
+                }, null);
+              }).catch(() => {
+                trackCartEvent('add_to_cart', null, null);
+              });
+            }
+            return response;
+          });
+      }
+      
+      // Track Cart Updates
+      if (typeof url === 'string' && url.includes('/cart/update')) {
+        originalFetch.apply(this, args)
+          .then(response => {
+            if (response.ok) {
+              response.clone().json().then(data => {
+                trackCartEvent('cart_updated', null, data.total_price / 100);
+              }).catch(() => {});
+            }
+            return response;
+          });
+      }
+      
+      // Track Cart Change (removes)
+      if (typeof url === 'string' && url.includes('/cart/change')) {
+        originalFetch.apply(this, args)
+          .then(response => {
+            if (response.ok) {
+              response.clone().json().then(data => {
+                const args1 = JSON.parse(args[1]?.body || '{}');
+                if (args1.quantity === 0) {
+                  trackCartEvent('remove_from_cart', {
+                    variant_id: args1.id || args1.line
+                  }, data.total_price / 100);
+                }
+              }).catch(() => {});
+            }
+            return response;
+          });
+      }
+      
+      return originalFetch.apply(this, args);
+    };
+    
+    // Method 2: Monitor cart form submissions
+    document.addEventListener('submit', (e) => {
+      const form = e.target;
+      if (form.action && form.action.includes('/cart')) {
+        // Track checkout initiation
+        trackCartEvent('checkout_started', null, null);
+      }
+    });
+    
+    // Method 3: Listen for Shopify theme events (if available)
+    if (window.Shopify?.theme) {
+      document.addEventListener('shopify:section:load', () => {
+        trackCartEvent('cart_viewed', null, null);
+      });
+    }
+    
+    // Method 4: Monitor checkout completion (if on thank you page)
+    if (window.location.pathname.includes('/thank') || window.location.pathname.includes('/orders/')) {
+      // Check for Shopify order data
+      if (window.Shopify?.checkout) {
+        trackCartEvent('checkout_completed', {
+          order_id: window.Shopify.checkout.order_id,
+          order_number: window.Shopify.checkout.order_number
+        }, window.Shopify.checkout.total_price);
+      } else {
+        trackCartEvent('checkout_completed', null, null);
+      }
+    }
   }
 
   // Helper functions for chat UI
