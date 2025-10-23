@@ -107,45 +107,15 @@ export const WorkspaceSidebar = () => {
   return (
     <Sidebar className="border-r">
       <SidebarHeader className="p-4">
-        {/* Workspace Selection */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-between h-auto p-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                {!isCollapsed && (
-                  <span className="text-sm font-medium truncate">
-                    {currentWorkspace?.name || 'Select Workspace'}
-                  </span>
-                )}
-              </div>
-              {!isCollapsed && <ChevronDown className="h-4 w-4" />}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-[300px]">
-            {workspaces.map((workspace) => (
-              <DropdownMenuItem
-                key={workspace.id}
-                onClick={() => {
-                  switchWorkspace(workspace);
-                  // Navigate to dashboard if switching workspaces
-                  if (workspace.id !== currentWorkspace?.id) {
-                    window.location.href = '/dashboard';
-                  }
-                }}
-                className={workspace.id === currentWorkspace?.id ? 'bg-muted' : ''}
-              >
-                <Building2 className="mr-2 h-4 w-4" />
-                {workspace.name}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => window.location.href = '/dashboard'}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Workspace
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Workspace Header - Simplified */}
+        <div className="flex items-center gap-2 p-3">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          {!isCollapsed && (
+            <span className="text-sm font-medium truncate">
+              {currentWorkspace?.name || 'My Store'}
+            </span>
+          )}
+        </div>
       </SidebarHeader>
       
       <SidebarContent>

@@ -77,18 +77,7 @@ export const WorkspaceOverview = () => {
           </Button>
         </div>
         <div className="flex gap-2">
-          {canCreateWorkspace ? (
-            <Button variant="outline" onClick={() => setShowCreateWorkspace(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Workspace
-            </Button>
-          ) : (
-            <Button variant="outline" disabled>
-              <Plus className="mr-2 h-4 w-4" />
-              New Workspace (Upgrade Required)
-            </Button>
-          )}
-          <PlanEnforcementWrapper 
+          <PlanEnforcementWrapper
             feature="agent" 
             fallbackContent={
               <Button disabled>

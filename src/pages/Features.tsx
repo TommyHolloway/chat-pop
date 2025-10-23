@@ -30,12 +30,12 @@ export const Features = () => {
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold">
-              Advanced Proactive Intelligence{' '}
-              <span className="text-gradient-primary">That Reactive Chatbots Can't Match</span>
+              Turn Shoppers Into Buyers{' '}
+              <span className="text-gradient-primary">Automatically</span>
             </h1>
             
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              While competitors wait for visitors to ask questions, our AI starts conversations first with configurable behavioral triggers and intelligent engagement rules.
+              AI shopping assistants that recommend products, answer questions, and recover abandoned carts - 24/7. Built specifically for e-commerce stores.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
@@ -79,10 +79,10 @@ export const Features = () => {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold">
-              How Proactive AI Recovers Lost Visitors
+              From Visitor to Customer in 3 Steps
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              While competitors wait for visitors to ask questions, our AI starts conversations first with three intelligent steps.
+              Set up in minutes and start converting more shoppers into buyers automatically.
             </p>
           </div>
 
@@ -166,10 +166,10 @@ export const Features = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-8 p-12 rounded-2xl bg-gradient-intelligence shadow-large">
             <h2 className="text-3xl md:text-5xl font-bold text-white">
-              Ready to Transform Visitors Into Customers?
+              Ready to Turn More Shoppers Into Buyers?
             </h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Be among the first to use proactive AI technology to engage visitors before they leave and turn browsers into buyers.
+              Join 500+ e-commerce stores using AI to increase conversions, recover abandoned carts, and boost revenue.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth/signup">
@@ -197,50 +197,50 @@ export const Features = () => {
 const intelligenceFeatures = [
   {
     icon: Brain,
-    title: 'Smart Behavior Reading',
-    description: 'AI analyzes visitor mouse movements, scroll patterns, and page engagement with configurable confidence thresholds and behavioral triggers to understand intent before starting conversations.'
+    title: 'Smart Product Recommendations',
+    description: 'AI learns your entire catalog and recommends the perfect products based on customer questions, browsing history, and preferences. Increases average order value by 40%.'
   },
   {
     icon: Target,
-    title: 'Perfect Timing',
-    description: 'Customizable timing delays and frequency limits ensure chat agents start conversations at the optimal moment without overwhelming visitors.'
+    title: 'Cart Abandonment Recovery',
+    description: 'Detects when shoppers are about to leave and starts a conversation at the perfect moment. Recovers 30% of abandoned carts by addressing concerns and answering questions.'
   },
   {
     icon: MessageSquare,
-    title: 'Intelligent Trigger Rules',
-    description: 'AI detects visitor intent patterns for pricing concerns, feature exploration, and company research to deliver highly relevant conversation starters.'
+    title: 'Size & Fit Assistant',
+    description: 'Answers sizing questions, provides measurements, and helps customers find the perfect fit. Reduces returns and increases customer confidence.'
   },
   {
     icon: Eye,
-    title: 'Real-time Intent Detection',
-    description: 'Advanced behavioral analysis identifies when visitors are ready to buy, comparing products, or about to leave - triggering perfectly timed engagement.'
+    title: 'Order Tracking & Support',
+    description: 'Handles "Where is my order?" questions automatically, provides tracking updates, and resolves common post-purchase inquiries 24/7.'
   },
   {
     icon: BarChart3,
-    title: 'Conversion Analytics',
-    description: 'Track proactive engagement performance and optimize behavioral triggers based on which conversation patterns convert best.'
+    title: 'Revenue Attribution Analytics',
+    description: 'Track which conversations drive sales, measure ROI, and see how the AI impacts your bottom line. Optimize based on real revenue data.'
   },
   {
     icon: Settings,
-    title: 'Adaptive Learning',
-    description: 'Continuously optimize engagement rules based on conversion data, improving timing and message relevance for maximum visitor recovery.'
+    title: 'Shopify Integration',
+    description: 'Seamlessly integrates with Shopify, syncing your product catalog, inventory, and customer data automatically. Setup takes minutes.'
   }
 ];
 
 const proactiveSteps = [
   {
-    title: 'Configure Behavioral Triggers',
-    description: 'Set up advanced behavioral triggers and engagement rules. Configure timing delays, frequency limits, and visitor intent detection patterns.',
+    title: 'Connect Your Store',
+    description: 'Integrate with Shopify or add our widget to any e-commerce platform. The AI automatically syncs your product catalog and inventory.',
     icon: Settings
   },
   {
-    title: 'AI Detects Intent Patterns',
-    description: 'AI analyzes real-time visitor behavior to detect intent patterns and optimal engagement moments before visitors leave your site.',
+    title: 'AI Learns Your Products',
+    description: 'Our AI studies your catalog, product descriptions, and customer data to provide accurate recommendations and answers.',
     icon: Brain
   },
   {
-    title: 'Deliver Personalized Messages',
-    description: 'AI delivers perfectly timed, personalized messages based on detected visitor behavior and intent, recovering visitors who would otherwise leave.',
+    title: 'Start Converting Shoppers',
+    description: 'AI engages shoppers at the perfect moment, answers questions, recommends products, and recovers abandoned carts - automatically.',
     icon: Target
   }
 ];

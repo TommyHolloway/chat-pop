@@ -14,82 +14,85 @@ export const pricingPlans: PricingPlan[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Perfect for getting started",
+    description: "Perfect for testing on a single product",
     features: [
-      "1 AI agent (~$1K-5K monthly revenue potential)",
+      "1 AI shopping assistant",
       "100 conversations/month",
-      "Train on 5 web pages",
-      "Basic visitor engagement",
+      "Basic product recommendations",
+      "Cart abandonment detection",
       "Email support"
     ],
-    buttonText: "Get Started Free",
+    buttonText: "Start Free",
     buttonVariant: "outline"
   },
   {
-    name: "Hobby",
-    price: "$35",
+    name: "Starter",
+    price: "$49",
     period: "per month",
-    description: "Perfect for small teams and growing projects",
+    description: "Perfect for small to medium online stores",
     features: [
       "Everything in Free +",
-      "2,000 conversations/month (~$20K-100K revenue potential)",
-      "Train on 20 web pages",
-      "2 AI agents for different sites",
-      "Lead capture & appointment booking",
+      "2,000 conversations/month",
+      "2 AI assistants (different product lines)",
+      "Smart product recommendations",
+      "Size & fit assistance",
+      "Cart recovery automation",
+      "Shopify integration",
       "Priority email support"
     ],
     highlighted: true,
-    buttonText: "Get Started",
+    buttonText: "Start Growing",
     buttonVariant: "default"
   },
   {
-    name: "Pro",
-    price: "$147",
+    name: "Growth",
+    price: "$199",
     period: "per month",
-    description: "For teams that need more power and flexibility",
+    description: "For established stores ready to scale",
     features: [
-      "Everything in Hobby +",
-      "12,000 conversations/month (~$100K-500K+ revenue potential)",
-      "Train on unlimited pages + documents",
-      "5 AI agents for multiple sites/brands",
-      "Proactive engagement & behavioral triggers",
-      "Advanced analytics & conversion tracking",
-      "CRM integrations (HubSpot, Salesforce, etc.)",
-      "Priority phone & chat support"
+      "Everything in Starter +",
+      "10,000 conversations/month",
+      "5 AI assistants (multiple stores/brands)",
+      "Advanced product catalog integration",
+      "Post-purchase upsells",
+      "Order tracking automation",
+      "Revenue attribution analytics",
+      "Multiple e-commerce integrations",
+      "Priority phone support"
     ],
-    buttonText: "Get Started",
+    buttonText: "Scale Revenue",
     buttonVariant: "outline"
   }
 ];
 
 export const faqItems = [
   {
-    question: "How quickly will I see results?",
-    answer: "Most customers see measurable improvements within 24-48 hours. The AI starts engaging visitors immediately, and you'll see increased lead capture and conversions in your first week. Full optimization typically happens within 2-4 weeks."
+    question: "Does it work with Shopify/WooCommerce/BigCommerce?",
+    answer: "Yes! Our AI shopping assistants integrate seamlessly with Shopify, WooCommerce, BigCommerce, and custom e-commerce platforms. Setup takes minutes with our simple widget integration."
   },
   {
-    question: "What if I already have a chatbot?",
-    answer: "ChatPop is fundamentally different - we proactively start conversations before visitors leave, while traditional chatbots wait for visitors to ask questions. Many customers run both: ChatPop for proactive engagement and their existing chatbot for FAQs."
+    question: "Can it recommend products from my catalog?",
+    answer: "Absolutely. The AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and past purchases. It can suggest alternatives, upsells, and complementary items."
   },
   {
-    question: "Do I need technical knowledge to set this up?",
-    answer: "No. Setup takes 23 minutes on average and requires just copying one line of code. Our AI automatically learns your business from your website content. If you can add Google Analytics to your site, you can add ChatPop."
+    question: "How does cart abandonment recovery work?",
+    answer: "Our AI detects when shoppers are about to leave without purchasing and starts a conversation at the perfect moment. It can answer questions, offer assistance, provide discount codes, or help resolve concerns - recovering 30% of abandoned carts on average."
   },
   {
-    question: "How is ChatPop different from other chatbots?",
-    answer: "Traditional chatbots are reactive - they wait for visitors to start conversations. ChatPop is proactive - it detects when visitors are about to leave and starts conversations first. This recovers 30% of visitors who would have left your site."
+    question: "What's the average ROI for e-commerce stores?",
+    answer: "E-commerce stores typically see 200-300% increases in conversion rates within 90 days. The AI converts more browsers into buyers, increases average order value through smart recommendations, and recovers lost sales from cart abandonment."
   },
   {
-    question: "Can I see real conversion data from other companies?",
-    answer: "Yes. Our customers average a 250% increase in conversion rates. Specific results vary by industry: e-commerce sees 200-300% lifts, SaaS sees 150-250% increases in demo bookings, and service businesses see 2-3X more qualified leads."
+    question: "Can it handle size/fit questions?",
+    answer: "Yes. The AI can answer size and fit questions, provide measurements, suggest sizing based on customer input, and even help with product comparisons. It learns from your product descriptions and specifications."
   },
   {
     question: "What happens after my free trial?",
-    answer: "Your free trial includes 100 conversations. After that, choose a paid plan or stay on the free tier. We'll never charge you without permission, and you can cancel anytime with no questions asked. Plus, we offer a 30-day money-back guarantee."
+    answer: "Your free trial includes 100 conversations. After that, choose a paid plan or stay on the free tier. We'll never charge you without permission, and you can cancel anytime. Plus, we offer a 30-day money-back guarantee on paid plans."
   },
   {
     question: "What are conversations?",
-    answer: "A conversation is counted each time a visitor interacts with your AI agent. One visitor session = one conversation, regardless of how many messages are exchanged. This makes pricing predictable and fair."
+    answer: "A conversation is counted each time a shopper interacts with your AI assistant. One visitor session = one conversation, regardless of how many messages are exchanged. This makes pricing predictable and fair."
   },
   {
     question: "Can I upgrade or downgrade anytime?",
@@ -97,6 +100,6 @@ export const faqItems = [
   },
   {
     question: "What kind of support do you provide?",
-    answer: "Free plans get email support with 48-hour response times. Hobby plans get priority email support within 24 hours. Pro plans get priority phone and chat support with same-day responses, plus a dedicated success manager."
+    answer: "Free plans get email support with 48-hour response times. Starter plans get priority email support within 24 hours. Growth plans get priority phone support with same-day responses."
   }
 ];
