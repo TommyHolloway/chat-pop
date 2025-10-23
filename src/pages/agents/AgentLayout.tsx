@@ -19,8 +19,6 @@ import { AgentSettingsIntegrations } from './sections/AgentSettingsIntegrations'
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
 import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
 import { AgentCompletionProgress } from '@/components/agent/AgentCompletionProgress';
-import { AgentShopifyIntegration } from './sections/AgentShopifyIntegration';
-import { AgentEcommerceAnalytics } from './sections/AgentEcommerceAnalytics';
 
 export const AgentLayout = () => {
   const { id, workspaceId } = useParams();
@@ -94,10 +92,6 @@ export const AgentLayout = () => {
           <Route path="settings/leads" element={<AgentSettingsLeads agent={agent} />} />
           <Route path="settings/proactive" element={<AgentSettingsProactive agent={agent} />} />
           <Route path="settings/integrations" element={<AgentSettingsIntegrations agent={agent} />} />
-          <Route path="settings/shopify" element={<AgentShopifyIntegration agent={agent} />} />
-          
-          {/* E-commerce Analytics */}
-          <Route path="analytics/ecommerce" element={<AgentEcommerceAnalytics agent={agent} />} />
           
           {/* Default */}
           <Route index element={<AgentPlayground agent={agent} />} />
