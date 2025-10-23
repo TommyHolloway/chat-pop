@@ -21,7 +21,6 @@ import { Landing } from "./pages/Landing";
 import { Contact } from "./pages/Contact";
 import { TermsOfService } from "./pages/TermsOfService";
 import { PrivacyPolicy } from "./pages/PrivacyPolicy";
-import Security from "./pages/Security";
 import { Pricing } from "./pages/Pricing";
 import { Features } from "./pages/Features";
 import { SecureLogin } from "./pages/auth/SecureLogin";
@@ -96,11 +95,6 @@ const App = () => (
               <Route path="/privacy" element={
                 <PublicLayout>
                   <PrivacyPolicy />
-                </PublicLayout>
-              } />
-              <Route path="/security" element={
-                <PublicLayout>
-                  <Security />
                 </PublicLayout>
               } />
               <Route path="/pricing" element={

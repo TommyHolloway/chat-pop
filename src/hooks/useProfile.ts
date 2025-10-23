@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
 
 interface Profile {
   user_id: string;
@@ -18,7 +17,6 @@ export const useProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { logPIIAccess } = useSecurityMonitoring();
 
   useEffect(() => {
     if (user) {
@@ -33,9 +31,6 @@ export const useProfile = () => {
     if (!user) return;
 
     try {
-      // Log PII access
-      await logPIIAccess('profiles', 'FETCH', 'Profile data retrieval', ['email', 'phone', 'display_name']);
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -55,15 +50,6 @@ export const useProfile = () => {
     if (!user || !profile) return;
 
     try {
-      // Log PII modification with specific fields
-      const modifiedFields = Object.keys(updates).filter(key => 
-        ['email', 'phone', 'display_name'].includes(key)
-      );
-      
-      if (modifiedFields.length > 0) {
-        await logPIIAccess('profiles', 'UPDATE', 'Profile data modification', modifiedFields);
-      }
-
       const { error } = await supabase
         .from('profiles')
         .update(updates)

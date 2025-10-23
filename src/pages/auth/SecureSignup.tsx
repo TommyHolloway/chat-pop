@@ -3,59 +3,39 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Bot, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { SecureForm } from '@/components/security/SecureForm';
-import { SecureInput } from '@/components/security/SecureInput';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { signupSchema, type SignupFormData } from '@/lib/validation';
 import { Label } from '@/components/ui/label';
-import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
-import { useFormContext } from 'react-hook-form';
+import { FormField, FormItem, FormControl, FormMessage, FormLabel, Form } from '@/components/ui/form';
 import { EmailVerificationDialog } from '@/components/EmailVerificationDialog';
-
-const TermsCheckbox = () => {
-  const form = useFormContext();
-  
-  return (
-    <FormField
-      control={form.control}
-      name="agreeToTerms"
-      render={({ field }) => (
-        <FormItem className="flex items-center space-x-2">
-          <FormControl>
-            <Checkbox
-              checked={field.value}
-              onCheckedChange={field.onChange}
-            />
-          </FormControl>
-          <Label className="text-sm">
-            I agree to the{' '}
-            <Link to="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link to="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-          </Label>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-};
 
 export const SecureSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [signupEmail, setSignupEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createCheckout } = useSubscription();
+  
+  const form = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      agreeToTerms: false,
+    },
+  });
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -65,6 +45,7 @@ export const SecureSignup = () => {
   }, [user, navigate]);
 
   const handleSubmit = async (data: SignupFormData) => {
+    setIsSubmitting(true);
     try {
       // Clean up existing state
       const cleanupAuthState = () => {
@@ -137,7 +118,8 @@ export const SecureSignup = () => {
         description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
-      throw error; // Re-throw to let SecureForm handle it
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -163,35 +145,54 @@ export const SecureSignup = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <SecureForm
-            schema={signupSchema}
-            onSubmit={handleSubmit}
-            className="space-y-4"
-            rateLimitKey="signup"
-            maxRequests={3}
-            windowMs={300000} // 5 minutes
-          >
-            <SecureInput
-              name="fullName"
-              label="Full Name"
-              type="text"
-              placeholder="Enter your full name"
-            />
-
-            <SecureInput
-              name="email"
-              label="Email"
-              type="email"
-              placeholder="Enter your email"
-            />
-            
-            <div className="space-y-2">
-              <SecureInput
-                name="password"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="Enter your full name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Enter your email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Create a password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button
                 type="button"
                 variant="ghost"
@@ -211,17 +212,56 @@ export const SecureSignup = () => {
                   </>
                 )}
               </Button>
-            </div>
 
-            <SecureInput
-              name="confirmPassword"
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm your password"
-            />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Confirm your password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <TermsCheckbox />
-          </SecureForm>
+              <FormField
+                control={form.control}
+                name="agreeToTerms"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <Label className="text-sm">
+                      I agree to the{' '}
+                      <Link to="/terms" className="text-primary hover:underline">
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link to="/privacy" className="text-primary hover:underline">
+                        Privacy Policy
+                      </Link>
+                    </Label>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating account...' : 'Create account'}
+              </Button>
+            </form>
+          </Form>
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>

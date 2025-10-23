@@ -3,11 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, ExternalLink, User, Mail, Phone } from 'lucide-react';
+import { ExternalLink, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-
-import { CalendarWidget } from '@/components/calendar/CalendarWidget';
 
 interface ActionButtonsProps {
   actions: any[];
@@ -35,8 +33,6 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   leadCaptureConfig
 }) => {
   const [leadCaptureOpen, setLeadCaptureOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [selectedCalendarIntegration, setSelectedCalendarIntegration] = useState<any>(null);
   const [leadData, setLeadData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -99,38 +95,6 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     <>
       <div className="flex flex-wrap gap-2 mt-2">
         {actions.map((action, index) => {
-          if (action.type === 'calendar_booking') {
-            // Check if it's embedded or redirect mode
-            const integration = action.data.integration;
-            const integrationMode = integration?.integration_mode || 'redirect';
-            
-            return (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (integrationMode === 'embedded' && integration) {
-                    setSelectedCalendarIntegration(integration);
-                    setCalendarOpen(true);
-                  } else {
-                    // Redirect mode - use external link
-                    const link = integration?.configuration_json?.redirect_url || 
-                                integration?.configuration_json?.calendly_link || 
-                                action.data.link;
-                    if (link) {
-                      window.open(link, '_blank');
-                    }
-                  }
-                }}
-                className="flex items-center gap-2"
-              >
-                <Calendar className="h-4 w-4" />
-                {action.data.text || 'Schedule Appointment'}
-              </Button>
-            );
-          }
-
           if (action.type === 'custom_button') {
             return (
               <Button
@@ -175,20 +139,6 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           return null;
         })}
       </div>
-
-      {/* Calendar Widget Modal */}
-      {selectedCalendarIntegration && (
-        <CalendarWidget
-          integration={selectedCalendarIntegration}
-          agentId={agentId}
-          conversationId={conversationId}
-          open={calendarOpen}
-          onClose={() => {
-            setCalendarOpen(false);
-            setSelectedCalendarIntegration(null);
-          }}
-        />
-      )}
 
       {/* Lead Capture Dialog */}
       <Dialog open={leadCaptureOpen} onOpenChange={setLeadCaptureOpen}>

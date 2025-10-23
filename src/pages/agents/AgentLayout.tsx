@@ -10,7 +10,6 @@ import { AgentSourcesFiles } from './sections/AgentSourcesFiles';
 import { AgentSourcesText } from './sections/AgentSourcesText';
 import { AgentSourcesWebsite } from './sections/AgentSourcesWebsite';
 import { AgentSourcesQnA } from './sections/AgentSourcesQnA';
-import { AgentActionsCalendar } from './sections/AgentActionsCalendar';
 import { AgentActionsCustom } from './sections/AgentActionsCustom';
 import { AgentDeployEmbed } from './sections/AgentDeployEmbed';
 import { AgentDeployShare } from './sections/AgentDeployShare';
@@ -81,7 +80,6 @@ export const AgentLayout = () => {
           <Route path="sources/qa" element={<AgentSourcesQnA agent={agent} />} />
           
           {/* Actions */}
-          <Route path="actions/calendar" element={<AgentActionsCalendar agent={agent} />} />
           <Route path="actions/buttons" element={<AgentActionsCustom agent={agent} />} />
           
           {/* Deploy */}

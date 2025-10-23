@@ -2,19 +2,31 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Bot, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { SecureForm } from '@/components/security/SecureForm';
-import { SecureInput } from '@/components/security/SecureInput';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 export const SecureLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -24,6 +36,7 @@ export const SecureLogin = () => {
   }, [user, navigate]);
 
   const handleSubmit = async (data: LoginFormData) => {
+    setIsSubmitting(true);
     try {
       console.log('SecureLogin: Starting authentication process');
       
@@ -61,7 +74,8 @@ export const SecureLogin = () => {
         description: error.message || "Invalid email or password.",
         variant: "destructive",
       });
-      throw error; // Re-throw to let SecureForm handle it
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -87,28 +101,40 @@ export const SecureLogin = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <SecureForm
-            schema={loginSchema}
-            onSubmit={handleSubmit}
-            className="space-y-4"
-            rateLimitKey="login"
-            maxRequests={5}
-            windowMs={300000} // 5 minutes
-          >
-            <SecureInput
-              name="email"
-              label="Email"
-              type="email"
-              placeholder="Enter your email"
-            />
-            
-            <div className="space-y-2">
-              <SecureInput
-                name="password"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Enter your email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button
                 type="button"
                 variant="ghost"
@@ -128,14 +154,18 @@ export const SecureLogin = () => {
                   </>
                 )}
               </Button>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-          </SecureForm>
+              <div className="flex items-center justify-between">
+                <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Signing in...' : 'Sign in'}
+              </Button>
+            </form>
+          </Form>
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>

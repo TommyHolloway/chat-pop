@@ -42,6 +42,9 @@ export const signupSchema = z.object({
   password: passwordSchema,
   confirmPassword: z.string(),
   fullName: nameSchema,
+  agreeToTerms: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the terms and conditions",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
