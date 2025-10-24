@@ -79,6 +79,31 @@ export const leadCaptureSchema = z.object({
   message: textInputSchema.optional(),
 });
 
+// Shopify integration schemas
+export const shopifyConfigSchema = z.object({
+  store_domain: z
+    .string()
+    .min(1, 'Store domain is required')
+    .regex(
+      /^[a-zA-Z0-9-]+\.myshopify\.com$/,
+      'Store domain must be in format: yourstore.myshopify.com'
+    )
+    .transform((val) => val.toLowerCase().trim()),
+  admin_api_token: z
+    .string()
+    .min(32, 'Admin API token must be at least 32 characters')
+    .max(256, 'Admin API token is too long')
+    .regex(/^shpat_[a-zA-Z0-9_]+$/, 'Invalid Admin API token format. Should start with "shpat_"')
+    .trim(),
+  storefront_api_token: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || val.length >= 32,
+      'Storefront API token must be at least 32 characters if provided'
+    )
+});
+
 // XSS sanitization utility
 export const sanitizeInput = (input: string): string => {
   return input.replace(/[<>&'"]/g, '').trim();
@@ -187,3 +212,4 @@ export type ProfileFormData = z.infer<typeof profileSchema>;
 export type AgentFormData = z.infer<typeof agentSchema>;
 export type WorkspaceFormData = z.infer<typeof workspaceSchema>;
 export type LeadCaptureFormData = z.infer<typeof leadCaptureSchema>;
+export type ShopifyConfigFormData = z.infer<typeof shopifyConfigSchema>;

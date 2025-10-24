@@ -1,41 +1,47 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Webhook, Slack, Mail, Zap, ShoppingBag } from 'lucide-react';
+import { Webhook, Slack, Mail, Zap, ShoppingBag, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-
-declare const shopify: {
-  manually_set_shopify_credentials: () => Promise<void>;
-};
+import { ShopifyConnectionDialog } from '@/components/ShopifyConnectionDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const { toast } = useToast();
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [showShopifyDialog, setShowShopifyDialog] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const isShopifyConnected = agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token;
 
-  const handleConnectShopify = async () => {
-    setIsConnecting(true);
+  const handleRefreshAgent = () => {
+    // Trigger a page reload to fetch updated agent data
+    window.location.reload();
+  };
+
+  const handleDisconnectShopify = async () => {
+    setIsDisconnecting(true);
     try {
-      if (typeof shopify !== 'undefined' && shopify.manually_set_shopify_credentials) {
-        await shopify.manually_set_shopify_credentials();
-        
-        // After successful connection, refresh to show updated status
-        window.location.reload();
-        
-        toast({
-          title: "Success",
-          description: "Shopify store connected! Your agent can now search products and make recommendations.",
-        });
-      }
+      const { error } = await supabase
+        .from('agents')
+        .update({ shopify_config: {} })
+        .eq('id', agent.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Disconnected',
+        description: 'Shopify store has been disconnected from this agent.',
+      });
+
+      handleRefreshAgent();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to connect Shopify store",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to disconnect Shopify store',
+        variant: 'destructive',
       });
     } finally {
-      setIsConnecting(false);
+      setIsDisconnecting(false);
     }
   };
 
@@ -77,12 +83,12 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
                 <li>Product search in chat conversations</li>
               </ul>
               <div className="pt-2">
-                <Button onClick={handleConnectShopify} disabled={isConnecting}>
-                  {isConnecting ? "Connecting..." : "Connect Shopify Store"}
+                <Button onClick={() => setShowShopifyDialog(true)}>
+                  Connect Shopify Store
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                You'll need your Shopify store domain, Admin API token, and Storefront API token
+                You'll need your Shopify store domain and Admin API access token
               </p>
             </div>
           ) : (
@@ -92,11 +98,31 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
                   <p className="text-sm font-medium">Store Domain</p>
                   <p className="text-sm text-muted-foreground">{agent.shopify_config?.store_domain}</p>
                 </div>
-                <Button variant="outline" size="sm" disabled>Connected</Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleDisconnectShopify}
+                    disabled={isDisconnecting}
+                  >
+                    {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                  </Button>
+                </div>
               </div>
               <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <p className="text-sm font-medium text-green-700 dark:text-green-400">✓ Product Search Enabled</p>
                 <p className="text-xs text-muted-foreground mt-1">Your agent can now search and recommend products from your store</p>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <ExternalLink className="h-3 w-3" />
+                <a 
+                  href={`https://${agent.shopify_config?.store_domain}/admin`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  Open Shopify Admin
+                </a>
               </div>
             </div>
           )}
@@ -155,6 +181,14 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Shopify Connection Dialog */}
+      <ShopifyConnectionDialog
+        open={showShopifyDialog}
+        onOpenChange={setShowShopifyDialog}
+        agentId={agent.id}
+        onSuccess={handleRefreshAgent}
+      />
     </div>
   );
 };
