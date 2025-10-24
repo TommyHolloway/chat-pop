@@ -21,10 +21,10 @@ export const FeatureShowcaseSection = ({
   children
 }: FeatureShowcaseSectionProps) => {
   return (
-    <section className={`py-12 px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
+    <section className={`py-8 px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl">
-        <Card className="p-8 md:p-12 shadow-xl min-h-[550px]">
-          <div className={`grid md:grid-cols-2 gap-12 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
+        <Card className="p-6 md:p-8 shadow-xl min-h-[400px]">
+          <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
             {imagePosition === 'left' && (
               <div className="relative">
                 <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
