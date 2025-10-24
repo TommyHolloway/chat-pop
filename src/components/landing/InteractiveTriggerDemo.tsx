@@ -99,18 +99,20 @@ export const InteractiveTriggerDemo = () => {
   return (
     <section className="py-20 px-4 bg-background">
       <div className="container mx-auto max-w-6xl">
-        {/* Heading */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-            See ChatPop Proactive Triggers in Action
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Watch how our AI engages shoppers at the perfect moment
-          </p>
-        </div>
-        
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        {/* Orange card container */}
+        <div className="relative bg-primary/10 rounded-3xl p-6 md:p-8 border-2 border-primary/20">
+          {/* Heading */}
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+              See ChatPop in Action
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Watch how our AI engages shoppers at the perfect moment
+            </p>
+          </div>
+          
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full justify-center mb-8 bg-transparent gap-2 h-auto flex-wrap">
             {TRIGGER_SCENARIOS.map((scenario) => (
               <TabsTrigger 
@@ -133,12 +135,11 @@ export const InteractiveTriggerDemo = () => {
           </TabsList>
           
           {/* Mockup Area */}
-          <div className="relative bg-primary/10 rounded-3xl p-6 md:p-8 border-2 border-primary/20">
-            <div 
-              className="relative rounded-2xl overflow-hidden shadow-elegant bg-white max-h-[500px] md:max-h-[600px]"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-            >
+          <div 
+            className="relative rounded-2xl overflow-hidden shadow-elegant bg-white max-h-[500px] md:max-h-[600px]"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
             {/* E-commerce store mockup */}
             <img 
               src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
@@ -168,8 +169,8 @@ export const InteractiveTriggerDemo = () => {
               </button>
             </div>
           </div>
-        </div>
         </Tabs>
+        </div>
         
         {/* Progress indicators */}
         <div className="flex justify-center gap-2 mt-6">
