@@ -97,7 +97,7 @@ export const InteractiveTriggerDemo = () => {
   const handleMouseLeave = () => setIsPaused(false);
 
   return (
-    <section className="py-20 px-4 gradient-soft-peach">
+    <section className="py-20 px-4 bg-background">
       <div className="container mx-auto max-w-6xl">
         {/* Heading */}
         <div className="text-center mb-12">
@@ -133,11 +133,12 @@ export const InteractiveTriggerDemo = () => {
           </TabsList>
           
           {/* Mockup Area */}
-          <div 
-            className="relative rounded-2xl overflow-hidden shadow-elegant bg-white max-h-[500px] md:max-h-[600px]"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
+          <div className="relative bg-primary/10 rounded-3xl p-6 md:p-8 border-2 border-primary/20">
+            <div 
+              className="relative rounded-2xl overflow-hidden shadow-elegant bg-white max-h-[500px] md:max-h-[600px]"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
             {/* E-commerce store mockup */}
             <img 
               src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
@@ -167,6 +168,7 @@ export const InteractiveTriggerDemo = () => {
               </button>
             </div>
           </div>
+        </div>
         </Tabs>
         
         {/* Progress indicators */}
