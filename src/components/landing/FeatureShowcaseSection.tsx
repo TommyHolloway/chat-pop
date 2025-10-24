@@ -26,12 +26,12 @@ export const FeatureShowcaseSection = ({
         <Card className="p-6 md:p-8 shadow-xl min-h-[400px]">
           <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
             {imagePosition === 'left' && (
-              <div className="relative">
+              <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
                 <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
                 <img
                   src={imageSrc}
                   alt={imageAlt}
-                  className="relative rounded-2xl shadow-2xl w-full"
+                  className="relative rounded-2xl shadow-2xl w-full h-full object-cover"
                 />
               </div>
             )}
@@ -47,12 +47,12 @@ export const FeatureShowcaseSection = ({
             </div>
             
             {imagePosition === 'right' && (
-              <div className="relative">
+              <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
                 <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
                 <img
                   src={imageSrc}
                   alt={imageAlt}
-                  className="relative rounded-2xl shadow-2xl w-full"
+                  className="relative rounded-2xl shadow-2xl w-full h-full object-cover"
                 />
               </div>
             )}
