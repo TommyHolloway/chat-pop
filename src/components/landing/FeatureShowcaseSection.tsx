@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Card } from '@/components/ui/card';
 
 interface FeatureShowcaseSectionProps {
   title: string;
@@ -20,41 +21,43 @@ export const FeatureShowcaseSection = ({
   children
 }: FeatureShowcaseSectionProps) => {
   return (
-    <section className={`py-20 px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
+    <section className={`py-12 px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl">
-        <div className={`grid md:grid-cols-2 gap-12 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
-          {imagePosition === 'left' && (
-            <div className="relative">
-              <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
-              <img
-                src={imageSrc}
-                alt={imageAlt}
-                className="relative rounded-2xl shadow-2xl w-full"
-              />
+        <Card className="p-8 md:p-12 shadow-xl">
+          <div className={`grid md:grid-cols-2 gap-12 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
+            {imagePosition === 'left' && (
+              <div className="relative">
+                <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
+                <img
+                  src={imageSrc}
+                  alt={imageAlt}
+                  className="relative rounded-2xl shadow-2xl w-full"
+                />
+              </div>
+            )}
+            
+            <div className={imagePosition === 'left' ? 'md:order-2' : ''}>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+                {title}
+              </h2>
+              <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
+                {description}
+              </p>
+              {children}
             </div>
-          )}
-          
-          <div className={imagePosition === 'left' ? 'md:order-2' : ''}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-              {title}
-            </h2>
-            <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
-              {description}
-            </p>
-            {children}
+            
+            {imagePosition === 'right' && (
+              <div className="relative">
+                <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
+                <img
+                  src={imageSrc}
+                  alt={imageAlt}
+                  className="relative rounded-2xl shadow-2xl w-full"
+                />
+              </div>
+            )}
           </div>
-          
-          {imagePosition === 'right' && (
-            <div className="relative">
-              <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
-              <img
-                src={imageSrc}
-                alt={imageAlt}
-                className="relative rounded-2xl shadow-2xl w-full"
-              />
-            </div>
-          )}
-        </div>
+        </Card>
       </div>
     </section>
   );
