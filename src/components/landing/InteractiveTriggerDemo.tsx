@@ -71,7 +71,7 @@ export const InteractiveTriggerDemo = () => {
             setIsMessageVisible(true);
           }, 100);
         }, 300);
-      }, 10000); // Rotate every 10 seconds
+      }, 8000); // Rotate every 8 seconds
       
       return () => clearInterval(interval);
     }
