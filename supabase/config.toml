@@ -1,5 +1,8 @@
 project_id = "etwjtxqjcwyxdamlcorf"
 
+[functions.extract-brand-info]
+verify_jwt = true
+
 [functions.secure-encrypt-api-key]
 verify_jwt = true
 

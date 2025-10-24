@@ -117,7 +117,7 @@ export const AgentOnboardingWizard = () => {
         variant: "destructive"
       });
       setIsProcessing(false);
-      navigate('/agents/new');
+      navigate('/agents');
     }
   };
 
