@@ -28,7 +28,35 @@ export default function Landing() {
       {/* 2. Interactive Trigger Demo */}
       <InteractiveTriggerDemo />
 
-      {/* 3. Beat Competition Section */}
+      {/* 3. AI Product Recommendations */}
+      <FeatureShowcaseSection
+        title="AI That Understands Your Products"
+        description="Our AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and preferences. Increase average order value by 40% with smart upsells and cross-sells."
+        imageSrc="/lovable-uploads/3d616246-b965-46e7-ac41-1c080309fd9d.png"
+        imageAlt="Product Recommendations"
+        imagePosition="right"
+      />
+
+      {/* 4. Cart Recovery Feature */}
+      <FeatureShowcaseSection
+        title="Recover 30% of Abandoned Carts Automatically"
+        description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
+        imageSrc="/lovable-uploads/6dc6879a-ad3c-479e-b8c4-99b7af2ab3ec.png"
+        imageAlt="Cart Recovery Chat"
+        imagePosition="left"
+        gradient={true}
+      />
+
+      {/* 5. Real-Time Assistance */}
+      <FeatureShowcaseSection
+        title="Real-Time Shopping Assistance"
+        description="Engage customers with intelligent conversations that understand context, product details, and customer intent. Provide instant answers to questions about sizing, compatibility, shipping, and more."
+        imageSrc="/lovable-uploads/3d616246-b965-46e7-ac41-1c080309fd9d.png"
+        imageAlt="Real-time Chat"
+        imagePosition="right"
+      />
+
+      {/* 6. Beat Competition Section */}
       <FeatureShowcaseSection
         title="Outperform Your Competition with AI"
         description="While competitors lose 70% of potential sales to abandoned carts, ChatPop automatically engages shoppers at the perfect moment—answering questions, addressing concerns, and closing deals 24/7."
@@ -37,10 +65,10 @@ export default function Landing() {
         imagePosition="left"
       />
 
-      {/* 4. Feature Cards Grid */}
+      {/* 7. Feature Cards Grid */}
       <FeatureCardsGrid />
 
-      {/* 6. Analytics Dashboard Showcase */}
+      {/* 8. Analytics Dashboard Showcase */}
       <section className="py-20 px-4 gradient-peach-blob">
         <div className="container mx-auto max-w-6xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
@@ -59,34 +87,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      {/* 7. AI Product Recommendations */}
-      <FeatureShowcaseSection
-        title="AI That Understands Your Products"
-        description="Our AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and preferences. Increase average order value by 40% with smart upsells and cross-sells."
-        imageSrc="/lovable-uploads/3d616246-b965-46e7-ac41-1c080309fd9d.png"
-        imageAlt="Product Recommendations"
-        imagePosition="right"
-      />
-
-      {/* 8. Cart Recovery Feature */}
-      <FeatureShowcaseSection
-        title="Recover 30% of Abandoned Carts Automatically"
-        description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
-        imageSrc="/lovable-uploads/6dc6879a-ad3c-479e-b8c4-99b7af2ab3ec.png"
-        imageAlt="Cart Recovery Chat"
-        imagePosition="left"
-        gradient={true}
-      />
-
-      {/* 9. Real-Time Assistance */}
-      <FeatureShowcaseSection
-        title="Real-Time Shopping Assistance"
-        description="Engage customers with intelligent conversations that understand context, product details, and customer intent. Provide instant answers to questions about sizing, compatibility, shipping, and more."
-        imageSrc="/lovable-uploads/3d616246-b965-46e7-ac41-1c080309fd9d.png"
-        imageAlt="Real-time Chat"
-        imagePosition="right"
-      />
 
       {/* 10. Integration Ecosystem */}
       <section className="py-20 px-4 bg-background">
