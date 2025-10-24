@@ -27,7 +27,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useAgents } from '@/hooks/useAgents';
 
 export const Deploy = () => {
-  const { id } = useParams();
+  const { id, workspaceId } = useParams();
   const { toast } = useToast();
   const { analytics } = useAnalytics(id!);
   const { agents } = useAgents();
@@ -138,13 +138,13 @@ export const Deploy = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <Link to={`/agents/${id}/playground`}>
+              <Link to={`/workspace/${workspaceId}/agents/${id}/playground`}>
                 <Button variant="outline">
                   <Eye className="mr-2 h-4 w-4" />
                   Preview
                 </Button>
               </Link>
-              <Link to={`/agents/${id}/edit`}>
+              <Link to={`/workspace/${workspaceId}/agents/${id}/settings/general`}>
                 <Button variant="outline">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
@@ -204,7 +204,7 @@ export const Deploy = () => {
                   </div>
                 </div>
                 {!(agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token) && (
-                  <Link to={`/agents/${id}/edit/integrations`}>
+                  <Link to={`/workspace/${workspaceId}/agents/${id}/settings/integrations`}>
                     <Button variant="default">
                       Connect Shopify
                     </Button>
