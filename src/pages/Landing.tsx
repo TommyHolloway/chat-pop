@@ -3,7 +3,6 @@ import { HeroWithStoreInput } from '@/components/landing/HeroWithStoreInput';
 import { LargeProductMockup } from '@/components/landing/LargeProductMockup';
 import { FeatureShowcaseSection } from '@/components/landing/FeatureShowcaseSection';
 import { FeatureCardsGrid } from '@/components/landing/FeatureCardsGrid';
-import { MetricsSection } from '@/components/landing/MetricsSection';
 import { GradientCTABanner } from '@/components/landing/GradientCTABanner';
 import { PricingSection } from '@/components/PricingSection';
 import { InteractiveTriggerDemo } from '@/components/landing/InteractiveTriggerDemo';
@@ -38,10 +37,7 @@ export default function Landing() {
         imagePosition="left"
       />
 
-      {/* 4. Metrics Section */}
-      <MetricsSection />
-
-      {/* 5. Feature Cards Grid */}
+      {/* 4. Feature Cards Grid */}
       <FeatureCardsGrid />
 
       {/* 6. Analytics Dashboard Showcase */}
