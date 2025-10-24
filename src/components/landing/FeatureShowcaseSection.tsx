@@ -23,7 +23,7 @@ export const FeatureShowcaseSection = ({
   return (
     <section className={`py-12 px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl">
-        <Card className="p-8 md:p-12 shadow-xl">
+        <Card className="p-8 md:p-12 shadow-xl min-h-[550px]">
           <div className={`grid md:grid-cols-2 gap-12 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
             {imagePosition === 'left' && (
               <div className="relative">

@@ -98,9 +98,12 @@ export const InteractiveTriggerDemo = () => {
 
   return (
     <section className="py-20 px-4 bg-background">
-      <div className="container mx-auto max-w-6xl">
-        {/* Orange card container */}
-        <div className="relative bg-primary/10 rounded-3xl p-6 md:p-8 border-2 border-primary/20">
+      <div className="container mx-auto max-w-6xl relative">
+        {/* Fixed-size orange background card */}
+        <div className="absolute inset-x-0 top-0 h-[600px] md:h-[650px] bg-primary/10 rounded-3xl border-2 border-primary/20 -mx-8" />
+        
+        {/* Content layer */}
+        <div className="relative z-10">
           {/* Heading */}
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
