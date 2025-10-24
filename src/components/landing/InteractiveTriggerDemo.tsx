@@ -9,6 +9,7 @@ interface TriggerScenario {
   title: string;
   message: string;
   icon: React.ReactNode;
+  imageSrc?: string;
 }
 
 const TRIGGER_SCENARIOS: TriggerScenario[] = [
@@ -24,7 +25,8 @@ const TRIGGER_SCENARIOS: TriggerScenario[] = [
     tabLabel: 'Product Comparison',
     title: 'Need help comparing?',
     message: 'Comparing options? 🤔 I can help you find the perfect match!',
-    icon: <Search className="w-4 h-4" />
+    icon: <Search className="w-4 h-4" />,
+    imageSrc: '/lovable-uploads/product-comparison-demo.png'
   },
   {
     id: 'checkout_exit',
@@ -138,7 +140,7 @@ export const InteractiveTriggerDemo = () => {
           >
             {/* E-commerce store mockup */}
             <img 
-              src="/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"
+              src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
               alt="E-commerce store interface"
               className="w-full h-full object-cover object-top"
             />
