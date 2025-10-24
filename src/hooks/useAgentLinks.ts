@@ -286,6 +286,7 @@ export const useAgentLinks = (agentId?: string) => {
     trainAgent,
     fetchLinks,
     fetchCrawlPages,
-    retryCrawl
+    retryCrawl,
+    crawlLink
   };
 };

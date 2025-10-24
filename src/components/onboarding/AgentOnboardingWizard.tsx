@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useAgents } from '@/hooks/useAgents';
+import { useAgentLinks } from '@/hooks/useAgentLinks';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Check, Loader2 } from 'lucide-react';
@@ -36,7 +37,8 @@ export const AgentOnboardingWizard = () => {
     logo: 'pending' as 'pending' | 'processing' | 'completed',
     brandColor: 'pending' as 'pending' | 'processing' | 'completed',
     links: 'pending' as 'pending' | 'processing' | 'completed',
-    prompt: 'pending' as 'pending' | 'processing' | 'completed'
+    prompt: 'pending' as 'pending' | 'processing' | 'completed',
+    knowledgeBase: 'pending' as 'pending' | 'processing' | 'completed'
   });
   
   const [agentName, setAgentName] = useState('');
@@ -53,6 +55,57 @@ export const AgentOnboardingWizard = () => {
   
   const [agentId, setAgentId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isAddingToKnowledgeBase, setIsAddingToKnowledgeBase] = useState(false);
+  const [knowledgeBaseCrawlStatus, setKnowledgeBaseCrawlStatus] = useState<'pending' | 'in_progress' | 'completed' | 'failed'>('pending');
+  const [crawlProgress, setCrawlProgress] = useState({ pagesProcessed: 0, pagesFound: 0 });
+  const [currentLinkId, setCurrentLinkId] = useState<string | null>(null);
+  
+  const agentLinksHook = useAgentLinks(agentId || undefined);
+
+  // Real-time subscription for crawl progress
+  useEffect(() => {
+    if (!currentLinkId) return;
+
+    console.log('Setting up real-time subscription for link:', currentLinkId);
+
+    const channel = supabase
+      .channel('agent_links_progress')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'agent_links',
+          filter: `id=eq.${currentLinkId}`
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          const newData = payload.new as any;
+          
+          if (newData.pages_found !== undefined && newData.pages_processed !== undefined) {
+            setCrawlProgress({
+              pagesProcessed: newData.pages_processed,
+              pagesFound: newData.pages_found
+            });
+          }
+
+          // Check if crawl completed
+          if (newData.status === 'completed') {
+            setKnowledgeBaseCrawlStatus('completed');
+            setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+          } else if (newData.status === 'failed') {
+            setKnowledgeBaseCrawlStatus('failed');
+            setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [currentLinkId]);
 
   const handleStartCrawling = async () => {
     setCurrentStep(2);
@@ -101,7 +154,8 @@ export const AgentOnboardingWizard = () => {
         logo: brandData.logoUrl ? 'completed' : 'pending',
         brandColor: 'completed',
         links: 'completed',
-        prompt: 'completed'
+        prompt: 'completed',
+        knowledgeBase: 'pending'
       });
       
       setTimeout(() => {
@@ -141,6 +195,10 @@ export const AgentOnboardingWizard = () => {
       
       setAgentId(newAgent.id);
       setIsProcessing(false);
+      
+      // Automatically add website to knowledge base
+      await handleAddToKnowledgeBase(newAgent.id);
+      
       setCurrentStep(3);
       
     } catch (error) {
@@ -151,6 +209,58 @@ export const AgentOnboardingWizard = () => {
         variant: "destructive"
       });
       setIsProcessing(false);
+    }
+  };
+
+  const handleAddToKnowledgeBase = async (agentIdParam: string) => {
+    const targetAgentId = agentIdParam || agentId;
+    if (!targetAgentId || !websiteUrl) return;
+    
+    setIsAddingToKnowledgeBase(true);
+    setKnowledgeBaseCrawlStatus('in_progress');
+    setProgressState(prev => ({ ...prev, knowledgeBase: 'processing' }));
+    
+    try {
+      console.log('Adding website to knowledge base:', websiteUrl);
+      
+      // Insert the link into agent_links first to get the ID
+      const { data: linkData, error: linkError } = await supabase
+        .from('agent_links')
+        .insert({
+          agent_id: targetAgentId,
+          url: `https://${websiteUrl}`,
+          status: 'pending',
+          crawl_mode: 'crawl',
+          crawl_limit: 50
+        })
+        .select()
+        .single();
+
+      if (linkError) throw linkError;
+      
+      // Store the link ID for real-time tracking
+      setCurrentLinkId(linkData.id);
+      console.log('Link created, starting crawl:', linkData.id);
+      
+      // Start the crawl asynchronously (don't await - let it run in background)
+      agentLinksHook.crawlLink(linkData.id, `https://${websiteUrl}`, 'crawl', 50);
+      
+      toast({
+        title: "Crawling Started",
+        description: "Your website is being crawled and added to the knowledge base.",
+      });
+      
+    } catch (error) {
+      console.error('Error adding to knowledge base:', error);
+      setKnowledgeBaseCrawlStatus('failed');
+      setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+      toast({
+        title: "Warning",
+        description: "Website crawl may have failed, but you can add it manually later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToKnowledgeBase(false);
     }
   };
 
@@ -299,6 +409,7 @@ export const AgentOnboardingWizard = () => {
           <Step2_CrawlingProgress
             websiteUrl={websiteUrl}
             progressState={progressState}
+            crawlProgress={crawlProgress}
           />
         );
       case 3:

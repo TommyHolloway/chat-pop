@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Image, Palette, Globe, Sparkles, Check, Loader2 } from 'lucide-react';
+import { Image, Palette, Globe, Sparkles, Check, Loader2, Database } from 'lucide-react';
 
 interface Step2Props {
   websiteUrl: string;
@@ -9,25 +9,41 @@ interface Step2Props {
     brandColor: 'pending' | 'processing' | 'completed';
     links: 'pending' | 'processing' | 'completed';
     prompt: 'pending' | 'processing' | 'completed';
+    knowledgeBase: 'pending' | 'processing' | 'completed';
   };
+  crawlProgress?: { pagesProcessed: number; pagesFound: number };
 }
 
-const ProgressItem = ({ icon, label, status }: {
+const ProgressItem = ({ icon, label, status, progressText }: {
   icon: React.ReactNode;
   label: string;
   status: 'pending' | 'processing' | 'completed';
+  progressText?: string;
 }) => (
   <div className="flex items-center gap-3">
     <div className="flex-shrink-0 text-muted-foreground">{icon}</div>
-    <span className="flex-1 font-medium">{label}</span>
+    <div className="flex-1">
+      <span className="font-medium">{label}</span>
+      {progressText && (
+        <span className="text-sm text-muted-foreground ml-2">
+          {progressText}
+        </span>
+      )}
+    </div>
     {status === 'pending' && <div className="h-4 w-4 rounded-full border-2 border-muted" />}
     {status === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
     {status === 'completed' && <Check className="h-4 w-4 text-green-600" />}
   </div>
 );
 
-export const Step2_CrawlingProgress = ({ websiteUrl, progressState }: Step2Props) => (
-  <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
+export const Step2_CrawlingProgress = ({ websiteUrl, progressState, crawlProgress }: Step2Props) => {
+  // Calculate progress text for knowledge base
+  const knowledgeBaseProgressText = crawlProgress && crawlProgress.pagesFound > 0
+    ? `${crawlProgress.pagesProcessed}/${crawlProgress.pagesFound} pages`
+    : undefined;
+
+  return (
+    <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
     {/* Left: Progress Indicators */}
     <div className="space-y-6">
       <div>
@@ -62,6 +78,13 @@ export const Step2_CrawlingProgress = ({ websiteUrl, progressState }: Step2Props
             label="Generating AI instructions"
             status={progressState.prompt}
           />
+          <Separator />
+          <ProgressItem
+            icon={<Database className="h-5 w-5" />}
+            label="Building knowledge base"
+            status={progressState.knowledgeBase}
+            progressText={knowledgeBaseProgressText}
+          />
         </CardContent>
       </Card>
     </div>
@@ -84,4 +107,5 @@ export const Step2_CrawlingProgress = ({ websiteUrl, progressState }: Step2Props
       </Card>
     </div>
   </div>
-);
+  );
+};
