@@ -29,6 +29,15 @@ export default function Landing() {
       {/* 2. Interactive Trigger Demo */}
       <InteractiveTriggerDemo />
 
+      {/* Header for Feature Sections */}
+      <section className="py-12 px-4 bg-background">
+        <div className="container mx-auto max-w-6xl text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+            Innovative AI solutions that helps
+          </h2>
+        </div>
+      </section>
+
       {/* 3-5. Sticky Layered Feature Sections */}
       <StickyFeatureStack />
 
@@ -40,9 +49,6 @@ export default function Landing() {
         imageAlt="AI Chat Assistant"
         imagePosition="left"
       />
-
-      {/* 7. Feature Cards Grid */}
-      <FeatureCardsGrid />
 
       {/* 8. Analytics Dashboard Showcase */}
       <section className="py-20 px-4 gradient-peach-blob">

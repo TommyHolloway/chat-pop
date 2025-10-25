@@ -19,16 +19,16 @@ export const PublicNavbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/" className="text-foreground hover:text-foreground/80 transition-colors">
               <span className="flex items-center gap-2">
                 <Home className="h-4 w-4" />
                 Solution
               </span>
             </Link>
-            <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/features" className="text-foreground hover:text-foreground/80 transition-colors">
               Features
             </Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/pricing" className="text-foreground hover:text-foreground/80 transition-colors">
               Pricing
             </Link>
           </div>
@@ -71,14 +71,14 @@ export const PublicNavbar = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <div className="flex flex-col space-y-4">
-              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+              <Link to="/" className="text-foreground hover:text-foreground/80 transition-colors flex items-center gap-2">
                 <Home className="h-4 w-4" />
                 Solution
               </Link>
-              <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/features" className="text-foreground hover:text-foreground/80 transition-colors">
                 Features
               </Link>
-              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/pricing" className="text-foreground hover:text-foreground/80 transition-colors">
                 Pricing
               </Link>
               <div className="flex flex-col space-y-2 pt-4 border-t">
