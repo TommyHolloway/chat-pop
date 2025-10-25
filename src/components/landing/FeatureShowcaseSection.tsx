@@ -8,6 +8,7 @@ interface FeatureShowcaseSectionProps {
   imageAlt: string;
   imagePosition?: 'left' | 'right';
   gradient?: boolean;
+  isSticky?: boolean;
   children?: ReactNode;
 }
 
@@ -18,10 +19,11 @@ export const FeatureShowcaseSection = ({
   imageAlt,
   imagePosition = 'right',
   gradient = false,
+  isSticky = false,
   children
 }: FeatureShowcaseSectionProps) => {
   return (
-    <section className={`py-8 px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
+    <section className={`px-4 relative overflow-hidden bg-background ${isSticky ? 'sticky top-0 py-0' : 'py-8'} ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl">
         <Card className="p-6 md:p-8 shadow-xl min-h-[400px]">
           <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>

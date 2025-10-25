@@ -29,6 +29,15 @@ export default function Landing() {
       {/* 2. Interactive Trigger Demo */}
       <InteractiveTriggerDemo />
 
+      {/* Header for Sticky Sections */}
+      <section className="py-12 px-4 bg-background">
+        <div className="container mx-auto max-w-6xl text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+            Innovative AI Solutions That Help
+          </h2>
+        </div>
+      </section>
+
       {/* 3-5. Sticky Layered Feature Sections */}
       <StickyFeatureStack />
 
