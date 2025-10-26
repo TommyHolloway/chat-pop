@@ -31,7 +31,7 @@ export const FeatureShowcaseSection = ({
   };
 
   return (
-    <section className={`${isSticky ? 'sticky top-0 py-0' : 'py-8'} px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
+    <section className={`${isSticky ? 'sticky top-0 py-6' : 'py-8'} px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl">
         <Card className={`p-6 md:p-8 shadow-xl min-h-[400px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
           <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
