@@ -30,11 +30,12 @@ export default function Landing() {
       <InteractiveTriggerDemo />
 
       {/* Header for Feature Sections */}
-      <section className="py-12 px-4 bg-background">
+      <section className="py-12 px-4 bg-gradient-to-b from-background to-primary/5">
         <div className="container mx-auto max-w-6xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Innovative AI solutions that helps
           </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-primary to-coral-light mx-auto rounded-full" />
         </div>
       </section>
 

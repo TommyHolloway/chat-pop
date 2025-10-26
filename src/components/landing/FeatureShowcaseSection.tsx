@@ -9,6 +9,8 @@ interface FeatureShowcaseSectionProps {
   imagePosition?: 'left' | 'right';
   gradient?: boolean;
   children?: ReactNode;
+  isSticky?: boolean;
+  stackIntensity?: 'light' | 'medium' | 'strong';
 }
 
 export const FeatureShowcaseSection = ({
@@ -18,16 +20,24 @@ export const FeatureShowcaseSection = ({
   imageAlt,
   imagePosition = 'right',
   gradient = false,
-  children
+  children,
+  isSticky = false,
+  stackIntensity
 }: FeatureShowcaseSectionProps) => {
+  const intensityStyles = {
+    light: 'border-l-4 border-primary/30',
+    medium: 'border-l-4 border-primary/50 shadow-primary/5',
+    strong: 'border-l-4 border-primary/70 shadow-2xl shadow-primary/10'
+  };
+
   return (
-    <section className={`py-8 px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
+    <section className={`${isSticky ? 'sticky top-0 py-0' : 'py-8'} px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl">
-        <Card className="p-6 md:p-8 shadow-xl min-h-[400px]">
+        <Card className={`p-6 md:p-8 shadow-xl min-h-[400px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
           <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
             {imagePosition === 'left' && (
               <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
-                <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
+                <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-2xl" />
                 <img
                   src={imageSrc}
                   alt={imageAlt}
@@ -48,7 +58,7 @@ export const FeatureShowcaseSection = ({
             
             {imagePosition === 'right' && (
               <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
-                <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
+                <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-2xl" />
                 <img
                   src={imageSrc}
                   alt={imageAlt}
