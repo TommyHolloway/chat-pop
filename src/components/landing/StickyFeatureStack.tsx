@@ -4,7 +4,7 @@ export const StickyFeatureStack = () => {
   return (
     <div className="relative">
       {/* Section 1 - Bottom layer (z-30 - highest, appears on top when stacked) */}
-      <div className="relative z-30 mb-20">
+      <div className="relative z-10 mb-[100vh]">
         <FeatureShowcaseSection
           title="AI That Understands Your Products"
           description="Our AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and preferences. Increase average order value by 40% with smart upsells and cross-sells."
@@ -13,13 +13,13 @@ export const StickyFeatureStack = () => {
           imagePosition="right"
           gradient={true}
           isSticky={true}
-          stickyTop="top-0"
+          stickyTop="top-[20vh]"
           stackIntensity="light"
         />
       </div>
 
       {/* Section 2 - Middle layer (z-20) */}
-      <div className="relative z-20 mb-20">
+      <div className="relative z-20 mb-[100vh]">
         <FeatureShowcaseSection
           title="Recover 30% of Abandoned Carts Automatically"
           description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
@@ -28,13 +28,13 @@ export const StickyFeatureStack = () => {
           imagePosition="left"
           gradient={true}
           isSticky={true}
-          stickyTop="top-16"
+          stickyTop="top-[20vh]"
           stackIntensity="medium"
         />
       </div>
 
       {/* Section 3 - Top layer (z-10 - lowest, appears at bottom of stack) */}
-      <div className="relative z-10">
+      <div className="relative z-30">
         <FeatureShowcaseSection
           title="Real-Time Shopping Assistance"
           description="Engage customers with intelligent conversations that understand context, product details, and customer intent. Provide instant answers to questions about sizing, compatibility, shipping, and more."
@@ -43,7 +43,7 @@ export const StickyFeatureStack = () => {
           imagePosition="right"
           gradient={true}
           isSticky={true}
-          stickyTop="top-32"
+          stickyTop="top-[20vh]"
           stackIntensity="strong"
         />
       </div>
