@@ -13,6 +13,7 @@ export const StickyFeatureStack = () => {
           imagePosition="right"
           gradient={true}
           isSticky={true}
+          stickyTop="top-0"
           stackIntensity="light"
         />
       </div>
@@ -27,6 +28,7 @@ export const StickyFeatureStack = () => {
           imagePosition="left"
           gradient={true}
           isSticky={true}
+          stickyTop="top-20"
           stackIntensity="medium"
         />
       </div>
@@ -41,6 +43,7 @@ export const StickyFeatureStack = () => {
           imagePosition="right"
           gradient={true}
           isSticky={true}
+          stickyTop="top-40"
           stackIntensity="strong"
         />
       </div>
