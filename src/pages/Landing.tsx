@@ -42,14 +42,6 @@ export default function Landing() {
       {/* 3-5. Sticky Layered Feature Sections */}
       <StickyFeatureStack />
 
-      {/* 6. Beat Competition Section */}
-      <FeatureShowcaseSection
-        title="Outperform Your Competition with AI"
-        description="While competitors lose 70% of potential sales to abandoned carts, ChatPop automatically engages shoppers at the perfect moment—answering questions, addressing concerns, and closing deals 24/7."
-        imageSrc="/lovable-uploads/6dc6879a-ad3c-479e-b8c4-99b7af2ab3ec.png"
-        imageAlt="AI Chat Assistant"
-        imagePosition="left"
-      />
 
       {/* 8. Analytics Dashboard Showcase */}
       <section className="py-20 px-4 gradient-peach-blob">
