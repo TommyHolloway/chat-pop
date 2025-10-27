@@ -4,7 +4,7 @@ export const StickyFeatureStack = () => {
   return (
     <div className="relative">
       {/* Section 1 - Bottom layer (z-30 - highest, appears on top when stacked) */}
-      <div className="relative z-30 mb-[40vh]">
+      <div className="relative z-30 mb-20">
         <FeatureShowcaseSection
           title="AI That Understands Your Products"
           description="Our AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and preferences. Increase average order value by 40% with smart upsells and cross-sells."
@@ -19,7 +19,7 @@ export const StickyFeatureStack = () => {
       </div>
 
       {/* Section 2 - Middle layer (z-20) */}
-      <div className="relative z-20 mb-[40vh]">
+      <div className="relative z-20 mb-20">
         <FeatureShowcaseSection
           title="Recover 30% of Abandoned Carts Automatically"
           description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
