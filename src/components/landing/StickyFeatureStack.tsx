@@ -14,7 +14,6 @@ export const StickyFeatureStack = () => {
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-10"
-        stackIntensity="light"
       />
 
       {/* Section 2 - Middle layer (z-20) */}
@@ -28,7 +27,6 @@ export const StickyFeatureStack = () => {
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-20"
-        stackIntensity="medium"
       />
 
       {/* Section 3 - Top layer (z-30 - highest) */}
@@ -42,7 +40,6 @@ export const StickyFeatureStack = () => {
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-30"
-        stackIntensity="strong"
       />
     </div>
   );
