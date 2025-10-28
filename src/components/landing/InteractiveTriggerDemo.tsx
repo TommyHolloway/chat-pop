@@ -11,6 +11,8 @@ interface TriggerScenario {
   icon: React.ReactNode;
   imageSrc?: string;
   videoSrc?: string;
+  duration?: number;        // Total display time in ms (default: 8000)
+  messageDelay?: number;    // Delay before message appears in ms (default: 3000)
 }
 
 const TRIGGER_SCENARIOS: TriggerScenario[] = [
@@ -20,7 +22,9 @@ const TRIGGER_SCENARIOS: TriggerScenario[] = [
     title: 'Still browsing?',
     message: '👋 Still deciding? I can help with sizing, shipping times, or answer any questions!',
     icon: <Timer className="w-4 h-4" />,
-    videoSrc: '/lovable-uploads/product-hesitation-demo.mp4'
+    videoSrc: '/lovable-uploads/product-hesitation-demo.mp4',
+    duration: 8000,
+    messageDelay: 3000
   },
   {
     id: 'compare_products',
@@ -29,21 +33,27 @@ const TRIGGER_SCENARIOS: TriggerScenario[] = [
     message: 'Comparing options? 🤔 I can help you find the perfect match!',
     icon: <Search className="w-4 h-4" />,
     imageSrc: '/lovable-uploads/product-comparison-demo.png',
-    videoSrc: '/lovable-uploads/product-comparison-demo.mp4'
+    videoSrc: '/lovable-uploads/product-comparison-demo.mp4',
+    duration: 11000,
+    messageDelay: 6000
   },
   {
     id: 'checkout_exit',
     tabLabel: 'Checkout Recovery',
     title: 'Almost there!',
     message: 'Need help completing your order? I can answer questions or apply a discount! 💬',
-    icon: <AlertCircle className="w-4 h-4" />
+    icon: <AlertCircle className="w-4 h-4" />,
+    duration: 8000,
+    messageDelay: 3000
   },
   {
     id: 'cart_abandonment',
     tabLabel: 'Cart Reminder',
     title: "Don't forget!",
     message: 'Your cart is waiting! 🛒 Got questions or need help with checkout?',
-    icon: <ShoppingCart className="w-4 h-4" />
+    icon: <ShoppingCart className="w-4 h-4" />,
+    duration: 8000,
+    messageDelay: 3000
   }
 ];
 
@@ -57,6 +67,9 @@ export const InteractiveTriggerDemo = () => {
   // Auto-rotate through scenarios
   useEffect(() => {
     if (!isPaused) {
+      const duration = activeScenario.duration || 8000;
+      const messageDelay = activeScenario.messageDelay || 3000;
+      
       const interval = setInterval(() => {
         // Fade out message
         setIsMessageVisible(false);
@@ -69,16 +82,16 @@ export const InteractiveTriggerDemo = () => {
             return TRIGGER_SCENARIOS[nextIndex].id;
           });
           
-          // Fade in new message after 3 seconds
+          // Fade in new message after configured delay
           setTimeout(() => {
             setIsMessageVisible(true);
-          }, 3000);
+          }, messageDelay);
         }, 300);
-      }, 8000); // Rotate every 8 seconds
+      }, duration);
       
       return () => clearInterval(interval);
     }
-  }, [isPaused]);
+  }, [isPaused, activeTab, activeScenario.duration, activeScenario.messageDelay]);
 
   // Manual tab change
   const handleTabChange = (value: string) => {
@@ -87,11 +100,16 @@ export const InteractiveTriggerDemo = () => {
     
     setTimeout(() => {
       setActiveTab(value);
+      
+      // Get the selected scenario's message delay
+      const selectedScenario = TRIGGER_SCENARIOS.find(s => s.id === value);
+      const messageDelay = selectedScenario?.messageDelay || 3000;
+      
       setTimeout(() => {
         setIsMessageVisible(true);
-        // Resume auto-rotation after 10 seconds
-        setTimeout(() => setIsPaused(false), 10000);
-      }, 3000);
+        // Resume auto-rotation immediately from the selected tab
+        setIsPaused(false);
+      }, messageDelay);
     }, 300);
   };
 
