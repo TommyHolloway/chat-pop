@@ -15,13 +15,13 @@ export const Logo = ({ to = "/", className = "flex items-center space-x-2 font-b
         <img 
           src="/lovable-uploads/chatpop-logo-dark.png" 
           alt="ChatPop" 
-          className="h-24 w-auto"
+          className="h-[120px] w-auto"
         />
       ) : (
         <img 
           src="/lovable-uploads/chatpop-logo-light.png" 
           alt="ChatPop" 
-          className="h-24 w-auto"
+          className="h-[120px] w-auto"
         />
       )}
     </Link>
