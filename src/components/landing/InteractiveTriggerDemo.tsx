@@ -28,7 +28,8 @@ const TRIGGER_SCENARIOS: TriggerScenario[] = [
     title: 'Need help comparing?',
     message: 'Comparing options? 🤔 I can help you find the perfect match!',
     icon: <Search className="w-4 h-4" />,
-    imageSrc: '/lovable-uploads/product-comparison-demo.png'
+    imageSrc: '/lovable-uploads/product-comparison-demo.png',
+    videoSrc: '/lovable-uploads/product-comparison-demo.mp4'
   },
   {
     id: 'checkout_exit',
