@@ -100,7 +100,10 @@ export const InteractiveTriggerDemo = () => {
     <section className="py-20 px-4 bg-background">
       <div className="container mx-auto max-w-6xl relative">
         {/* Fixed-size orange background card */}
-        <div className="absolute inset-x-0 -top-12 h-[600px] md:h-[650px] bg-primary/75 rounded-3xl border-2 border-primary/70 -mx-8" />
+        <div 
+          className="absolute inset-x-0 -top-12 h-[600px] md:h-[650px] rounded-3xl border-2 border-primary/70 -mx-8 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/lovable-uploads/paint-texture-bg.png)' }}
+        />
         
         {/* Content layer */}
         <div className="relative z-10">
