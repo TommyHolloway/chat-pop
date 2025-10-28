@@ -61,12 +61,15 @@ export const InteractiveTriggerDemo = () => {
   const [activeTab, setActiveTab] = useState(TRIGGER_SCENARIOS[0].id);
   const [isPaused, setIsPaused] = useState(false);
   const [isMessageVisible, setIsMessageVisible] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [nextScenario, setNextScenario] = useState<string | null>(null);
 
   const activeScenario = TRIGGER_SCENARIOS.find(s => s.id === activeTab) || TRIGGER_SCENARIOS[0];
+  const nextScenarioData = nextScenario ? TRIGGER_SCENARIOS.find(s => s.id === nextScenario) : null;
 
   // Auto-rotate through scenarios
   useEffect(() => {
-    if (!isPaused) {
+    if (!isPaused && !isTransitioning) {
       const duration = activeScenario.duration || 8000;
       const messageDelay = activeScenario.messageDelay || 3000;
       
@@ -74,42 +77,62 @@ export const InteractiveTriggerDemo = () => {
         // Fade out message
         setIsMessageVisible(false);
         
-        // Wait 300ms, then switch tab
+        // Determine next scenario
+        const currentIndex = TRIGGER_SCENARIOS.findIndex(s => s.id === activeTab);
+        const nextIndex = (currentIndex + 1) % TRIGGER_SCENARIOS.length;
+        const nextScenarioId = TRIGGER_SCENARIOS[nextIndex].id;
+        
+        // Start transition after 300ms
         setTimeout(() => {
-          setActiveTab((prev) => {
-            const currentIndex = TRIGGER_SCENARIOS.findIndex(s => s.id === prev);
-            const nextIndex = (currentIndex + 1) % TRIGGER_SCENARIOS.length;
-            return TRIGGER_SCENARIOS[nextIndex].id;
-          });
+          setNextScenario(nextScenarioId);
+          setIsTransitioning(true);
           
-          // Fade in new message after configured delay
+          // Complete transition after slide animation (500ms)
           setTimeout(() => {
-            setIsMessageVisible(true);
-          }, messageDelay);
+            setActiveTab(nextScenarioId);
+            setNextScenario(null);
+            setIsTransitioning(false);
+            
+            // Fade in new message after configured delay
+            setTimeout(() => {
+              setIsMessageVisible(true);
+            }, messageDelay);
+          }, 500);
         }, 300);
       }, duration);
       
       return () => clearInterval(interval);
     }
-  }, [isPaused, activeTab, activeScenario.duration, activeScenario.messageDelay]);
+  }, [isPaused, activeTab, isTransitioning, activeScenario.duration, activeScenario.messageDelay]);
 
   // Manual tab change
   const handleTabChange = (value: string) => {
+    if (value === activeTab || isTransitioning) return;
+    
     setIsPaused(true);
     setIsMessageVisible(false);
     
+    // Get the selected scenario's message delay
+    const selectedScenario = TRIGGER_SCENARIOS.find(s => s.id === value);
+    const messageDelay = selectedScenario?.messageDelay || 3000;
+    
+    // Start transition after 300ms
     setTimeout(() => {
-      setActiveTab(value);
+      setNextScenario(value);
+      setIsTransitioning(true);
       
-      // Get the selected scenario's message delay
-      const selectedScenario = TRIGGER_SCENARIOS.find(s => s.id === value);
-      const messageDelay = selectedScenario?.messageDelay || 3000;
-      
+      // Complete transition after slide animation (500ms)
       setTimeout(() => {
-        setIsMessageVisible(true);
-        // Resume auto-rotation immediately from the selected tab
-        setIsPaused(false);
-      }, messageDelay);
+        setActiveTab(value);
+        setNextScenario(null);
+        setIsTransitioning(false);
+        
+        // Fade in new message and resume auto-rotation
+        setTimeout(() => {
+          setIsMessageVisible(true);
+          setIsPaused(false);
+        }, messageDelay);
+      }, 500);
     }, 300);
   };
 
@@ -120,9 +143,9 @@ export const InteractiveTriggerDemo = () => {
   return (
     <section className="py-20 px-4 bg-background">
       <div className="container mx-auto max-w-6xl relative">
-        {/* Fixed-size orange background card */}
+        {/* Fixed-size orange background card with strong glow */}
         <div 
-          className="absolute inset-x-0 -top-12 h-[600px] md:h-[650px] rounded-3xl border-2 border-primary/70 -mx-8 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-x-0 -top-12 h-[600px] md:h-[650px] rounded-3xl border-2 border-primary/90 -mx-8 bg-cover bg-center bg-no-repeat backdrop-blur-sm shadow-[0_0_60px_rgba(251,146,60,0.4)_inset] shadow-[0_0_80px_rgba(251,146,60,0.5)]"
           style={{ backgroundImage: 'url(/lovable-uploads/gradient-stripe-bg.jpg)' }}
         />
         
@@ -161,37 +184,62 @@ export const InteractiveTriggerDemo = () => {
             ))}
           </TabsList>
           
-          {/* Mockup Area */}
+          {/* Mockup Area with slide transitions */}
           <div 
             className="relative rounded-2xl overflow-hidden shadow-elegant bg-white max-h-[500px] md:max-h-[600px]"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            {/* E-commerce store mockup */}
-            {activeScenario.videoSrc ? (
-              <video 
-                key={activeScenario.id}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover object-top"
-              >
-                <source src={activeScenario.videoSrc} type="video/mp4" />
-                {/* Fallback image if video fails to load */}
+            {/* E-commerce store mockup - dual video rendering during transitions */}
+            <div className="relative w-full h-full">
+              {/* Current scenario video */}
+              {activeScenario.videoSrc ? (
+                <video 
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className={cn(
+                    "absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out",
+                    isTransitioning ? "-translate-x-full" : "translate-x-0"
+                  )}
+                >
+                  <source src={activeScenario.videoSrc} type="video/mp4" />
+                </video>
+              ) : (
                 <img 
                   src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
                   alt="E-commerce store interface"
-                  className="w-full h-full object-cover object-top"
+                  className={cn(
+                    "absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out",
+                    isTransitioning ? "-translate-x-full" : "translate-x-0"
+                  )}
                 />
-              </video>
-            ) : (
-              <img 
-                src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
-                alt="E-commerce store interface"
-                className="w-full h-full object-cover object-top"
-              />
-            )}
+              )}
+              
+              {/* Next scenario video (during transition only) */}
+              {isTransitioning && nextScenarioData && (
+                nextScenarioData.videoSrc ? (
+                  <video 
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out translate-x-0"
+                    style={{ transform: 'translateX(0)' }}
+                  >
+                    <source src={nextScenarioData.videoSrc} type="video/mp4" />
+                  </video>
+                ) : (
+                  <img 
+                    src={nextScenarioData.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
+                    alt="E-commerce store interface"
+                    className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out translate-x-0"
+                    style={{ transform: 'translateX(0)' }}
+                  />
+                )
+              )}
+            </div>
             
             {/* Chatbot Widget Overlay (bottom right) */}
             <div className="absolute bottom-4 md:bottom-6 right-4 md:right-6">
