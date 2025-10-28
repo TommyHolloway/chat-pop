@@ -34,13 +34,13 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.train-agent]
-verify_jwt = false
+verify_jwt = true
 
 [functions.extract-file-content]
-verify_jwt = false
+verify_jwt = true
 
 [functions.chunk-content]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-subscription]
 verify_jwt = true
