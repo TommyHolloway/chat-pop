@@ -102,7 +102,7 @@ export const InteractiveTriggerDemo = () => {
         {/* Fixed-size orange background card */}
         <div 
           className="absolute inset-x-0 -top-12 h-[600px] md:h-[650px] rounded-3xl border-2 border-primary/70 -mx-8 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/lovable-uploads/paint-texture-bg.png)' }}
+          style={{ backgroundImage: 'url(/lovable-uploads/gradient-stripe-bg.jpg)' }}
         />
         
         {/* Content layer */}
