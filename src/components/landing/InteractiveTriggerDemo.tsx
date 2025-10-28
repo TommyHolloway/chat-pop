@@ -68,10 +68,10 @@ export const InteractiveTriggerDemo = () => {
             return TRIGGER_SCENARIOS[nextIndex].id;
           });
           
-          // Fade in new message after 100ms
+          // Fade in new message after 3 seconds
           setTimeout(() => {
             setIsMessageVisible(true);
-          }, 100);
+          }, 3000);
         }, 300);
       }, 8000); // Rotate every 8 seconds
       
@@ -90,7 +90,7 @@ export const InteractiveTriggerDemo = () => {
         setIsMessageVisible(true);
         // Resume auto-rotation after 10 seconds
         setTimeout(() => setIsPaused(false), 10000);
-      }, 100);
+      }, 3000);
     }, 300);
   };
 
