@@ -186,7 +186,7 @@ export const InteractiveTriggerDemo = () => {
           
           {/* Mockup Area with slide transitions */}
           <div 
-            className="relative rounded-2xl overflow-hidden shadow-elegant bg-white max-h-[500px] md:max-h-[600px]"
+            className="relative rounded-2xl overflow-hidden shadow-elegant bg-white h-[500px] md:h-[600px]"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
