@@ -11,6 +11,7 @@ interface FeatureShowcaseSectionProps {
   children?: ReactNode;
   isSticky?: boolean;
   stickyTop?: string;
+  zIndex?: string;
   stackIntensity?: 'light' | 'medium' | 'strong';
 }
 
@@ -24,6 +25,7 @@ export const FeatureShowcaseSection = ({
   children,
   isSticky = false,
   stickyTop,
+  zIndex,
   stackIntensity
 }: FeatureShowcaseSectionProps) => {
   const intensityStyles = {
@@ -33,8 +35,8 @@ export const FeatureShowcaseSection = ({
   };
 
   return (
-    <section className={`${isSticky ? `sticky ${stickyTop || 'top-0'} py-6` : 'py-8'} px-4 relative overflow-hidden bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
-      <div className="container mx-auto max-w-6xl">
+    <section className={`${isSticky ? `sticky ${stickyTop || 'top-0'} ${zIndex || ''} py-6` : 'py-8'} px-4 bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
+      <div className="container mx-auto max-w-6xl overflow-hidden rounded-2xl">
         <Card className={`p-6 md:p-8 shadow-xl min-h-[400px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
           <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
             {imagePosition === 'left' && (
