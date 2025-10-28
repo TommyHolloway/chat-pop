@@ -10,6 +10,7 @@ interface TriggerScenario {
   message: string;
   icon: React.ReactNode;
   imageSrc?: string;
+  videoSrc?: string;
 }
 
 const TRIGGER_SCENARIOS: TriggerScenario[] = [
@@ -18,7 +19,8 @@ const TRIGGER_SCENARIOS: TriggerScenario[] = [
     tabLabel: 'Product Hesitation',
     title: 'Still browsing?',
     message: '👋 Still deciding? I can help with sizing, shipping times, or answer any questions!',
-    icon: <Timer className="w-4 h-4" />
+    icon: <Timer className="w-4 h-4" />,
+    videoSrc: '/lovable-uploads/product-hesitation-demo.mp4'
   },
   {
     id: 'compare_products',
@@ -147,11 +149,30 @@ export const InteractiveTriggerDemo = () => {
             onMouseLeave={handleMouseLeave}
           >
             {/* E-commerce store mockup */}
-            <img 
-              src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
-              alt="E-commerce store interface"
-              className="w-full h-full object-cover object-top"
-            />
+            {activeScenario.videoSrc ? (
+              <video 
+                key={activeScenario.id}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover object-top"
+              >
+                <source src={activeScenario.videoSrc} type="video/mp4" />
+                {/* Fallback image if video fails to load */}
+                <img 
+                  src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
+                  alt="E-commerce store interface"
+                  className="w-full h-full object-cover object-top"
+                />
+              </video>
+            ) : (
+              <img 
+                src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
+                alt="E-commerce store interface"
+                className="w-full h-full object-cover object-top"
+              />
+            )}
             
             {/* Chatbot Widget Overlay (bottom right) */}
             <div className="absolute bottom-4 md:bottom-6 right-4 md:right-6">
