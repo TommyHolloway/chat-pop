@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, Timer, Search, AlertCircle, ShoppingCart } from 'lucide-react';
+import { MessageCircle, Timer, Search, AlertCircle } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
@@ -44,15 +44,6 @@ const TRIGGER_SCENARIOS: TriggerScenario[] = [
     message: 'Need help completing your order? I can answer questions or apply a discount! 💬',
     icon: <AlertCircle className="w-4 h-4" />,
     videoSrc: '/lovable-uploads/checkout-recovery-demo.mp4',
-    duration: 8000,
-    messageDelay: 3000
-  },
-  {
-    id: 'cart_abandonment',
-    tabLabel: 'Cart Reminder',
-    title: "Don't forget!",
-    message: 'Your cart is waiting! 🛒 Got questions or need help with checkout?',
-    icon: <ShoppingCart className="w-4 h-4" />,
     duration: 8000,
     messageDelay: 3000
   }
