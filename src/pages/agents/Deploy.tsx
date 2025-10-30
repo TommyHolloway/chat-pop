@@ -36,7 +36,6 @@ export const Deploy = () => {
   const [agent, setAgent] = useState<any>(null);
   const [widgetPosition, setWidgetPosition] = useState('bottom-right');
   const [widgetTheme, setWidgetTheme] = useState('light');
-  const [widgetColor, setWidgetColor] = useState('#84cc16');
   const [widgetPages, setWidgetPages] = useState('');
   const [proactivePages, setProactivePages] = useState('');
   const [saving, setSaving] = useState(false);
@@ -105,7 +104,7 @@ export const Deploy = () => {
   const scriptCode = `<script>
 (function() {
   var script = document.createElement('script');
-  script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget-enhanced?agentId=${id}&position=${widgetPosition}&theme=${widgetTheme}&color=${encodeURIComponent(widgetColor)}';
+  script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget-enhanced?agentId=${id}&position=${widgetPosition}&theme=${widgetTheme}';
   document.head.appendChild(script);
 })();
 </script>`;
@@ -228,7 +227,7 @@ export const Deploy = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Widget Customization */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Position</Label>
                   <Select value={widgetPosition} onValueChange={setWidgetPosition}>
@@ -257,28 +256,19 @@ export const Deploy = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label>Primary Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={widgetColor}
-                      onChange={(e) => setWidgetColor(e.target.value)}
-                      placeholder="#84cc16"
-                    />
-                    <div 
-                      className="w-10 h-10 rounded border cursor-pointer"
-                      style={{ backgroundColor: widgetColor }}
-                      onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'color';
-                        input.value = widgetColor;
-                        input.onchange = (e) => setWidgetColor((e.target as HTMLInputElement).value);
-                        input.click();
-                      }}
-                    />
-                  </div>
-                </div>
+              </div>
+
+              {/* Helpful Note */}
+              <div className="bg-muted/50 border rounded-lg p-3">
+                <p className="text-sm text-muted-foreground">
+                  💡 <strong>Customize colors, avatar, and messages</strong> in{' '}
+                  <Link 
+                    to={`/workspace/${workspaceId}/agents/${id}/settings/chat`}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Settings → Chat Interface
+                  </Link>
+                </p>
               </div>
 
               {/* Embed Script Code */}
@@ -335,7 +325,6 @@ export const Deploy = () => {
                   <ul className="space-y-1 text-muted-foreground">
                     <li>• Position on page</li>
                     <li>• Light/Dark theme</li>
-                    <li>• Primary color</li>
                   </ul>
                 </div>
                 <div className="space-y-2">

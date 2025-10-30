@@ -341,13 +341,6 @@ export const WorkspaceSidebar = () => {
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/ai`)}>
-                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/ai`}>
-                                <span>AI Configuration</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/chat`)}>
                               <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/chat`}>
                                 <span>Chat Interface</span>
@@ -358,6 +351,13 @@ export const WorkspaceSidebar = () => {
                             <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/leads`)}>
                               <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/leads`}>
                                 <span>Lead Capture</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/integrations`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/integrations`}>
+                                <span>Integrations</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
