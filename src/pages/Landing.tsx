@@ -32,7 +32,7 @@ export default function Landing() {
       {/* Header for Feature Sections */}
       <section className="py-12 px-4 bg-gradient-to-b from-background to-primary/5">
         <div className="container mx-auto max-w-6xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="font-alice text-4xl md:text-5xl text-foreground mb-4">
             Innovative AI solutions that helps
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-primary to-coral-light mx-auto rounded-full" />
@@ -46,7 +46,7 @@ export default function Landing() {
       {/* 8. Analytics Dashboard Showcase */}
       <section className="py-20 px-4 gradient-peach-blob">
         <div className="container mx-auto max-w-6xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+          <h2 className="font-alice text-4xl md:text-5xl mb-6 text-foreground">
             Track Every Dollar Your AI Recovers
           </h2>
           <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
@@ -66,7 +66,7 @@ export default function Landing() {
       {/* 10. Integration Ecosystem */}
       <section className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-6xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+          <h2 className="font-alice text-4xl md:text-5xl mb-4 text-foreground">
             Works on Every E-commerce Platform
           </h2>
           <p className="text-xl text-muted-foreground mb-12">

@@ -66,7 +66,7 @@ export const PricingSection = ({ title = "Pricing Plans", description, className
     <section className={`py-20 px-4 bg-background ${className}`}>
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">{title}</h2>
+          <h2 className="font-alice text-4xl md:text-5xl mb-4 text-foreground">{title}</h2>
           {description && (
             <p className="text-xl text-muted-foreground">{description}</p>
           )}
