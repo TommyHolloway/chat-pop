@@ -51,7 +51,7 @@ export const FeatureShowcaseSection = ({
             )}
             
             <div className={imagePosition === 'left' ? 'md:order-2' : ''}>
-              <h2 className="font-alice text-4xl md:text-5xl mb-6 text-foreground">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
                 {title}
               </h2>
               <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
