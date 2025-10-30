@@ -43,6 +43,7 @@ const TRIGGER_SCENARIOS: TriggerScenario[] = [
     title: 'Almost there!',
     message: 'Need help completing your order? I can answer questions or apply a discount! 💬',
     icon: <AlertCircle className="w-4 h-4" />,
+    videoSrc: '/lovable-uploads/checkout-recovery-demo.mp4',
     duration: 8000,
     messageDelay: 3000
   },
