@@ -310,13 +310,6 @@ export const WorkspaceSidebar = () => {
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/integrations`)}>
-                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/deploy/integrations`}>
-                                <span>Integrations</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
                         </SidebarMenuSub>
                       </CollapsibleContent>
                     </SidebarMenuItem>
