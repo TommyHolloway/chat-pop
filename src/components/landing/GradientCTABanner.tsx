@@ -10,7 +10,7 @@ export const GradientCTABanner = () => {
       <div className="absolute inset-0 gradient-coral-pink opacity-90" />
       
       <div className="container mx-auto max-w-4xl relative z-10 text-center">
-        <h2 className="font-alice text-4xl md:text-6xl font-bold mb-6 text-white">
+        <h2 className="font-alice text-4xl md:text-6xl mb-6 text-white">
           Ready to Recover Lost Revenue
           <br />
           in 24 Hours?

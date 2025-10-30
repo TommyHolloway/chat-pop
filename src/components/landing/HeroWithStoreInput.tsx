@@ -20,7 +20,7 @@ export const HeroWithStoreInput = () => {
       
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center">
-          <h1 className="font-alice text-5xl md:text-7xl font-bold mb-6 text-foreground leading-tight">
+          <h1 className="font-alice text-5xl md:text-7xl mb-6 text-foreground leading-tight">
             Turn Online Shoppers Into
             <br />
             <span className="gradient-text">Paying Customers</span>
