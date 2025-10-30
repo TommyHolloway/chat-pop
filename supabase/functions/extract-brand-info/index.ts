@@ -36,7 +36,7 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: `Analyze this website: ${url}\n\nContent (first 10k chars):\n${content.slice(0, 10000)}\n\nUse case: ${useCase}\n\nExtract the following:\n- Business name\n- Brief description (1-2 sentences)\n- Logo URL (if visible in content)\n- Primary brand color in hex format\n- Suggested AI agent instructions tailored to the use case\n- Initial greeting message for the AI agent`
+            content: `Analyze this website: ${url}\n\nContent (first 10k chars):\n${content.slice(0, 10000)}\n\nUse case: ${useCase}\n\nExtract the following:\n- Business name\n- Brief description (1-2 sentences)\n- Logo URL (if visible in content)\n- Primary brand color in hex format - IMPORTANT: Extract the ACTUAL dominant brand color from the website content, not a default color. Look for colors used in headers, buttons, or branding elements. If you cannot confidently determine the brand color, use #3B82F6 as a fallback.\n- Suggested AI agent instructions tailored to the use case\n- Initial greeting message for the AI agent`
           }
         ],
         tools: [{

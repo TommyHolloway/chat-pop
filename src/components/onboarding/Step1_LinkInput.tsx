@@ -60,10 +60,11 @@ export const Step1_LinkInput = ({ websiteUrl, setWebsiteUrl, useCase, setUseCase
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="customer_support">
-                  <div className="flex items-center gap-2">
+                <SelectItem value="customer_support" disabled>
+                  <div className="flex items-center gap-2 opacity-50">
                     <MessageSquare className="h-4 w-4" />
-                    Customer support (answer questions, provide help)
+                    <span>Customer support (answer questions, provide help)</span>
+                    <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">Coming Soon</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="sales">
@@ -72,10 +73,11 @@ export const Step1_LinkInput = ({ websiteUrl, setWebsiteUrl, useCase, setUseCase
                     Sales & e-commerce (recommend products, recover carts)
                   </div>
                 </SelectItem>
-                <SelectItem value="general">
-                  <div className="flex items-center gap-2">
+                <SelectItem value="general" disabled>
+                  <div className="flex items-center gap-2 opacity-50">
                     <Bot className="h-4 w-4" />
-                    General AI agent (flexible assistant)
+                    <span>General AI agent (flexible assistant)</span>
+                    <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">Coming Soon</span>
                   </div>
                 </SelectItem>
               </SelectContent>

@@ -12,6 +12,7 @@ import { Step1_LinkInput } from './Step1_LinkInput';
 import { Step2_CrawlingProgress } from './Step2_CrawlingProgress';
 import { Step3_UICustomization } from './Step3_UICustomization';
 import { Step4_QuickTriggersSetup } from './Step4_QuickTriggersSetup';
+import { Step5_ShopifyConnection } from './Step5_ShopifyConnection';
 
 interface BrandInfo {
   businessName: string;
@@ -29,7 +30,7 @@ export const AgentOnboardingWizard = () => {
   const { createAgent } = useAgents();
   const { toast } = useToast();
   
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [useCase, setUseCase] = useState<'general' | 'customer_support' | 'sales'>('sales');
   const [brandInfo, setBrandInfo] = useState<BrandInfo | null>(null);
@@ -61,6 +62,20 @@ export const AgentOnboardingWizard = () => {
   const [currentLinkId, setCurrentLinkId] = useState<string | null>(null);
   
   const agentLinksHook = useAgentLinks(agentId || undefined);
+
+  // Auto-advance to Step 3 when knowledge base is completed
+  useEffect(() => {
+    if (currentStep === 2 && knowledgeBaseCrawlStatus === 'completed') {
+      toast({
+        title: "Website Analysis Complete",
+        description: "All pages have been successfully crawled and added to the knowledge base.",
+      });
+      
+      setTimeout(() => {
+        setCurrentStep(3);
+      }, 1500);
+    }
+  }, [currentStep, knowledgeBaseCrawlStatus, toast]);
 
   // Real-time subscription for crawl progress
   useEffect(() => {
@@ -199,7 +214,7 @@ export const AgentOnboardingWizard = () => {
       // Automatically add website to knowledge base
       await handleAddToKnowledgeBase(newAgent.id);
       
-      setCurrentStep(3);
+      // Don't advance to step 3 yet - wait for knowledge base to complete
       
     } catch (error) {
       console.error('Agent creation error:', error);
@@ -284,7 +299,7 @@ export const AgentOnboardingWizard = () => {
       if (error) throw error;
       
       setIsProcessing(false);
-      setCurrentStep(4);
+      setCurrentStep(5);
       
     } catch (error) {
       console.error('Error updating agent UI:', error);
@@ -372,15 +387,6 @@ export const AgentOnboardingWizard = () => {
       setIsProcessing(false);
       setCurrentStep(5);
       
-      toast({
-        title: "🎉 Agent created successfully!",
-        description: "Your AI shopping assistant is ready to deploy.",
-      });
-      
-      setTimeout(() => {
-        navigate(`/workspace/${currentWorkspace?.id}/agents/${agentId}/deploy/embed`);
-      }, 2000);
-      
     } catch (error) {
       console.error('Error saving quick triggers:', error);
       toast({
@@ -390,6 +396,19 @@ export const AgentOnboardingWizard = () => {
       });
       setIsProcessing(false);
     }
+  };
+
+  const handleSkipShopify = () => {
+    setCurrentStep(6);
+    
+    toast({
+      title: "🎉 Agent created successfully!",
+      description: "Your AI shopping assistant is ready to deploy.",
+    });
+    
+    setTimeout(() => {
+      navigate(`/workspace/${currentWorkspace?.id}/agents/${agentId}/deploy/embed`);
+    }, 2000);
   };
 
   const renderStep = () => {
@@ -408,6 +427,7 @@ export const AgentOnboardingWizard = () => {
         return (
           <Step2_CrawlingProgress
             websiteUrl={websiteUrl}
+            agentId={agentId}
             progressState={progressState}
             crawlProgress={crawlProgress}
           />
@@ -442,6 +462,14 @@ export const AgentOnboardingWizard = () => {
           />
         );
       case 5:
+        return agentId ? (
+          <Step5_ShopifyConnection
+            agentId={agentId}
+            onNext={handleSkipShopify}
+            onSkip={handleSkipShopify}
+          />
+        ) : null;
+      case 6:
         return (
           <div className="max-w-2xl mx-auto text-center space-y-6">
             <div className="h-16 w-16 mx-auto bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
@@ -464,10 +492,10 @@ export const AgentOnboardingWizard = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12 px-4">
-      {currentStep < 5 && (
+      {currentStep < 6 && (
         <div className="max-w-4xl mx-auto mb-8">
           <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((step) => (
+            {[1, 2, 3, 4, 5].map((step) => (
               <div
                 key={step}
                 className={cn(

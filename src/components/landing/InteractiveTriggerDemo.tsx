@@ -148,7 +148,7 @@ export const InteractiveTriggerDemo = () => {
             <h2 className="font-alice text-4xl md:text-5xl mb-4 text-foreground">
               See ChatPop in Action
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-white max-w-2xl mx-auto">
               Watch how our AI engages shoppers at the perfect moment
             </p>
           </div>
