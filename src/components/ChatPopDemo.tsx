@@ -81,7 +81,7 @@ export const ChatPopDemo = () => {
       <div className="container mx-auto px-4 relative z-10">
         {/* Heading Section */}
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="font-alice text-3xl md:text-5xl text-foreground mb-4">
             See ChatPop in Action
           </h2>
           <p className="text-xl text-muted-foreground">

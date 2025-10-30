@@ -154,7 +154,7 @@ export const InteractiveTriggerDemo = () => {
         <div className="relative z-10">
           {/* Heading */}
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+            <h2 className="font-alice text-4xl md:text-5xl mb-4 text-foreground">
               See ChatPop in Action
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
