@@ -230,9 +230,9 @@ export const TriggerCreationWizard = ({
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-2">Target Pages</h3>
+              <h3 className="text-lg font-semibold mb-2">Target Pages for This Trigger</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Choose which pages this trigger should appear on
+                Choose which pages this specific trigger should appear on. This is separate from your global widget visibility settings.
               </p>
             </div>
 

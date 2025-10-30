@@ -490,6 +490,8 @@ serve(async (req) => {
         if (configData.agent?.lead_capture_config) {
           leadConfig = configData.agent.lead_capture_config;
         }
+        // Return agent data including widget_excluded_pages
+        return configData.agent;
       }
       
       const response = await fetch(supabaseUrl + '/rest/v1/rpc/get_public_agent_data?agent_uuid=' + agentId, {
@@ -1048,9 +1050,40 @@ serve(async (req) => {
 
   // Initialize widget
   async function init() {
-    // Fetch agent data first to get the color
+    // Fetch agent data first to get configuration
     const data = await fetchAgentData();
     agentData = data;
+    
+    // Check if current page is excluded
+    if (data?.widget_excluded_pages && Array.isArray(data.widget_excluded_pages)) {
+      const currentPath = window.location.pathname;
+      const currentUrl = window.location.href;
+      
+      const isExcluded = data.widget_excluded_pages.some(pattern => {
+        if (!pattern) return false;
+        
+        // Check if pattern matches current path or full URL
+        if (currentPath.includes(pattern) || currentUrl.includes(pattern)) {
+          return true;
+        }
+        
+        // Support wildcard matching (e.g., /admin/*)
+        if (pattern.includes('*')) {
+          const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+          if (regex.test(currentPath) || regex.test(currentUrl)) {
+            return true;
+          }
+        }
+        
+        return false;
+      });
+      
+      if (isExcluded) {
+        console.log('ChatPop widget not loaded - page excluded:', currentPath);
+        return; // Don't initialize widget on excluded pages
+      }
+    }
+    
     const primaryColor = data?.message_bubble_color || '#84cc16';
     
     createWidget(primaryColor);

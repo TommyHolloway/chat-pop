@@ -18,7 +18,6 @@ import { AgentSettingsChat } from './sections/AgentSettingsChat';
 import { AgentSettingsIntegrations } from './sections/AgentSettingsIntegrations';
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
 import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
-import { AgentCompletionProgress } from '@/components/agent/AgentCompletionProgress';
 import { AgentEcommerceAnalytics } from './sections/AgentEcommerceAnalytics';
 import { AgentAbandonedCarts } from './sections/AgentAbandonedCarts';
  
@@ -65,7 +64,6 @@ export const AgentLayout = () => {
   return (
     <div className={`flex-1 ${isPlaygroundRoute ? '' : 'p-8'}`}>
       <div className={isPlaygroundRoute ? '' : 'max-w-6xl mx-auto'}>
-        {!isPlaygroundRoute && <AgentCompletionProgress agent={agent} />}
         <Routes>
           {/* Main sections */}
           <Route path="playground" element={<AgentPlayground agent={agent} />} />

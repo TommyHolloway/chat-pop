@@ -453,6 +453,7 @@ export type Database = {
           status: string | null
           updated_at: string
           user_id: string
+          widget_excluded_pages: string[] | null
           widget_page_restrictions: string[] | null
           workspace_id: string | null
         }
@@ -475,6 +476,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id: string
+          widget_excluded_pages?: string[] | null
           widget_page_restrictions?: string[] | null
           workspace_id?: string | null
         }
@@ -497,6 +499,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+          widget_excluded_pages?: string[] | null
           widget_page_restrictions?: string[] | null
           workspace_id?: string | null
         }

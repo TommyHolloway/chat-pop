@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Zap, Save, Plus, MessageSquare } from 'lucide-react';
 import { ProactiveGlobalSettings } from '@/components/agent/ProactiveGlobalSettings';
-import { PageRestrictionsConfig } from '@/components/agent/PageRestrictionsConfig';
+import { WidgetExcludedPagesConfig } from '@/components/agent/WidgetExcludedPagesConfig';
 import { TriggerCreationWizard } from '@/components/agent/TriggerCreationWizard';
 import { TriggerListCard } from '@/components/agent/TriggerListCard';
 import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
@@ -83,12 +83,12 @@ export const AgentSettingsProactive = ({ agent }: { agent: any }) => {
         </CardContent>
       </Card>
 
+      {/* Widget Visibility - Always visible */}
+      <WidgetExcludedPagesConfig agent={agent} />
+
       {/* Global Settings */}
       {config.enabled && (
-        <>
-          <ProactiveGlobalSettings config={config} onUpdate={updateConfig} />
-          <PageRestrictionsConfig config={config} onUpdate={updateConfig} />
-        </>
+        <ProactiveGlobalSettings config={config} onUpdate={updateConfig} />
       )}
 
       {/* Quick Triggers Section */}

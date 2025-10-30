@@ -33,7 +33,7 @@ serve(async (req) => {
     // Fetch configuration needed for the widget
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('name, initial_message, message_bubble_color, chat_interface_theme, profile_image_url, description, lead_capture_config, enable_proactive_engagement, proactive_config, widget_page_restrictions, status')
+      .select('name, initial_message, message_bubble_color, chat_interface_theme, profile_image_url, description, lead_capture_config, enable_proactive_engagement, proactive_config, widget_page_restrictions, widget_excluded_pages, status')
       .eq('id', agentId)
       .eq('status', 'active')
       .single();
