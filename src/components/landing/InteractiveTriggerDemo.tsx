@@ -196,6 +196,7 @@ export const InteractiveTriggerDemo = () => {
               {/* Current scenario video */}
               {activeScenario.videoSrc ? (
                 <video 
+                  key={activeScenario.id}
                   autoPlay
                   loop
                   muted
@@ -222,6 +223,7 @@ export const InteractiveTriggerDemo = () => {
               {isTransitioning && nextScenarioData && (
                 nextScenarioData.videoSrc ? (
                   <video 
+                    key={nextScenarioData.id}
                     autoPlay
                     loop
                     muted
