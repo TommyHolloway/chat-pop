@@ -197,11 +197,24 @@ serve(async (req) => {
       console.error('Error details:', error.message);
     }
     
+    // Provide more specific error messages based on the error type
+    let errorMessage = 'An error occurred while processing your request. Please try again.';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('FIRECRAWL_API_KEY') || error.message.includes('API key')) {
+        errorMessage = 'Website analysis service is not configured. Please contact support.';
+      } else if (error.message.includes('fetch failed') || error.message.includes('network')) {
+        errorMessage = 'Unable to reach the website. Please check the URL and try again.';
+      } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      }
+    }
+    
     return new Response(JSON.stringify({
       success: false,
-      error: 'An error occurred while processing your request. Please try again.'
+      error: errorMessage
     }), {
-      status: 500,
+      status: 200, // Return 200 so client can read the detailed error
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

@@ -138,6 +138,9 @@ export const AgentOnboardingWizard = () => {
       });
       
       if (crawlError) throw crawlError;
+      if (!crawlData?.success) {
+        throw new Error(crawlData?.error || 'Failed to analyze website');
+      }
       
       setProgressState(prev => ({ ...prev, links: 'completed' }));
       
@@ -180,13 +183,21 @@ export const AgentOnboardingWizard = () => {
       
     } catch (error) {
       console.error('Crawling error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to analyze your website. Please try again.";
       toast({
-        title: "Error",
-        description: "Failed to analyze your website. Please try again.",
+        title: "Website Analysis Failed",
+        description: errorMessage,
         variant: "destructive"
       });
       setIsProcessing(false);
-      navigate('/agents');
+      setProgressState({
+        logo: 'pending',
+        brandColor: 'pending',
+        links: 'pending',
+        prompt: 'pending',
+        knowledgeBase: 'pending'
+      });
+      setCurrentStep(1);
     }
   };
 
