@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Image, Palette, Globe, Sparkles, Check, Loader2, Database, FileText } from 'lucide-react';
+import { Globe, Sparkles, Check, Loader2, Database, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,8 +9,6 @@ interface Step2Props {
   websiteUrl: string;
   agentId?: string | null;
   progressState: {
-    logo: 'pending' | 'processing' | 'completed';
-    brandColor: 'pending' | 'processing' | 'completed';
     links: 'pending' | 'processing' | 'completed';
     prompt: 'pending' | 'processing' | 'completed';
     knowledgeBase: 'pending' | 'processing' | 'completed';
@@ -122,27 +120,15 @@ export const Step2_CrawlingProgress = ({ websiteUrl, agentId, progressState, cra
       <div>
         <h2 className="text-3xl font-bold">Analyzing your site</h2>
         <p className="text-muted-foreground text-lg mt-2">
-          We're automatically extracting your brand details to personalize your AI assistant.
+          We're analyzing your website to create a personalized AI assistant.
         </p>
       </div>
       
       <Card className="border-2">
         <CardContent className="pt-6 space-y-4">
           <ProgressItem
-            icon={<Image className="h-5 w-5" />}
-            label="Fetching logo"
-            status={progressState.logo}
-          />
-          <Separator />
-          <ProgressItem
-            icon={<Palette className="h-5 w-5" />}
-            label="Extracting brand color"
-            status={progressState.brandColor}
-          />
-          <Separator />
-          <ProgressItem
             icon={<Globe className="h-5 w-5" />}
-            label="Crawling site links"
+            label="Analyzing website structure"
             status={progressState.links}
           />
           <Separator />

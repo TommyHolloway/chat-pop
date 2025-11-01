@@ -17,8 +17,6 @@ import { Step5_ShopifyConnection } from './Step5_ShopifyConnection';
 interface BrandInfo {
   businessName: string;
   businessDescription: string;
-  logoUrl: string | null;
-  primaryColor: string;
   suggestedInstructions: string;
   suggestedInitialMessage: string;
 }
@@ -35,8 +33,6 @@ export const AgentOnboardingWizard = () => {
   const [useCase, setUseCase] = useState<'general' | 'customer_support' | 'sales'>('sales');
   const [brandInfo, setBrandInfo] = useState<BrandInfo | null>(null);
   const [progressState, setProgressState] = useState({
-    logo: 'pending' as 'pending' | 'processing' | 'completed',
-    brandColor: 'pending' as 'pending' | 'processing' | 'completed',
     links: 'pending' as 'pending' | 'processing' | 'completed',
     prompt: 'pending' as 'pending' | 'processing' | 'completed',
     knowledgeBase: 'pending' as 'pending' | 'processing' | 'completed'
@@ -142,14 +138,7 @@ export const AgentOnboardingWizard = () => {
         throw new Error(crawlData?.error || 'Failed to analyze website');
       }
       
-      setProgressState(prev => ({ ...prev, links: 'completed' }));
-      
-      setProgressState(prev => ({ 
-        ...prev,
-        logo: 'processing',
-        brandColor: 'processing',
-        prompt: 'processing'
-      }));
+      setProgressState(prev => ({ ...prev, links: 'completed', prompt: 'processing' }));
       
       const { data: brandData, error: brandError } = await supabase.functions.invoke('extract-brand-info', {
         body: {
@@ -163,14 +152,14 @@ export const AgentOnboardingWizard = () => {
       
       setBrandInfo(brandData);
       setAgentName(brandData.businessName);
-      setProfileImageUrl(brandData.logoUrl);
-      setMessageBubbleColor(brandData.primaryColor);
       setInstructions(brandData.suggestedInstructions);
       setInitialMessage(brandData.suggestedInitialMessage);
       
+      // Set defaults for user to customize in Step 3
+      setProfileImageUrl(null);
+      setMessageBubbleColor('#3B82F6');
+      
       setProgressState({
-        logo: brandData.logoUrl ? 'completed' : 'pending',
-        brandColor: 'completed',
         links: 'completed',
         prompt: 'completed',
         knowledgeBase: 'pending'
@@ -191,8 +180,6 @@ export const AgentOnboardingWizard = () => {
       });
       setIsProcessing(false);
       setProgressState({
-        logo: 'pending',
-        brandColor: 'pending',
         links: 'pending',
         prompt: 'pending',
         knowledgeBase: 'pending'

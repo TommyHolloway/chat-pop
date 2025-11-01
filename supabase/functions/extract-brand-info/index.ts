@@ -36,7 +36,7 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: `Analyze this website: ${url}\n\nContent (first 10k chars):\n${content.slice(0, 10000)}\n\nUse case: ${useCase}\n\nExtract the following:\n- Business name\n- Brief description (1-2 sentences)\n- Logo URL (if visible in content)\n- Primary brand color in hex format - IMPORTANT: Extract the ACTUAL dominant brand color from the website content, not a default color. Look for colors used in headers, buttons, or branding elements. If you cannot confidently determine the brand color, use #3B82F6 as a fallback.\n- Suggested AI agent instructions tailored to the use case\n- Initial greeting message for the AI agent`
+            content: `Analyze this website: ${url}\n\nContent (first 10k chars):\n${content.slice(0, 10000)}\n\nUse case: ${useCase}\n\nExtract the following:\n- Business name\n- Brief description (1-2 sentences)\n- Suggested AI agent instructions tailored to the use case\n- Initial greeting message for the AI agent`
           }
         ],
         tools: [{
@@ -46,7 +46,7 @@ serve(async (req) => {
             description: "Extract structured brand information from website content",
             parameters: {
               type: "object",
-              required: ["businessName", "businessDescription", "primaryColor", "suggestedInstructions", "suggestedInitialMessage"],
+              required: ["businessName", "businessDescription", "suggestedInstructions", "suggestedInitialMessage"],
               properties: {
                 businessName: {
                   type: "string",
@@ -55,14 +55,6 @@ serve(async (req) => {
                 businessDescription: {
                   type: "string",
                   description: "Brief 1-2 sentence business description"
-                },
-                logoUrl: {
-                  type: "string",
-                  description: "URL to logo image if found in the content, otherwise null"
-                },
-                primaryColor: {
-                  type: "string",
-                  description: "Primary brand color in hex format (e.g., #3B82F6)"
                 },
                 suggestedInstructions: {
                   type: "string",
