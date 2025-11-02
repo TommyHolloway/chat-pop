@@ -55,11 +55,14 @@ Deno.serve(async (req) => {
     
     widgetScript += '  function initShopifyTracking() {\n';
     widgetScript += '    if (typeof window.Shopify === "undefined" || !window.Shopify.theme) {\n';
-    widgetScript += '      console.log("Not on Shopify - cart tracking disabled");\n';
+    widgetScript += '      console.log("%c[ChatPop] Cart Tracking Disabled", "color: #f59e0b; font-weight: bold;");\n';
+    widgetScript += '      console.log("%cℹ️  This site is not running on Shopify. E-commerce features (cart tracking, product recommendations, abandoned cart recovery) are only available on Shopify stores.", "color: #6b7280;");\n';
+    widgetScript += '      console.log("%c✅ Your chat agent is working normally. Only cart-specific features are unavailable.", "color: #10b981;");\n';
     widgetScript += '      return;\n';
     widgetScript += '    }\n\n';
     
-    widgetScript += '    console.log("ChatPop: Shopify detected, initializing cart tracking");\n\n';
+    widgetScript += '    console.log("%c[ChatPop] ✓ Shopify Detected", "color: #10b981; font-weight: bold;");\n';
+    widgetScript += '    console.log("%c🛒 E-commerce features enabled: Cart tracking, product recommendations, and abandoned cart recovery are now active.", "color: #6b7280;");\n\n';
     
     widgetScript += '    const originalFetch = window.fetch;\n';
     widgetScript += '    window.fetch = function(...args) {\n';

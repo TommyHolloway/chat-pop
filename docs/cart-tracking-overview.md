@@ -24,7 +24,7 @@ Once you embed the ChatPop widget on your Shopify store, cart tracking happens a
 ### Session Information
 - **Session ID**: Anonymous identifier (no personal data)
 - **Timestamps**: When cart was created, updated, abandoned
-- **Event types**: `cart_add`, `cart_update`, `checkout_start`, `purchase_complete`
+- **Event types**: `add_to_cart`, `cart_updated`, `checkout_started`, `checkout_completed`
 
 ### Privacy & Compliance
 - ✅ No personal data collected without consent
@@ -101,7 +101,7 @@ View detailed e-commerce performance:
 | `cart_add` | Customer adds item to cart | Product details, new cart total |
 | `cart_update` | Cart quantity changes | Updated items and total |
 | `checkout_start` | Customer goes to checkout | Full cart contents |
-| `purchase_complete` | Order confirmed | Order ID, final total |
+| `checkout_completed` | Order confirmed | Order ID, final total |
 
 ### Cart Abandonment Criteria
 

@@ -77,6 +77,9 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
   const { canViewVisitorAnalytics } = usePlanEnforcement();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
+  // Check if Shopify is connected
+  const isShopifyConnected = agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token;
+  
   // State for controlling which sections are open
   const [openSections, setOpenSections] = useState({
     activity: false,
@@ -318,6 +321,11 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                           <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/ecommerce`}>
                             <ShoppingCart className="h-4 w-4" />
                             <span>E-commerce</span>
+                            {isShopifyConnected ? (
+                              <Badge variant="default" className="ml-auto text-xs bg-green-600">Shopify</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="ml-auto text-xs bg-amber-600 text-white">Connect</Badge>
+                            )}
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -326,6 +334,11 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                           <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/abandoned-carts`}>
                             <ShoppingBag className="h-4 w-4" />
                             <span>Abandoned Carts</span>
+                            {isShopifyConnected ? (
+                              <Badge variant="default" className="ml-auto text-xs bg-green-600">Shopify</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="ml-auto text-xs bg-amber-600 text-white">Connect</Badge>
+                            )}
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
