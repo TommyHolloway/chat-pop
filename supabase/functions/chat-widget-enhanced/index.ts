@@ -64,6 +64,59 @@ Deno.serve(async (req) => {
     widgetScript += '    console.log("%c[ChatPop] ✓ Shopify Detected", "color: #10b981; font-weight: bold;");\n';
     widgetScript += '    console.log("%c🛒 E-commerce features enabled: Cart tracking, product recommendations, and abandoned cart recovery are now active.", "color: #6b7280;");\n\n';
     
+    // Cart event queue for offline handling
+    widgetScript += '    let cartEventQueue = [];\n\n';
+    
+    // Enhanced trackCartEvent with retry logic
+    widgetScript += '    async function trackCartEvent(eventType, productData, cartTotal, retryCount = 0) {\n';
+    widgetScript += '      const maxRetries = 3;\n';
+    widgetScript += '      const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 8000);\n\n';
+    widgetScript += '      try {\n';
+    widgetScript += '        const response = await fetch("https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/track-cart-event", {\n';
+    widgetScript += '          method: "POST",\n';
+    widgetScript += '          headers: {\n';
+    widgetScript += '            "Content-Type": "application/json",\n';
+    widgetScript += '            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0d2p0eHFqY3d5eGRhbWxjb3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNzI3MTcsImV4cCI6MjA2ODk0ODcxN30.Dji_q0KFNL8hetK_Og8k9MI4l8sZJ5iCQQxQc4j1isM"\n';
+    widgetScript += '          },\n';
+    widgetScript += '          body: JSON.stringify({\n';
+    widgetScript += '            sessionId: chatState.sessionId,\n';
+    widgetScript += '            agentId: "${agentId}",\n';
+    widgetScript += '            eventType: eventType,\n';
+    widgetScript += '            productData: productData,\n';
+    widgetScript += '            cartTotal: cartTotal,\n';
+    widgetScript += '            currency: window.Shopify?.currency?.active || "USD"\n';
+    widgetScript += '          })\n';
+    widgetScript += '        });\n\n';
+    widgetScript += '        if (!response.ok) throw new Error("Cart tracking failed");\n';
+    widgetScript += '        console.log("[ChatPop] Cart event tracked:", eventType);\n';
+    widgetScript += '      } catch (error) {\n';
+    widgetScript += '        console.warn("[ChatPop] Cart tracking error:", error);\n';
+    widgetScript += '        if (retryCount < maxRetries) {\n';
+    widgetScript += '          console.log(`[ChatPop] Retrying cart event (${retryCount + 1}/${maxRetries}) in ${retryDelay}ms...`);\n';
+    widgetScript += '          setTimeout(() => trackCartEvent(eventType, productData, cartTotal, retryCount + 1), retryDelay);\n';
+    widgetScript += '        } else if (!navigator.onLine) {\n';
+    widgetScript += '          console.log("[ChatPop] Offline - queueing cart event for later");\n';
+    widgetScript += '          cartEventQueue.push({ eventType, productData, cartTotal });\n';
+    widgetScript += '        } else {\n';
+    widgetScript += '          console.error("[ChatPop] Cart event failed after max retries");\n';
+    widgetScript += '        }\n';
+    widgetScript += '      }\n';
+    widgetScript += '    }\n\n';
+    
+    // Process queued events when online
+    widgetScript += '    function processCartEventQueue() {\n';
+    widgetScript += '      if (cartEventQueue.length === 0) return;\n';
+    widgetScript += '      console.log(`[ChatPop] Processing ${cartEventQueue.length} queued cart events...`);\n';
+    widgetScript += '      const events = [...cartEventQueue];\n';
+    widgetScript += '      cartEventQueue = [];\n';
+    widgetScript += '      events.forEach(event => {\n';
+    widgetScript += '        trackCartEvent(event.eventType, event.productData, event.cartTotal);\n';
+    widgetScript += '      });\n';
+    widgetScript += '    }\n\n';
+    
+    // Online event listener
+    widgetScript += '    window.addEventListener("online", processCartEventQueue);\n\n';
+    
     widgetScript += '    const originalFetch = window.fetch;\n';
     widgetScript += '    window.fetch = function(...args) {\n';
     widgetScript += '      const url = args[0];\n';

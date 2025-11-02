@@ -32,6 +32,7 @@ export const AgentOnboardingWizard = () => {
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [useCase, setUseCase] = useState<'general' | 'customer_support' | 'sales'>('sales');
   const [brandInfo, setBrandInfo] = useState<BrandInfo | null>(null);
+  const [isEcommerceDetected, setIsEcommerceDetected] = useState(false);
   const [progressState, setProgressState] = useState({
     links: 'pending' as 'pending' | 'processing' | 'completed',
     prompt: 'pending' as 'pending' | 'processing' | 'completed',
@@ -154,6 +155,18 @@ export const AgentOnboardingWizard = () => {
       setAgentName(brandData.businessName);
       setInstructions(brandData.suggestedInstructions);
       setInitialMessage(brandData.suggestedInitialMessage);
+      
+      // Detect e-commerce indicators in crawled content
+      const content = (crawlData.markdown || '').toLowerCase();
+      const ecommerceKeywords = [
+        'add to cart', 'buy now', 'shop', 'checkout', 'product', 'price',
+        'shopping cart', 'myshopify', 'shopify', 'woocommerce', 'ecommerce',
+        'store', 'purchase', 'order', 'shipping', 'payment'
+      ];
+      const isEcommerce = ecommerceKeywords.some(keyword => content.includes(keyword)) || 
+                          websiteUrl.includes('.myshopify.com');
+      setIsEcommerceDetected(isEcommerce);
+      console.log('E-commerce detected:', isEcommerce);
       
       // Set defaults for user to customize in Step 3
       setProfileImageUrl(null);
@@ -383,7 +396,14 @@ export const AgentOnboardingWizard = () => {
       if (error) throw error;
       
       setIsProcessing(false);
-      setCurrentStep(5);
+      
+      // Conditionally skip Shopify step if not e-commerce
+      if (!isEcommerceDetected) {
+        console.log('Non-e-commerce site detected, skipping Shopify connection');
+        handleSkipShopify();
+      } else {
+        setCurrentStep(5);
+      }
       
     } catch (error) {
       console.error('Error saving quick triggers:', error);
@@ -493,7 +513,7 @@ export const AgentOnboardingWizard = () => {
       {currentStep < 6 && (
         <div className="max-w-4xl mx-auto mb-8">
           <div className="flex items-center justify-between">
-            {[1, 2, 3, 4, 5].map((step) => (
+            {[1, 2, 3, 4, ...(isEcommerceDetected || currentStep >= 5 ? [5] : [])].map((step) => (
               <div
                 key={step}
                 className={cn(

@@ -81,7 +81,16 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
         url: `https://${baseUrl}.myshopify.com/products/${p.handle}`,
         image: p.images?.[0]?.src,
         description: p.body_html?.replace(/<[^>]*>/g, '').slice(0, 200),
-        available: p.variants?.some((v: any) => (v.inventory_quantity || 0) > 0) || false,
+        available: p.variants?.some((v: any) => {
+          // Check if inventory tracking is disabled
+          if (!v.inventory_management) return true;
+          
+          // Check if overselling is allowed
+          if (v.inventory_policy === 'continue') return true;
+          
+          // Otherwise check actual inventory
+          return (v.inventory_quantity || 0) > 0;
+        }) || false,
         type: p.product_type,
         vendor: p.vendor
       };
