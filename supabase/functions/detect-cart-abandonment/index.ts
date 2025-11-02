@@ -19,29 +19,35 @@ serve(async (req) => {
 
     console.log('Running cart abandonment detection...');
 
-    // Find abandoned carts in the last 5-10 minutes that haven't had recovery attempted
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const abandonmentThresholdMinutes = 15; // Configurable threshold
+    const recoveryAttemptCooldownMinutes = 60; // Don't attempt recovery more than once per hour
+    const thresholdTimestamp = new Date(Date.now() - abandonmentThresholdMinutes * 60 * 1000).toISOString();
+    const cooldownTimestamp = new Date(Date.now() - recoveryAttemptCooldownMinutes * 60 * 1000).toISOString();
 
+    // Find abandoned carts that:
+    // 1. Are not recovered
+    // 2. Have not had recovery attempted in the last hour
+    // 3. Were last updated 15+ minutes ago
     const { data: abandonedCarts } = await supabase
       .from('abandoned_carts')
-      .select('*')
-      .eq('recovery_attempted', false)
+      .select(`
+        *,
+        agents!inner(
+          id,
+          proactive_config
+        )
+      `)
       .eq('recovered', false)
-      .gte('created_at', tenMinutesAgo)
-      .lte('created_at', fiveMinutesAgo);
+      .lt('last_updated', thresholdTimestamp)
+      .or(`recovery_attempted.is.null,recovery_attempted_at.lt.${cooldownTimestamp}`)
+      .limit(50); // Process max 50 per run to avoid timeouts
 
-    console.log(`Found ${abandonedCarts?.length || 0} abandoned carts to recover`);
+    console.log(`Found ${abandonedCarts?.length || 0} abandoned carts eligible for recovery`);
 
     let triggeredCount = 0;
 
     for (const cart of abandonedCarts || []) {
-      // Get agent proactive config
-      const { data: agent } = await supabase
-        .from('agents')
-        .select('proactive_config')
-        .eq('id', cart.agent_id)
-        .single();
+      const agent = (cart as any).agents;
 
       if (!agent?.proactive_config?.enabled) continue;
 
@@ -62,7 +68,7 @@ serve(async (req) => {
             behavioral_triggers: {
               cart_total: cart.cart_total,
               cart_items_count: cart.cart_items?.length || 0,
-              time_abandoned: 5,
+              time_abandoned: abandonmentThresholdMinutes,
             },
           });
 
@@ -71,12 +77,12 @@ serve(async (req) => {
           .from('abandoned_carts')
           .update({
             recovery_attempted: true,
-            recovery_message_sent_at: new Date().toISOString(),
+            recovery_attempted_at: new Date().toISOString(),
           })
           .eq('id', cart.id);
 
         triggeredCount++;
-        console.log(`Triggered recovery for cart: ${cart.id}`);
+        console.log(`Triggered recovery for cart: ${cart.id}, total: $${cart.cart_total}`);
       }
     }
 

@@ -41,6 +41,62 @@ Deno.serve(async (req) => {
   widgetScript += '  let widget, overlay, agentData;\n';
   widgetScript += '  let sessionId = "session-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);\n';
     widgetScript += '\n';
+    
+    // Add Shopify cart tracking utilities
+    widgetScript += '  const trackCartEvent = async (eventType, productData, cartTotal) => {\n';
+    widgetScript += '    try {\n';
+    widgetScript += '      await fetch(supabaseUrl + "/functions/v1/track-cart-event", {\n';
+    widgetScript += '        method: "POST",\n';
+    widgetScript += '        headers: { "Content-Type": "application/json", "apikey": supabaseKey },\n';
+    widgetScript += '        body: JSON.stringify({ sessionId, agentId, eventType, productData, cartTotal, currency: window.Shopify?.currency?.active || "USD" })\n';
+    widgetScript += '      });\n';
+    widgetScript += '    } catch (error) { console.error("Cart tracking error:", error); }\n';
+    widgetScript += '  };\n\n';
+    
+    widgetScript += '  function initShopifyTracking() {\n';
+    widgetScript += '    if (typeof window.Shopify === "undefined" || !window.Shopify.theme) {\n';
+    widgetScript += '      console.log("Not on Shopify - cart tracking disabled");\n';
+    widgetScript += '      return;\n';
+    widgetScript += '    }\n\n';
+    
+    widgetScript += '    console.log("ChatPop: Shopify detected, initializing cart tracking");\n\n';
+    
+    widgetScript += '    const originalFetch = window.fetch;\n';
+    widgetScript += '    window.fetch = function(...args) {\n';
+    widgetScript += '      const url = args[0];\n';
+    widgetScript += '      if (typeof url === "string" && (url.includes("/cart/add") || url.includes("/cart/change") || url.includes("/cart/update"))) {\n';
+    widgetScript += '        return originalFetch.apply(this, args).then(async (response) => {\n';
+    widgetScript += '          if (response.ok) {\n';
+    widgetScript += '            try {\n';
+    widgetScript += '              const cartData = await fetch("/cart.js").then(r => r.json());\n';
+    widgetScript += '              const eventType = url.includes("/cart/add") ? "add_to_cart" : "cart_updated";\n';
+    widgetScript += '              const recentItem = cartData.items?.[cartData.items.length - 1];\n';
+    widgetScript += '              await trackCartEvent(eventType, recentItem, cartData.total_price / 100);\n';
+    widgetScript += '            } catch (e) { console.error("Cart data fetch error:", e); }\n';
+    widgetScript += '          }\n';
+    widgetScript += '          return response;\n';
+    widgetScript += '        });\n';
+    widgetScript += '      }\n';
+    widgetScript += '      return originalFetch.apply(this, args);\n';
+    widgetScript += '    };\n\n';
+    
+    widgetScript += '    const checkoutButtons = document.querySelectorAll(\'[name="checkout"], [href*="/checkout"], .checkout-button\');\n';
+    widgetScript += '    checkoutButtons.forEach(btn => {\n';
+    widgetScript += '      btn.addEventListener("click", async () => {\n';
+    widgetScript += '        try {\n';
+    widgetScript += '          const cartData = await fetch("/cart.js").then(r => r.json());\n';
+    widgetScript += '          await trackCartEvent("checkout_started", null, cartData.total_price / 100);\n';
+    widgetScript += '        } catch (e) { console.error("Checkout tracking error:", e); }\n';
+    widgetScript += '      });\n';
+    widgetScript += '    });\n\n';
+    
+    widgetScript += '    fetch("/cart.js").then(r => r.json()).then(cartData => {\n';
+    widgetScript += '      if (cartData.item_count > 0) {\n';
+    widgetScript += '        trackCartEvent("cart_viewed", null, cartData.total_price / 100);\n';
+    widgetScript += '      }\n';
+    widgetScript += '    }).catch(e => console.error("Initial cart check error:", e));\n';
+    widgetScript += '  }\n\n';
+    
     widgetScript += '  // Instead of iframe, embed chat UI directly\n';
     widgetScript += '  window.ChatPopWidget = { open: () => toggleChat(), close: () => toggleChat() };\n';
     widgetScript += '\n';
@@ -74,6 +130,15 @@ Deno.serve(async (req) => {
     widgetScript += '    fetchAgentData().then(data => { if (data?.message_bubble_color) widget.style.background = data.message_bubble_color; });\n';
     widgetScript += '  }\n';
     widgetScript += '\n';
+    
+    // Initialize cart tracking when script loads
+    widgetScript += '  if (document.readyState === "loading") {\n';
+    widgetScript += '    document.addEventListener("DOMContentLoaded", initShopifyTracking);\n';
+    widgetScript += '  } else {\n';
+    widgetScript += '    initShopifyTracking();\n';
+    widgetScript += '  }\n';
+    widgetScript += '\n';
+    
     widgetScript += '  function createOverlay(primaryColor, theme) {\n';
     widgetScript += '    const gradientEnd = adjustColorBrightness(primaryColor, -20);\n';
     widgetScript += '    overlay = document.createElement("div");\n';

@@ -51,8 +51,8 @@ export const ShopifyConnectionDialog = ({
 
       const validated = shopifyConfigSchema.parse(formData);
 
-      // Test the Shopify connection before saving
-      const testUrl = `https://${validated.store_domain}/admin/api/2024-01/shop.json`;
+      // Test the Shopify connection AND verify scopes
+      const testUrl = `https://${validated.store_domain}/admin/api/2024-10/shop.json`;
       const testResponse = await fetch(testUrl, {
         headers: {
           'X-Shopify-Access-Token': validated.admin_api_token,
@@ -61,7 +61,21 @@ export const ShopifyConnectionDialog = ({
       });
 
       if (!testResponse.ok) {
-        throw new Error('Failed to connect to Shopify. Please check your credentials.');
+        const errorText = await testResponse.text();
+        throw new Error(`Failed to connect to Shopify (${testResponse.status}): ${errorText}`);
+      }
+
+      // Verify we can access products endpoint (validates read_products scope)
+      const productsTestUrl = `https://${validated.store_domain}/admin/api/2024-10/products.json?limit=1`;
+      const productsResponse = await fetch(productsTestUrl, {
+        headers: {
+          'X-Shopify-Access-Token': validated.admin_api_token,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!productsResponse.ok) {
+        throw new Error('Failed to access products. Please ensure your API token has the "read_products" and "read_orders" scopes.');
       }
 
       // Save to database

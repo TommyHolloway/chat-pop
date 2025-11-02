@@ -37,25 +37,35 @@ serve(async (req) => {
 
     if (eventError) throw eventError;
 
-    // Check for abandonment if this is add_to_cart event
-    if (eventType === 'add_to_cart' && cartTotal > 0) {
-      // Get recent events for this session
-      const { data: recentEvents } = await supabase
+    // Check for abandonment if this is add_to_cart or cart_updated event
+    if ((eventType === 'add_to_cart' || eventType === 'cart_updated') && cartTotal > 0) {
+      const abandonmentThresholdMinutes = 10;
+      const thresholdTimestamp = new Date(Date.now() - abandonmentThresholdMinutes * 60 * 1000).toISOString();
+      
+      // Get the most recent checkout event for this session
+      const { data: recentCheckout } = await supabase
         .from('cart_events')
-        .select('*')
+        .select('created_at')
         .eq('session_id', sessionId)
+        .in('event_type', ['checkout_completed', 'checkout_started'])
+        .gte('created_at', thresholdTimestamp)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(1);
 
-      // Check if there's a checkout event in the last 10 minutes
-      const hasCheckout = recentEvents?.some(e => 
-        e.event_type === 'checkout_completed' || e.event_type === 'checkout_started'
-      );
+      // Only mark as abandoned if no checkout event in the last 10 minutes
+      if (!recentCheckout || recentCheckout.length === 0) {
+        // Get all recent cart items (last 30 minutes)
+        const { data: recentCartEvents } = await supabase
+          .from('cart_events')
+          .select('product_data, cart_total')
+          .eq('session_id', sessionId)
+          .in('event_type', ['add_to_cart', 'cart_updated'])
+          .gte('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false });
 
-      if (!hasCheckout) {
-        // Get all cart items
-        const cartItems = recentEvents
-          ?.filter(e => e.event_type === 'add_to_cart')
+        const latestCart = recentCartEvents?.[0];
+        const cartItems = recentCartEvents
+          ?.filter(e => e.product_data)
           ?.map(e => e.product_data) || [];
 
         // Create or update abandoned cart record
@@ -65,15 +75,20 @@ serve(async (req) => {
             session_id: sessionId,
             agent_id: agentId,
             cart_items: cartItems,
-            cart_total: cartTotal,
+            cart_total: latestCart?.cart_total || cartTotal,
             currency: currency,
+            last_updated: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }, {
             onConflict: 'session_id',
             ignoreDuplicates: false
           });
 
-        if (abandonedError) console.error('Error tracking abandoned cart:', abandonedError);
+        if (abandonedError) {
+          console.error('Error tracking abandoned cart:', abandonedError);
+        } else {
+          console.log(`Abandoned cart tracked for session ${sessionId}: $${cartTotal}`);
+        }
       }
     }
 

@@ -52,7 +52,7 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
   }
   
   try {
-    const shopifyUrl = `https://${shopifyConfig.store_domain}/admin/api/2024-01/products.json`;
+    const shopifyUrl = `https://${shopifyConfig.store_domain}/admin/api/2024-10/products.json`;
     const response = await fetch(`${shopifyUrl}?limit=5&title=${encodeURIComponent(query)}`, {
       headers: {
         'X-Shopify-Access-Token': shopifyConfig.admin_api_token,
@@ -66,18 +66,26 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
     }
     
     const data = await response.json();
-    return data.products?.slice(0, 5).map((p: any) => ({
-      id: p.id.toString(),
-      title: p.title,
-      price: p.variants?.[0]?.price || '0',
-      currency: 'USD',
-      url: `https://${shopifyConfig.store_domain.replace('.myshopify.com', '')}.myshopify.com/products/${p.handle}`,
-      image: p.images?.[0]?.src,
-      description: p.body_html?.replace(/<[^>]*>/g, '').slice(0, 200),
-      available: p.variants?.[0]?.inventory_quantity > 0,
-      type: p.product_type,
-      vendor: p.vendor
-    })) || [];
+    return data.products?.slice(0, 5).map((p: any) => {
+      // Construct proper product URL
+      const storeDomain = shopifyConfig.store_domain;
+      const baseUrl = storeDomain.includes('.myshopify.com') 
+        ? storeDomain.replace('.myshopify.com', '')
+        : storeDomain.split('.')[0];
+      
+      return {
+        id: p.id.toString(),
+        title: p.title,
+        price: p.variants?.[0]?.price || '0',
+        currency: p.variants?.[0]?.price_currency || 'USD',
+        url: `https://${baseUrl}.myshopify.com/products/${p.handle}`,
+        image: p.images?.[0]?.src,
+        description: p.body_html?.replace(/<[^>]*>/g, '').slice(0, 200),
+        available: p.variants?.some((v: any) => (v.inventory_quantity || 0) > 0) || false,
+        type: p.product_type,
+        vendor: p.vendor
+      };
+    }) || [];
   } catch (error) {
     console.error('Error searching Shopify products:', error);
     return null;
