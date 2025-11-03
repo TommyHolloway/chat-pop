@@ -240,7 +240,7 @@ export const ShopifyConnectionDialog = ({
                 type="password"
                 value={adminApiToken}
                 onChange={(e) => setAdminApiToken(e.target.value)}
-                placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                placeholder="shpat_... or shpss_... or other Shopify token"
                 required
                 className={errors.admin_api_token ? 'border-destructive' : ''}
               />
@@ -248,7 +248,7 @@ export const ShopifyConnectionDialog = ({
                 <p className="text-sm text-destructive">{errors.admin_api_token}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Starts with "shpat_" - Required for product search
+                Admin API access token (starts with "shp" - e.g., shpat_, shpss_, shpca_)
               </p>
             </div>
 
