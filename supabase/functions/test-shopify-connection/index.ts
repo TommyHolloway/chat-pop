@@ -60,7 +60,7 @@ serve(async (req) => {
       { name: 'read_products', url: `https://${storeDomain}/admin/api/2024-10/products.json?limit=1` },
       { name: 'read_orders', url: `https://${storeDomain}/admin/api/2024-10/orders.json?limit=1` },
       { name: 'read_customers', url: `https://${storeDomain}/admin/api/2024-10/customers.json?limit=1` },
-      { name: 'read_inventory', url: `https://${storeDomain}/admin/api/2024-10/inventory_levels.json?limit=1` },
+      { name: 'read_inventory', url: `https://${storeDomain}/admin/api/2024-10/inventory_items.json?limit=1` },
       { name: 'read_price_rules', url: `https://${storeDomain}/admin/api/2024-10/price_rules.json?limit=1` }
     ];
 
