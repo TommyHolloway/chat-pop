@@ -12,7 +12,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, ExternalLink, CheckCircle } from 'lucide-react';
+import { AlertCircle, ExternalLink, CheckCircle, Info } from 'lucide-react';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { shopifyConfigSchema, type ShopifyConfigFormData } from '@/lib/validation';
 
@@ -250,20 +252,49 @@ export const ShopifyConnectionDialog = ({
               </p>
             </div>
 
-            {/* Storefront API Token Field (Optional) */}
+            {/* Storefront API Token Field (Coming Soon) */}
             <div className="grid gap-2">
-              <Label htmlFor="storefront-token">
-                Storefront API Access Token <span className="text-muted-foreground">(Optional)</span>
-              </Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="storefront-token">
+                  Storefront API Access Token <span className="text-muted-foreground">(Optional)</span>
+                </Label>
+                <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <button type="button" className="inline-flex">
+                      <Info className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-80" side="right">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold">Future Capabilities</h4>
+                      <p className="text-xs text-muted-foreground">
+                        When implemented, the Storefront API will enable:
+                      </p>
+                      <ul className="text-xs space-y-1 list-disc pl-4 text-muted-foreground">
+                        <li><strong>Direct "Add to Cart" buttons</strong> - Let customers add products without leaving the chat</li>
+                        <li><strong>Real-time cart preview</strong> - Show and modify cart contents in the conversation</li>
+                        <li><strong>Instant checkout links</strong> - Generate personalized checkout URLs</li>
+                        <li><strong>Public product browsing</strong> - Access product data without authentication</li>
+                        <li><strong>Enhanced product variants</strong> - Display and select sizes/colors dynamically</li>
+                      </ul>
+                      <p className="text-xs text-muted-foreground italic mt-2">
+                        Note: All current features use the Admin API only. The Storefront API is optional and not yet utilized.
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
               <Input
                 id="storefront-token"
                 type="password"
                 value={storefrontApiToken}
                 onChange={(e) => setStorefrontApiToken(e.target.value)}
-                placeholder="Optional - For enhanced features"
+                placeholder="Optional - For future enhanced features"
+                disabled={true}
               />
               <p className="text-xs text-muted-foreground">
-                Optional - Enables additional storefront features
+                This field is reserved for future features. All current functionality uses the Admin API.
               </p>
             </div>
 
