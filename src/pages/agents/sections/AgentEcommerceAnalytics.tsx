@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useEcommerceAnalytics } from '@/hooks/useEcommerceAnalytics';
 import { startOfMonth } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DollarSign, ShoppingCart, TrendingUp, Package, Calendar } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Package, Calendar, ShoppingBag } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
   const [dateRange, setDateRange] = useState({
@@ -16,12 +17,45 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
   });
 
   const { data: metrics, isLoading } = useEcommerceAnalytics(agent.id, dateRange);
+  
+  // Fetch previous period metrics for comparison
+  const previousPeriodStart = new Date(dateRange.from.getTime() - (dateRange.to.getTime() - dateRange.from.getTime()));
+  const { data: previousMetrics } = useEcommerceAnalytics(agent.id, {
+    from: previousPeriodStart,
+    to: dateRange.from
+  });
+
+  const isShopifyConnected = agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token;
+
+  const calculateChange = (current: number, previous: number) => {
+    if (!previous) return null;
+    const change = ((current - previous) / previous) * 100;
+    return { value: change, isPositive: change >= 0 };
+  };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner />
       </div>
+    );
+  }
+
+  if (!isShopifyConnected) {
+    return (
+      <Card className="mt-6">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <ShoppingBag className="h-16 w-16 text-muted-foreground mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Shopify Not Connected</h3>
+          <p className="text-muted-foreground max-w-md mb-6">
+            Connect your Shopify store to unlock e-commerce analytics including revenue tracking, order monitoring, and cart recovery metrics.
+          </p>
+          <Button onClick={() => window.location.href = './integrations'}>
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Connect Shopify Store
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -90,9 +124,17 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${metrics?.totalRevenue?.toFixed(2) || '0.00'}</div>
-            <p className="text-xs text-muted-foreground">
-              from {metrics?.totalOrders || 0} orders
-            </p>
+              <p className="text-xs text-muted-foreground">
+                from {metrics?.totalOrders || 0} orders
+                {previousMetrics && (() => {
+                  const change = calculateChange(metrics?.totalRevenue || 0, previousMetrics?.totalRevenue || 0);
+                  return change ? (
+                    <span className={cn("ml-2", change.isPositive ? "text-green-600" : "text-red-600")}>
+                      {change.isPositive ? "↑" : "↓"} {Math.abs(change.value).toFixed(1)}%
+                    </span>
+                  ) : null;
+                })()}
+              </p>
           </CardContent>
         </Card>
         

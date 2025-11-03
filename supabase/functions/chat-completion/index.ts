@@ -33,6 +33,27 @@ function calculateRelevance(chunkText: string, query: string): number {
 const responseCache = new Map<string, { response: string; timestamp: number }>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
+// Product search cache
+const productSearchCache = new Map<string, { products: any[]; timestamp: number }>();
+const PRODUCT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function getCachedProducts(query: string, shopifyConfig: any): any[] | null {
+  const cacheKey = `${shopifyConfig.store_domain}:${query.toLowerCase()}`;
+  const cached = productSearchCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < PRODUCT_CACHE_DURATION) {
+    console.log('Product search cache hit for:', query);
+    return cached.products;
+  }
+  
+  return null;
+}
+
+function cacheProducts(query: string, shopifyConfig: any, products: any[]) {
+  const cacheKey = `${shopifyConfig.store_domain}:${query.toLowerCase()}`;
+  productSearchCache.set(cacheKey, { products, timestamp: Date.now() });
+}
+
 function getCacheKey(agentId: string, message: string): string {
   return `${agentId}:${message.toLowerCase().slice(0, 100)}`;
 }
@@ -51,6 +72,12 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
     return null;
   }
   
+  // Check cache first
+  const cachedProducts = getCachedProducts(query, shopifyConfig);
+  if (cachedProducts) {
+    return cachedProducts;
+  }
+  
   try {
     const shopifyUrl = `https://${shopifyConfig.store_domain}/admin/api/2024-10/products.json`;
     const response = await fetch(`${shopifyUrl}?limit=5&title=${encodeURIComponent(query)}`, {
@@ -66,19 +93,26 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
     }
     
     const data = await response.json();
-    return data.products?.slice(0, 5).map((p: any) => {
-      // Construct proper product URL
+    const products = data.products?.slice(0, 5).map((p: any) => {
+      // Construct proper product URL - support both .myshopify.com and custom domains
       const storeDomain = shopifyConfig.store_domain;
-      const baseUrl = storeDomain.includes('.myshopify.com') 
-        ? storeDomain.replace('.myshopify.com', '')
-        : storeDomain.split('.')[0];
+      let productUrl: string;
+
+      if (storeDomain.includes('.myshopify.com')) {
+        // Shopify subdomain
+        const baseUrl = storeDomain.replace('.myshopify.com', '');
+        productUrl = `https://${baseUrl}.myshopify.com/products/${p.handle}`;
+      } else {
+        // Custom domain
+        productUrl = `https://${storeDomain}/products/${p.handle}`;
+      }
       
       return {
         id: p.id.toString(),
         title: p.title,
         price: p.variants?.[0]?.price || '0',
         currency: p.variants?.[0]?.price_currency || 'USD',
-        url: `https://${baseUrl}.myshopify.com/products/${p.handle}`,
+        url: productUrl,
         image: p.images?.[0]?.src,
         description: p.body_html?.replace(/<[^>]*>/g, '').slice(0, 200),
         available: p.variants?.some((v: any) => {
@@ -95,6 +129,13 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
         vendor: p.vendor
       };
     }) || [];
+    
+    // Cache the results
+    if (products && products.length > 0) {
+      cacheProducts(query, shopifyConfig, products);
+    }
+    
+    return products;
   } catch (error) {
     console.error('Error searching Shopify products:', error);
     return null;

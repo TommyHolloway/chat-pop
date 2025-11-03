@@ -11,6 +11,7 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const { toast } = useToast();
   const [showShopifyDialog, setShowShopifyDialog] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const isShopifyConnected = agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token;
 
   const handleRefreshAgent = () => {
@@ -18,26 +19,67 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
     window.location.reload();
   };
 
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('test-shopify-connection', {
+        body: {
+          storeDomain: agent.shopify_config?.store_domain,
+          adminApiToken: agent.shopify_config?.admin_api_token
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: 'Connection Successful',
+          description: `Connected to ${data.shopName}`,
+        });
+      } else {
+        toast({
+          title: 'Connection Failed',
+          description: data?.error || 'Failed to connect to Shopify',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error testing connection:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to test connection',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const handleDisconnectShopify = async () => {
+    if (!confirm('Are you sure you want to disconnect Shopify? This will disable all e-commerce features.')) {
+      return;
+    }
+
     setIsDisconnecting(true);
     try {
       const { error } = await supabase
         .from('agents')
-        .update({ shopify_config: {} })
+        .update({ shopify_config: null })
         .eq('id', agent.id);
 
       if (error) throw error;
 
       toast({
-        title: 'Disconnected',
-        description: 'Shopify store has been disconnected from this agent.',
+        title: 'Shopify Disconnected',
+        description: 'Your Shopify store has been disconnected.',
       });
 
       handleRefreshAgent();
     } catch (error) {
+      console.error('Error disconnecting Shopify:', error);
       toast({
         title: 'Error',
-        description: 'Failed to disconnect Shopify store',
+        description: 'Failed to disconnect Shopify',
         variant: 'destructive',
       });
     } finally {

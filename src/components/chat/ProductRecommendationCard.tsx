@@ -23,11 +23,15 @@ export const ProductRecommendationCard = ({ product }: ProductRecommendationCard
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <div className="flex flex-col sm:flex-row gap-4">
         {product.image && (
-          <div className="w-full sm:w-32 h-32 flex-shrink-0">
+          <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-muted relative">
             <img 
               src={product.image} 
               alt={product.title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
           </div>
         )}
@@ -41,7 +45,12 @@ export const ProductRecommendationCard = ({ product }: ProductRecommendationCard
                 </p>
               )}
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg font-bold text-primary">{product.price}</span>
+                <span className="text-lg font-bold text-primary">
+                  {new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: product.currency || 'USD',
+                  }).format(parseFloat(product.price))}
+                </span>
                 {product.available ? (
                   <Badge variant="default" className="text-xs">In Stock</Badge>
                 ) : (
@@ -59,17 +68,10 @@ export const ProductRecommendationCard = ({ product }: ProductRecommendationCard
                 size="sm"
                 variant="default"
                 onClick={() => window.open(product.url, '_blank')}
-                className="flex-1"
+                className="w-full"
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 View Product
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.open(product.url, '_blank')}
-              >
-                <ExternalLink className="h-4 w-4" />
               </Button>
             </div>
           </div>

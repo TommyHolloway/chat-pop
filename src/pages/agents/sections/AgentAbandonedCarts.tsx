@@ -38,6 +38,7 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'recovery_sent' | 'recovered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCart, setSelectedCart] = useState<AbandonedCart | null>(null);
+  const [selectedCarts, setSelectedCarts] = useState<Set<string>>(new Set());
 
   const { carts, loading, sendRecoveryMessage } = useAbandonedCarts(agent.id, {
     status: statusFilter,
@@ -106,6 +107,39 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
         </CardContent>
       </Card>
 
+      {/* Bulk Actions */}
+      {selectedCarts.size > 0 && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="pt-4 flex items-center justify-between">
+            <p className="text-sm font-medium">
+              {selectedCarts.size} cart{selectedCarts.size !== 1 ? 's' : ''} selected
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedCarts(new Set())}
+              >
+                Clear Selection
+              </Button>
+              <Button
+                size="sm"
+                onClick={async () => {
+                  for (const cartId of selectedCarts) {
+                    const cart = carts.find(c => c.id === cartId);
+                    if (cart) await sendRecoveryMessage(cart);
+                  }
+                  setSelectedCarts(new Set());
+                }}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Send Recovery to Selected
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Carts Table */}
       <Card>
         <CardHeader>
@@ -130,6 +164,20 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <input
+                        type="checkbox"
+                        className="cursor-pointer"
+                        checked={carts.length > 0 && selectedCarts.size === carts.filter(c => !c.recovered && !c.recovery_attempted).length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCarts(new Set(carts.filter(c => !c.recovered && !c.recovery_attempted).map(c => c.id)));
+                          } else {
+                            setSelectedCarts(new Set());
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead>Session ID</TableHead>
                     <TableHead>Items</TableHead>
                     <TableHead>Total</TableHead>
@@ -145,6 +193,24 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => setSelectedCart(cart)}
                     >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {!cart.recovered && !cart.recovery_attempted && (
+                          <input
+                            type="checkbox"
+                            className="cursor-pointer"
+                            checked={selectedCarts.has(cart.id)}
+                            onChange={(e) => {
+                              const newSelected = new Set(selectedCarts);
+                              if (e.target.checked) {
+                                newSelected.add(cart.id);
+                              } else {
+                                newSelected.delete(cart.id);
+                              }
+                              setSelectedCarts(newSelected);
+                            }}
+                          />
+                        )}
+                      </TableCell>
                       <TableCell className="font-mono text-xs">
                         {cart.session_id.substring(0, 12)}...
                       </TableCell>
