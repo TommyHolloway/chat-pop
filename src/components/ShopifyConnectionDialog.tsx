@@ -75,7 +75,55 @@ export const ShopifyConnectionDialog = ({
       });
 
       if (!productsResponse.ok) {
-        throw new Error('Failed to access products. Please ensure your API token has the "read_products" and "read_orders" scopes.');
+        throw new Error('Failed to access products. Please ensure your API token has the required scopes.');
+      }
+
+      // Verify read_orders scope
+      const ordersTestUrl = `https://${validated.store_domain}/admin/api/2024-10/orders.json?limit=1`;
+      const ordersResponse = await fetch(ordersTestUrl, {
+        headers: {
+          'X-Shopify-Access-Token': validated.admin_api_token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!ordersResponse.ok) {
+        throw new Error('Missing required scope: read_orders');
+      }
+
+      // Verify read_customers scope
+      const customersTestUrl = `https://${validated.store_domain}/admin/api/2024-10/customers.json?limit=1`;
+      const customersResponse = await fetch(customersTestUrl, {
+        headers: {
+          'X-Shopify-Access-Token': validated.admin_api_token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!customersResponse.ok) {
+        throw new Error('Missing required scope: read_customers');
+      }
+
+      // Verify read_inventory scope
+      const inventoryTestUrl = `https://${validated.store_domain}/admin/api/2024-10/inventory_levels.json?limit=1`;
+      const inventoryResponse = await fetch(inventoryTestUrl, {
+        headers: {
+          'X-Shopify-Access-Token': validated.admin_api_token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!inventoryResponse.ok) {
+        throw new Error('Missing required scope: read_inventory');
+      }
+
+      // Verify read_price_rules scope
+      const priceRulesTestUrl = `https://${validated.store_domain}/admin/api/2024-10/price_rules.json?limit=1`;
+      const priceRulesResponse = await fetch(priceRulesTestUrl, {
+        headers: {
+          'X-Shopify-Access-Token': validated.admin_api_token,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!priceRulesResponse.ok) {
+        throw new Error('Missing required scope: read_price_rules');
       }
 
       // Save to database
@@ -145,7 +193,7 @@ export const ShopifyConnectionDialog = ({
                 <ol className="list-decimal pl-4 mt-2 space-y-1">
                   <li>Go to your Shopify Admin → Settings → Apps and sales channels</li>
                   <li>Click "Develop apps" → "Create an app"</li>
-                  <li>Configure Admin API scopes: <code className="text-xs bg-muted px-1 py-0.5 rounded">read_products, read_orders</code></li>
+                  <li>Configure Admin API scopes: <code className="text-xs bg-muted px-1 py-0.5 rounded">read_products, read_orders, read_customers, read_inventory, read_price_rules</code></li>
                   <li>Install the app and copy your Admin API access token</li>
                 </ol>
                 <a 
@@ -226,9 +274,12 @@ export const ShopifyConnectionDialog = ({
                 <AlertDescription className="text-sm text-green-700 dark:text-green-400">
                   Once connected, your agent will be able to:
                   <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                    <li>Search and recommend products from your catalog</li>
-                    <li>Track cart events and conversions</li>
-                    <li>Provide real-time product information to customers</li>
+                    <li>Search and recommend products with real-time stock levels</li>
+                    <li>Track abandoned carts and orders with smart recovery</li>
+                    <li>Analyze customer lifetime value and repeat purchases</li>
+                    <li>Display active promotions and discounts automatically</li>
+                    <li>Trigger urgency messages for low stock items</li>
+                    <li>Import historical order data for complete analytics</li>
                   </ul>
                 </AlertDescription>
               </Alert>

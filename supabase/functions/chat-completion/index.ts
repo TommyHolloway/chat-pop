@@ -93,18 +93,57 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
     }
     
     const data = await response.json();
+    
+    // Fetch inventory levels for real-time stock
+    const inventoryItemIds = [];
+    for (const product of data.products || []) {
+      for (const variant of product.variants || []) {
+        if (variant.inventory_item_id) {
+          inventoryItemIds.push(variant.inventory_item_id);
+        }
+      }
+    }
+    
+    let inventoryLevels = [];
+    if (inventoryItemIds.length > 0) {
+      try {
+        const inventoryResponse = await fetch(
+          `https://${shopifyConfig.store_domain}/admin/api/2024-10/inventory_levels.json?inventory_item_ids=${inventoryItemIds.join(',')}`,
+          {
+            headers: {
+              'X-Shopify-Access-Token': shopifyConfig.admin_api_token,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        if (inventoryResponse.ok) {
+          const inventoryData = await inventoryResponse.json();
+          inventoryLevels = inventoryData.inventory_levels || [];
+        }
+      } catch (error) {
+        console.error('Failed to fetch inventory:', error);
+      }
+    }
+    
     const products = data.products?.slice(0, 5).map((p: any) => {
-      // Construct proper product URL - support both .myshopify.com and custom domains
+      // Construct proper product URL
       const storeDomain = shopifyConfig.store_domain;
       let productUrl: string;
 
       if (storeDomain.includes('.myshopify.com')) {
-        // Shopify subdomain
         const baseUrl = storeDomain.replace('.myshopify.com', '');
         productUrl = `https://${baseUrl}.myshopify.com/products/${p.handle}`;
       } else {
-        // Custom domain
         productUrl = `https://${storeDomain}/products/${p.handle}`;
+      }
+      
+      // Calculate total stock across all variants
+      let totalStock = 0;
+      for (const variant of p.variants || []) {
+        const level = inventoryLevels.find((l: any) => l.inventory_item_id === variant.inventory_item_id);
+        if (level) {
+          totalStock += level.available || 0;
+        }
       }
       
       return {
@@ -115,16 +154,9 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
         url: productUrl,
         image: p.images?.[0]?.src,
         description: p.body_html?.replace(/<[^>]*>/g, '').slice(0, 200),
-        available: p.variants?.some((v: any) => {
-          // Check if inventory tracking is disabled
-          if (!v.inventory_management) return true;
-          
-          // Check if overselling is allowed
-          if (v.inventory_policy === 'continue') return true;
-          
-          // Otherwise check actual inventory
-          return (v.inventory_quantity || 0) > 0;
-        }) || false,
+        available: totalStock > 0,
+        stock_level: totalStock,
+        low_stock: totalStock > 0 && totalStock < 10,
         type: p.product_type,
         vendor: p.vendor
       };
@@ -210,8 +242,11 @@ You have access to a search_products tool that searches the store's product cata
 - Users describe what they're looking for (e.g., "red dress", "wireless headphones")
 - Users compare products or ask for alternatives
 
-After searching, present products naturally in conversation. Format product recommendations using this syntax:
-[PRODUCT_CARD:{"id":"123","title":"Product Name","price":"29.99","currency":"USD","image":"url","url":"product-url","available":true,"type":"category","vendor":"brand"}]
+After searching, present products naturally in conversation. Format product recommendations using this syntax (include stock_level and low_stock):
+[PRODUCT_CARD:{"id":"123","title":"Product Name","price":"29.99","currency":"USD","image":"url","url":"product-url","available":true,"stock_level":5,"low_stock":true,"type":"category","vendor":"brand"}]
+
+When low_stock is true, create urgency: "Only X left in stock!" or "Hurry, almost sold out!"
+When available is false, suggest alternatives or notify about restocking.
 
 Be proactive - if someone mentions a product type or need, search for it!`;
   }

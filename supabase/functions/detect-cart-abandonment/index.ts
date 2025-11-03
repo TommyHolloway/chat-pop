@@ -56,33 +56,88 @@ serve(async (req) => {
       );
 
       if (cartTrigger) {
-        // Create proactive suggestion
-        await supabase
-          .from('proactive_suggestions')
-          .insert({
-            agent_id: cart.agent_id,
-            session_id: cart.session_id,
-            suggestion_type: 'cart_abandonment',
-            suggestion_message: cartTrigger.message,
-            confidence_score: 0.9,
-            behavioral_triggers: {
-              cart_total: cart.cart_total,
-              cart_items_count: cart.cart_items?.length || 0,
-              time_abandoned: abandonmentThresholdMinutes,
-            },
-          });
+        // Smart recovery: Check if cart was already completed in Shopify
+        let alreadyPurchased = false;
+        if (agent.shopify_config?.store_domain && agent.shopify_config?.admin_api_token) {
+          try {
+            const recentOrdersResponse = await fetch(
+              `https://${agent.shopify_config.store_domain}/admin/api/2024-10/orders.json?created_at_min=${cart.created_at}&limit=50`,
+              {
+                headers: {
+                  'X-Shopify-Access-Token': agent.shopify_config.admin_api_token,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
 
-        // Mark recovery as attempted
-        await supabase
-          .from('abandoned_carts')
-          .update({
-            recovery_attempted: true,
-            recovery_attempted_at: new Date().toISOString(),
-          })
-          .eq('id', cart.id);
+            if (recentOrdersResponse.ok) {
+              const ordersData = await recentOrdersResponse.json();
+              
+              const cartItemTitles = cart.cart_items.map((item: any) => 
+                item.title?.toLowerCase()
+              );
+              
+              const matchingOrder = ordersData.orders.find((order: any) => {
+                const orderItemTitles = order.line_items.map((item: any) => 
+                  item.title?.toLowerCase()
+                );
+                
+                const matches = cartItemTitles.filter((title: string) => 
+                  orderItemTitles.includes(title)
+                );
+                
+                return matches.length >= cartItemTitles.length * 0.5;
+              });
 
-        triggeredCount++;
-        console.log(`Triggered recovery for cart: ${cart.id}, total: $${cart.cart_total}`);
+              if (matchingOrder) {
+                console.log(`Cart ${cart.id} already converted as order ${matchingOrder.id}, marking as recovered`);
+                alreadyPurchased = true;
+                
+                await supabase
+                  .from('abandoned_carts')
+                  .update({ 
+                    recovered: true,
+                    recovered_at: new Date().toISOString()
+                  })
+                  .eq('id', cart.id);
+                
+                continue;
+              }
+            }
+          } catch (error) {
+            console.error('Order check failed:', error);
+          }
+        }
+
+        if (!alreadyPurchased) {
+          // Create proactive suggestion
+          await supabase
+            .from('proactive_suggestions')
+            .insert({
+              agent_id: cart.agent_id,
+              session_id: cart.session_id,
+              suggestion_type: 'cart_abandonment',
+              suggestion_message: cartTrigger.message,
+              confidence_score: 0.9,
+              behavioral_triggers: {
+                cart_total: cart.cart_total,
+                cart_items_count: cart.cart_items?.length || 0,
+                time_abandoned: abandonmentThresholdMinutes,
+              },
+            });
+
+          // Mark recovery as attempted
+          await supabase
+            .from('abandoned_carts')
+            .update({
+              recovery_attempted: true,
+              recovery_attempted_at: new Date().toISOString(),
+            })
+            .eq('id', cart.id);
+
+          triggeredCount++;
+          console.log(`Triggered recovery for cart: ${cart.id}, total: $${cart.cart_total}`);
+        }
       }
     }
 

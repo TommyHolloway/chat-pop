@@ -13,6 +13,8 @@ interface ProductRecommendationCardProps {
     image?: string;
     url: string;
     available: boolean;
+    stock_level?: number;
+    low_stock?: boolean;
     type?: string;
     vendor?: string;
   };
@@ -33,6 +35,18 @@ export const ProductRecommendationCard = ({ product }: ProductRecommendationCard
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
+            
+            {product.low_stock && product.available && (
+              <Badge variant="destructive" className="absolute top-2 right-2 text-xs">
+                Only {product.stock_level} left!
+              </Badge>
+            )}
+            
+            {!product.available && (
+              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                <Badge variant="secondary">Out of Stock</Badge>
+              </div>
+            )}
           </div>
         )}
         <CardContent className="flex-1 p-4">

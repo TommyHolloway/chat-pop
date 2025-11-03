@@ -585,6 +585,100 @@ export type Database = {
           },
         ]
       }
+      customer_analytics: {
+        Row: {
+          agent_id: string
+          average_order_value: number | null
+          created_at: string | null
+          customer_segment: string | null
+          days_since_last_order: number | null
+          email: string | null
+          first_order_date: string | null
+          id: string
+          last_order_date: string | null
+          shopify_customer_id: string
+          total_orders: number | null
+          total_spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          average_order_value?: number | null
+          created_at?: string | null
+          customer_segment?: string | null
+          days_since_last_order?: number | null
+          email?: string | null
+          first_order_date?: string | null
+          id?: string
+          last_order_date?: string | null
+          shopify_customer_id: string
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          average_order_value?: number | null
+          created_at?: string | null
+          customer_segment?: string | null
+          days_since_last_order?: number | null
+          email?: string | null
+          first_order_date?: string | null
+          id?: string
+          last_order_date?: string | null
+          shopify_customer_id?: string
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_analytics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_snapshot: {
+        Row: {
+          agent_id: string
+          available: number | null
+          id: string
+          inventory_item_id: string
+          product_id: string
+          updated_at: string | null
+          variant_id: string
+        }
+        Insert: {
+          agent_id: string
+          available?: number | null
+          id?: string
+          inventory_item_id: string
+          product_id: string
+          updated_at?: string | null
+          variant_id: string
+        }
+        Update: {
+          agent_id?: string
+          available?: number | null
+          id?: string
+          inventory_item_id?: string
+          product_id?: string
+          updated_at?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_snapshot_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_files: {
         Row: {
           agent_id: string
