@@ -32,34 +32,76 @@ serve(async (req) => {
     const { store_domain, admin_api_token } = agent.shopify_config;
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
+    // Fetch orders using GraphQL with pagination
+    let hasNextPage = true;
+    let cursor = null;
     let allOrders = [];
-    let nextPageUrl = `https://${store_domain}/admin/api/2024-10/orders.json?status=any&created_at_min=${startDate}&limit=250`;
 
-    while (nextPageUrl) {
-      const response = await fetch(nextPageUrl, {
+    while (hasNextPage) {
+      const graphqlQuery = `
+        query($cursor: String, $query: String) {
+          orders(first: 250, after: $cursor, query: $query) {
+            edges {
+              node {
+                id
+                createdAt
+                totalPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      `;
+
+      const response = await fetch(`https://${store_domain}/admin/api/2024-10/graphql.json`, {
+        method: 'POST',
         headers: {
           'X-Shopify-Access-Token': admin_api_token,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables: {
+            cursor,
+            query: `created_at:>='${startDate}'`
+          }
+        })
       });
 
       if (!response.ok) {
-        throw new Error(`Shopify API error: ${response.status}`);
+        throw new Error(`Shopify GraphQL API error: ${response.status}`);
       }
 
-      const data = await response.json();
-      allOrders = allOrders.concat(data.orders);
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
 
-      const linkHeader = response.headers.get('Link');
-      nextPageUrl = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)?.[1] || null;
+      allOrders = allOrders.concat(result.data.orders.edges);
+      hasNextPage = result.data.orders.pageInfo.hasNextPage;
+      cursor = result.data.orders.pageInfo.endCursor;
     }
 
-    console.log(`Fetched ${allOrders.length} orders from Shopify`);
+    console.log(`Fetched ${allOrders.length} orders from Shopify GraphQL`);
 
+    // Transform GraphQL data to metrics format
     const metricsByDate = new Map();
 
-    allOrders.forEach((order: any) => {
-      const date = new Date(order.created_at).toISOString().split('T')[0];
+    allOrders.forEach((orderEdge: any) => {
+      const order = orderEdge.node;
+      const date = new Date(order.createdAt).toISOString().split('T')[0];
+      const orderId = order.id.split('/').pop();
+      const amount = parseFloat(order.totalPriceSet.shopMoney.amount);
+      const currency = order.totalPriceSet.shopMoney.currencyCode;
       
       if (!metricsByDate.has(date)) {
         metricsByDate.set(date, {
@@ -72,12 +114,12 @@ serve(async (req) => {
       }
 
       const metrics = metricsByDate.get(date);
-      metrics.total_revenue += parseFloat(order.total_price);
+      metrics.total_revenue += amount;
       metrics.total_orders += 1;
       metrics.revenue_data.push({
-        order_id: order.id.toString(),
-        amount: parseFloat(order.total_price),
-        currency: order.currency,
+        order_id: orderId,
+        amount,
+        currency,
       });
     });
 

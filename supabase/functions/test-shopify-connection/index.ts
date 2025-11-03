@@ -23,79 +23,131 @@ serve(async (req) => {
       });
     }
 
-    console.log('Testing Shopify connection for:', storeDomain);
+    console.log('Testing Shopify GraphQL connection for:', storeDomain);
 
-    // Test connection by fetching shop info
-    const response = await fetch(`https://${storeDomain}/admin/api/2024-10/shop.json`, {
+    // Single GraphQL query to test connection and fetch shop info
+    const graphqlQuery = `
+      query {
+        shop {
+          name
+          myshopifyDomain
+          email
+          currencyCode
+        }
+      }
+    `;
+
+    const response = await fetch(`https://${storeDomain}/admin/api/2024-10/graphql.json`, {
+      method: 'POST',
       headers: {
         'X-Shopify-Access-Token': adminApiToken,
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify({ query: graphqlQuery })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Shopify API error:', response.status, errorText);
-      
+      console.error('Shopify GraphQL API error:', response.status);
       return new Response(JSON.stringify({
         success: false,
         error: response.status === 401 ? 'Invalid API token' : `API error: ${response.status}`,
-        scopes: []
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const data = await response.json();
-    
-    // Extract API scopes from response headers
-    const scopesHeader = response.headers.get('X-Shopify-Access-Scopes');
-    const scopes = scopesHeader ? scopesHeader.split(',').map(s => s.trim()) : [];
-    
-    console.log('Connection successful:', data.shop?.name);
+    const result = await response.json();
 
-    // Check if all required scopes are present in the header
-    const requiredScopes = ['read_products', 'read_orders', 'read_customers', 'read_inventory', 'read_price_rules'];
-    const missingScopesFromHeader = requiredScopes.filter(scope => !scopes.includes(scope));
-
-    if (missingScopesFromHeader.length > 0) {
+    // GraphQL returns errors in the response, not as HTTP status codes
+    if (result.errors) {
+      console.error('GraphQL errors:', result.errors);
+      
+      // Check if errors indicate missing scopes
+      const scopeErrors = result.errors.filter((e: any) => 
+        e.message.toLowerCase().includes('access') || 
+        e.message.toLowerCase().includes('permission')
+      );
+      
+      if (scopeErrors.length > 0) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Missing required API scopes. Please ensure your Shopify app has: read_products, read_orders, read_customers, read_inventory, and read_discounts enabled.',
+          missingScopes: ['Check Shopify app permissions']
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
       return new Response(JSON.stringify({
         success: false,
-        error: `Missing required scopes: ${missingScopesFromHeader.join(', ')}. Please update your Shopify app permissions.`,
-        missingScopes: missingScopesFromHeader,
-        grantedScopes: scopes
+        error: result.errors[0].message || 'GraphQL query failed'
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Verify endpoint access for testable scopes (read_inventory verified via header since inventory endpoints require specific query params)
+    const shopData = result.data?.shop;
+
+    if (!shopData) {
+      throw new Error('No shop data returned from GraphQL query');
+    }
+
+    console.log('Connection successful:', shopData.name);
+
+    // Test each required scope with minimal GraphQL queries
     const scopeTests = [
-      { name: 'read_products', url: `https://${storeDomain}/admin/api/2024-10/products.json?limit=1` },
-      { name: 'read_orders', url: `https://${storeDomain}/admin/api/2024-10/orders.json?limit=1` },
-      { name: 'read_customers', url: `https://${storeDomain}/admin/api/2024-10/customers.json?limit=1` },
-      { name: 'read_price_rules', url: `https://${storeDomain}/admin/api/2024-10/price_rules.json?limit=1` }
+      {
+        name: 'read_products',
+        query: `{ products(first: 1) { edges { node { id } } } }`
+      },
+      {
+        name: 'read_orders',
+        query: `{ orders(first: 1) { edges { node { id } } } }`
+      },
+      {
+        name: 'read_customers',
+        query: `{ customers(first: 1) { edges { node { id } } } }`
+      },
+      {
+        name: 'read_inventory',
+        query: `{ inventoryItems(first: 1) { edges { node { id } } } }`
+      },
+      {
+        name: 'read_discounts',
+        query: `{ discountNodes(first: 1) { edges { node { id } } } }`
+      }
     ];
 
     const missingScopes: string[] = [];
 
     for (const test of scopeTests) {
-      const testResponse = await fetch(test.url, {
+      const testResponse = await fetch(`https://${storeDomain}/admin/api/2024-10/graphql.json`, {
+        method: 'POST',
         headers: {
           'X-Shopify-Access-Token': adminApiToken,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ query: test.query })
       });
-      
-      if (!testResponse.ok) {
-        console.log(`Failed scope test for ${test.name}:`, testResponse.status);
-        missingScopes.push(test.name);
+
+      if (testResponse.ok) {
+        const testResult = await testResponse.json();
+        if (testResult.errors) {
+          const hasPermissionError = testResult.errors.some((e: any) =>
+            e.message.toLowerCase().includes('access') ||
+            e.message.toLowerCase().includes('permission')
+          );
+          if (hasPermissionError) {
+            console.log(`Missing scope: ${test.name}`);
+            missingScopes.push(test.name);
+          }
+        }
       }
     }
 
-    // If any scopes are missing, return error
     if (missingScopes.length > 0) {
       return new Response(JSON.stringify({
         success: false,
@@ -107,15 +159,15 @@ serve(async (req) => {
       });
     }
 
-    console.log('All scope tests passed successfully');
+    console.log('All GraphQL scope tests passed');
 
     return new Response(JSON.stringify({
       success: true,
-      shopName: data.shop?.name,
-      shopDomain: data.shop?.domain,
-      email: data.shop?.email,
-      currency: data.shop?.currency,
-      scopes: scopes,
+      shopName: shopData.name,
+      shopDomain: shopData.myshopifyDomain,
+      email: shopData.email,
+      currency: shopData.currencyCode,
+      apiVersion: 'GraphQL 2024-10',
       message: 'Connection successful'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

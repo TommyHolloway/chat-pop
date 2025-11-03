@@ -31,21 +31,56 @@ serve(async (req) => {
 
     const { store_domain, admin_api_token } = agent.shopify_config;
 
-    const shopifyOrders = await fetch(
-      `https://${store_domain}/admin/api/2024-10/orders.json?status=any&created_at_min=${startDate}&created_at_max=${endDate}`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': admin_api_token,
-          'Content-Type': 'application/json',
-        },
+    // Fetch orders from Shopify using GraphQL
+    const graphqlQuery = `
+      query($query: String) {
+        orders(first: 250, query: $query) {
+          edges {
+            node {
+              id
+              name
+              createdAt
+              totalPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+            }
+          }
+        }
       }
-    );
+    `;
 
-    if (!shopifyOrders.ok) {
-      throw new Error(`Shopify API error: ${shopifyOrders.status}`);
+    const response = await fetch(`https://${store_domain}/admin/api/2024-10/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': admin_api_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: graphqlQuery,
+        variables: {
+          query: `created_at:>='${startDate}' AND created_at:<='${endDate}'`
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Shopify GraphQL API error: ${response.status}`);
     }
 
-    const ordersData = await shopifyOrders.json();
+    const result = await response.json();
+
+    if (result.errors) {
+      throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+    }
+
+    const ordersData = result.data.orders.edges.map((edge: any) => ({
+      id: edge.node.id.split('/').pop(),
+      order_number: edge.node.name,
+      total_price: edge.node.totalPriceSet.shopMoney.amount,
+      created_at: edge.node.createdAt,
+    }));
 
     const { data: conversions } = await supabase
       .from('agent_conversions')
@@ -54,19 +89,19 @@ serve(async (req) => {
       .gte('created_at', startDate)
       .lte('created_at', endDate);
 
-    const shopifyOrderIds = new Set(ordersData.orders.map((o: any) => o.id.toString()));
+    const shopifyOrderIds = new Set(ordersData.map((o: any) => o.id));
     const trackedOrderIds = new Set(conversions?.map(c => c.order_id) || []);
 
-    const missingFromTracking = ordersData.orders.filter(
-      (o: any) => !trackedOrderIds.has(o.id.toString())
+    const missingFromTracking = ordersData.filter(
+      (o: any) => !trackedOrderIds.has(o.id)
     );
 
     const report = {
-      shopifyOrderCount: ordersData.orders.length,
+      shopifyOrderCount: ordersData.length,
       trackedConversions: conversions?.length || 0,
       missingFromTracking: missingFromTracking.length,
       matchRate: conversions?.length 
-        ? ((conversions.length / ordersData.orders.length) * 100).toFixed(1) 
+        ? ((conversions.length / ordersData.length) * 100).toFixed(1) 
         : 0,
       discrepancies: missingFromTracking.map((o: any) => ({
         orderId: o.id,

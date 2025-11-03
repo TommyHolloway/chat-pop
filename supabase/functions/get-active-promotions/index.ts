@@ -31,45 +31,114 @@ serve(async (req) => {
 
     const { store_domain, admin_api_token } = agent.shopify_config;
 
-    const priceRulesResponse = await fetch(
-      `https://${store_domain}/admin/api/2024-10/price_rules.json`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': admin_api_token,
-          'Content-Type': 'application/json',
-        },
+    // Fetch active discounts using GraphQL (replaces deprecated price_rules)
+    const graphqlQuery = `
+      query {
+        discountNodes(first: 250) {
+          edges {
+            node {
+              id
+              discount {
+                ... on DiscountCodeBasic {
+                  title
+                  status
+                  startsAt
+                  endsAt
+                  customerGets {
+                    value {
+                      ... on DiscountPercentage {
+                        percentage
+                      }
+                      ... on DiscountAmount {
+                        amount {
+                          amount
+                          currencyCode
+                        }
+                      }
+                    }
+                  }
+                  usageLimit
+                }
+                ... on DiscountAutomaticBasic {
+                  title
+                  status
+                  startsAt
+                  endsAt
+                  customerGets {
+                    value {
+                      ... on DiscountPercentage {
+                        percentage
+                      }
+                      ... on DiscountAmount {
+                        amount {
+                          amount
+                          currencyCode
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-    );
+    `;
 
-    if (!priceRulesResponse.ok) {
-      throw new Error(`Shopify API error: ${priceRulesResponse.status}`);
-    }
-
-    const priceRulesData = await priceRulesResponse.json();
-
-    const now = new Date();
-    const activePromotions = priceRulesData.price_rules.filter((rule: any) => {
-      const startsAt = rule.starts_at ? new Date(rule.starts_at) : null;
-      const endsAt = rule.ends_at ? new Date(rule.ends_at) : null;
-
-      const isActive = (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now);
-      return isActive;
+    const response = await fetch(`https://${store_domain}/admin/api/2024-10/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': admin_api_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: graphqlQuery })
     });
 
-    const formattedPromotions = activePromotions.map((rule: any) => ({
-      title: rule.title,
-      value: rule.value,
-      valueType: rule.value_type,
-      targetType: rule.target_type,
-      description: `${rule.title}: ${rule.value_type === 'percentage' ? rule.value + '%' : '$' + rule.value} off`,
-      startsAt: rule.starts_at,
-      endsAt: rule.ends_at,
-    }));
+    if (!response.ok) {
+      throw new Error(`Shopify GraphQL API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.errors) {
+      throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+    }
+
+    // Filter and format active promotions
+    const now = new Date();
+    const activePromotions = result.data.discountNodes.edges
+      .map((edge: any) => edge.node.discount)
+      .filter((discount: any) => {
+        if (discount.status !== 'ACTIVE') return false;
+        
+        const startsAt = discount.startsAt ? new Date(discount.startsAt) : null;
+        const endsAt = discount.endsAt ? new Date(discount.endsAt) : null;
+        
+        return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now);
+      })
+      .map((discount: any) => {
+        const value = discount.customerGets?.value;
+        let valueDisplay = '';
+        
+        if (value?.percentage) {
+          valueDisplay = `${value.percentage}% off`;
+        } else if (value?.amount) {
+          valueDisplay = `$${value.amount.amount} off`;
+        }
+        
+        return {
+          title: discount.title,
+          description: `${discount.title}: ${valueDisplay}`,
+          startsAt: discount.startsAt,
+          endsAt: discount.endsAt,
+          status: discount.status,
+        };
+      });
 
     return new Response(JSON.stringify({
       success: true,
-      activePromotions: formattedPromotions,
-      count: formattedPromotions.length,
+      activePromotions: activePromotions,
+      count: activePromotions.length,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

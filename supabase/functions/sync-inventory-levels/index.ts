@@ -31,65 +31,103 @@ serve(async (req) => {
 
     const { store_domain, admin_api_token } = agent.shopify_config;
 
-    const productsResponse = await fetch(
-      `https://${store_domain}/admin/api/2024-10/products.json?limit=250`,
-      {
+    // Fetch products with variants and inventory in ONE GraphQL query
+    let hasNextPage = true;
+    let cursor = null;
+    let allProducts = [];
+
+    while (hasNextPage) {
+      const graphqlQuery = `
+        query($cursor: String) {
+          products(first: 250, after: $cursor) {
+            edges {
+              node {
+                id
+                variants(first: 100) {
+                  edges {
+                    node {
+                      id
+                      inventoryItem {
+                        id
+                        inventoryLevels(first: 10) {
+                          edges {
+                            node {
+                              available
+                              location {
+                                id
+                                name
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      `;
+
+      const response = await fetch(`https://${store_domain}/admin/api/2024-10/graphql.json`, {
+        method: 'POST',
         headers: {
           'X-Shopify-Access-Token': admin_api_token,
           'Content-Type': 'application/json',
         },
-      }
-    );
-
-    if (!productsResponse.ok) {
-      throw new Error(`Shopify API error: ${productsResponse.status}`);
-    }
-
-    const productsData = await productsResponse.json();
-
-    const inventoryItemIds = [];
-    productsData.products.forEach((product: any) => {
-      product.variants.forEach((variant: any) => {
-        if (variant.inventory_item_id) {
-          inventoryItemIds.push(variant.inventory_item_id);
-        }
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables: { cursor }
+        })
       });
-    });
 
-    const batchSize = 50;
-    let allInventoryLevels = [];
-
-    for (let i = 0; i < inventoryItemIds.length; i += batchSize) {
-      const batch = inventoryItemIds.slice(i, i + batchSize);
-      const inventoryResponse = await fetch(
-        `https://${store_domain}/admin/api/2024-10/inventory_levels.json?inventory_item_ids=${batch.join(',')}`,
-        {
-          headers: {
-            'X-Shopify-Access-Token': admin_api_token,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (inventoryResponse.ok) {
-        const inventoryData = await inventoryResponse.json();
-        allInventoryLevels = allInventoryLevels.concat(inventoryData.inventory_levels);
+      if (!response.ok) {
+        throw new Error(`Shopify GraphQL API error: ${response.status}`);
       }
+
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+
+      allProducts = allProducts.concat(result.data.products.edges);
+      hasNextPage = result.data.products.pageInfo.hasNextPage;
+      cursor = result.data.products.pageInfo.endCursor;
     }
 
+    console.log(`Fetched ${allProducts.length} products with inventory from GraphQL`);
+
+    // Transform GraphQL data to inventory snapshot
     const inventorySnapshot = [];
-    productsData.products.forEach((product: any) => {
-      product.variants.forEach((variant: any) => {
-        const inventoryLevel = allInventoryLevels.find(
-          (level: any) => level.inventory_item_id === variant.inventory_item_id
+
+    allProducts.forEach((productEdge: any) => {
+      const product = productEdge.node;
+      const productId = product.id.split('/').pop(); // Extract numeric ID from GraphQL global ID
+
+      product.variants.edges.forEach((variantEdge: any) => {
+        const variant = variantEdge.node;
+        const variantId = variant.id.split('/').pop();
+        const inventoryItem = variant.inventoryItem;
+        const inventoryItemId = inventoryItem.id.split('/').pop();
+
+        // Sum available inventory across all locations
+        const totalAvailable = inventoryItem.inventoryLevels.edges.reduce(
+          (sum: number, levelEdge: any) => sum + (levelEdge.node.available || 0),
+          0
         );
 
         inventorySnapshot.push({
           agent_id: agentId,
-          product_id: product.id.toString(),
-          variant_id: variant.id.toString(),
-          inventory_item_id: variant.inventory_item_id.toString(),
-          available: inventoryLevel?.available ?? 0,
+          product_id: productId,
+          variant_id: variantId,
+          inventory_item_id: inventoryItemId,
+          available: totalAvailable,
           updated_at: new Date().toISOString(),
         });
       });
@@ -108,7 +146,7 @@ serve(async (req) => {
       throw insertError;
     }
 
-    const totalProducts = productsData.products.length;
+    const totalProducts = allProducts.length;
     const inStock = inventorySnapshot.filter(i => i.available > 0).length;
     const lowStock = inventorySnapshot.filter(i => i.available > 0 && i.available < 10).length;
     const outOfStock = inventorySnapshot.filter(i => i.available === 0).length;
