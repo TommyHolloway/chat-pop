@@ -53,80 +53,26 @@ export const ShopifyConnectionDialog = ({
 
       const validated = shopifyConfigSchema.parse(formData);
 
-      // Test the Shopify connection AND verify scopes
-      const testUrl = `https://${validated.store_domain}/admin/api/2024-10/shop.json`;
-      const testResponse = await fetch(testUrl, {
-        headers: {
-          'X-Shopify-Access-Token': validated.admin_api_token,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Test the Shopify connection using edge function (bypasses CORS)
+      const { data: testResult, error: testError } = await supabase.functions.invoke(
+        'test-shopify-connection',
+        {
+          body: {
+            storeDomain: validated.store_domain,
+            adminApiToken: validated.admin_api_token,
+          },
+        }
+      );
 
-      if (!testResponse.ok) {
-        const errorText = await testResponse.text();
-        throw new Error(`Failed to connect to Shopify (${testResponse.status}): ${errorText}`);
+      if (testError) {
+        throw new Error(`Connection test failed: ${testError.message}`);
       }
 
-      // Verify we can access products endpoint (validates read_products scope)
-      const productsTestUrl = `https://${validated.store_domain}/admin/api/2024-10/products.json?limit=1`;
-      const productsResponse = await fetch(productsTestUrl, {
-        headers: {
-          'X-Shopify-Access-Token': validated.admin_api_token,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!productsResponse.ok) {
-        throw new Error('Failed to access products. Please ensure your API token has the required scopes.');
+      if (!testResult?.success) {
+        throw new Error(testResult?.error || 'Failed to verify Shopify credentials and scopes');
       }
 
-      // Verify read_orders scope
-      const ordersTestUrl = `https://${validated.store_domain}/admin/api/2024-10/orders.json?limit=1`;
-      const ordersResponse = await fetch(ordersTestUrl, {
-        headers: {
-          'X-Shopify-Access-Token': validated.admin_api_token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!ordersResponse.ok) {
-        throw new Error('Missing required scope: read_orders');
-      }
-
-      // Verify read_customers scope
-      const customersTestUrl = `https://${validated.store_domain}/admin/api/2024-10/customers.json?limit=1`;
-      const customersResponse = await fetch(customersTestUrl, {
-        headers: {
-          'X-Shopify-Access-Token': validated.admin_api_token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!customersResponse.ok) {
-        throw new Error('Missing required scope: read_customers');
-      }
-
-      // Verify read_inventory scope
-      const inventoryTestUrl = `https://${validated.store_domain}/admin/api/2024-10/inventory_levels.json?limit=1`;
-      const inventoryResponse = await fetch(inventoryTestUrl, {
-        headers: {
-          'X-Shopify-Access-Token': validated.admin_api_token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!inventoryResponse.ok) {
-        throw new Error('Missing required scope: read_inventory');
-      }
-
-      // Verify read_price_rules scope
-      const priceRulesTestUrl = `https://${validated.store_domain}/admin/api/2024-10/price_rules.json?limit=1`;
-      const priceRulesResponse = await fetch(priceRulesTestUrl, {
-        headers: {
-          'X-Shopify-Access-Token': validated.admin_api_token,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!priceRulesResponse.ok) {
-        throw new Error('Missing required scope: read_price_rules');
-      }
+      console.log('Shopify connection successful:', testResult.shopName);
 
       // Save to database
       const { error: updateError } = await supabase

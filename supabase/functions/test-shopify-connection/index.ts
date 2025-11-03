@@ -55,6 +55,45 @@ serve(async (req) => {
     
     console.log('Connection successful:', data.shop?.name);
 
+    // Verify all required scopes by testing each endpoint
+    const scopeTests = [
+      { name: 'read_products', url: `https://${storeDomain}/admin/api/2024-10/products.json?limit=1` },
+      { name: 'read_orders', url: `https://${storeDomain}/admin/api/2024-10/orders.json?limit=1` },
+      { name: 'read_customers', url: `https://${storeDomain}/admin/api/2024-10/customers.json?limit=1` },
+      { name: 'read_inventory', url: `https://${storeDomain}/admin/api/2024-10/inventory_levels.json?limit=1` },
+      { name: 'read_price_rules', url: `https://${storeDomain}/admin/api/2024-10/price_rules.json?limit=1` }
+    ];
+
+    const missingScopes: string[] = [];
+
+    for (const test of scopeTests) {
+      const testResponse = await fetch(test.url, {
+        headers: {
+          'X-Shopify-Access-Token': adminApiToken,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!testResponse.ok) {
+        console.log(`Failed scope test for ${test.name}:`, testResponse.status);
+        missingScopes.push(test.name);
+      }
+    }
+
+    // If any scopes are missing, return error
+    if (missingScopes.length > 0) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Missing required scopes: ${missingScopes.join(', ')}. Please update your Shopify app permissions.`,
+        missingScopes: missingScopes
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('All scope tests passed successfully');
+
     return new Response(JSON.stringify({
       success: true,
       shopName: data.shop?.name,
