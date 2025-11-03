@@ -55,12 +55,27 @@ serve(async (req) => {
     
     console.log('Connection successful:', data.shop?.name);
 
-    // Verify all required scopes by testing each endpoint
+    // Check if all required scopes are present in the header
+    const requiredScopes = ['read_products', 'read_orders', 'read_customers', 'read_inventory', 'read_price_rules'];
+    const missingScopesFromHeader = requiredScopes.filter(scope => !scopes.includes(scope));
+
+    if (missingScopesFromHeader.length > 0) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Missing required scopes: ${missingScopesFromHeader.join(', ')}. Please update your Shopify app permissions.`,
+        missingScopes: missingScopesFromHeader,
+        grantedScopes: scopes
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Verify endpoint access for testable scopes (read_inventory verified via header since inventory endpoints require specific query params)
     const scopeTests = [
       { name: 'read_products', url: `https://${storeDomain}/admin/api/2024-10/products.json?limit=1` },
       { name: 'read_orders', url: `https://${storeDomain}/admin/api/2024-10/orders.json?limit=1` },
       { name: 'read_customers', url: `https://${storeDomain}/admin/api/2024-10/customers.json?limit=1` },
-      { name: 'read_inventory', url: `https://${storeDomain}/admin/api/2024-10/inventory_items.json?limit=1` },
       { name: 'read_price_rules', url: `https://${storeDomain}/admin/api/2024-10/price_rules.json?limit=1` }
     ];
 
