@@ -1,22 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useEcommerceAnalytics } from '@/hooks/useEcommerceAnalytics';
 import { startOfMonth } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DollarSign, ShoppingCart, TrendingUp, Package, Calendar, ShoppingBag } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Package, Calendar, ShoppingBag, Download, Loader2, Users, Repeat } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: new Date()
   });
+  const [isImporting, setIsImporting] = useState(false);
+  const [clvData, setClvData] = useState<any>(null);
+  const [isLoadingClv, setIsLoadingClv] = useState(false);
 
   const { data: metrics, isLoading } = useEcommerceAnalytics(agent.id, dateRange);
+
+  const handleImportHistoricalData = async () => {
+    setIsImporting(true);
+    try {
+      const { error } = await supabase.functions.invoke('import-shopify-orders', {
+        body: { agentId: agent.id, days: 90 }
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Historical data imported successfully');
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast.error(error.message || 'Failed to import data');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const fetchClvData = async () => {
+    setIsLoadingClv(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('calculate-customer-clv', {
+        body: { agentId: agent.id }
+      });
+      
+      if (error) throw error;
+      setClvData(data?.summary || null);
+    } catch (error) {
+      console.error('CLV fetch error:', error);
+    } finally {
+      setIsLoadingClv(false);
+    }
+  };
+
+  useEffect(() => {
+    if (agent.shopify_config?.store_domain) {
+      fetchClvData();
+    }
+  }, [agent.id]);
   
   // Fetch previous period metrics for comparison
   const previousPeriodStart = new Date(dateRange.from.getTime() - (dateRange.to.getTime() - dateRange.from.getTime()));
@@ -61,12 +107,31 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">E-commerce Analytics</h2>
           <p className="text-muted-foreground">Track revenue, orders, and cart recovery performance</p>
         </div>
-        <Popover>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleImportHistoricalData}
+            disabled={isImporting}
+            variant="outline"
+            size="sm"
+          >
+            {isImporting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Import Historical Data
+              </>
+            )}
+          </Button>
+          <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm">
               <Calendar className="mr-2 h-4 w-4" />
@@ -114,6 +179,7 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
             </div>
           </PopoverContent>
         </Popover>
+        </div>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -177,6 +243,54 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* CLV Metrics */}
+      {clvData && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{clvData.totalCustomers || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {clvData.vipCustomers || 0} VIP customers
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Repeat Customer Rate</CardTitle>
+              <Repeat className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {clvData.repeatCustomerRate ? `${clvData.repeatCustomerRate.toFixed(1)}%` : '0%'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Customers with 2+ orders
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Lifetime Value</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${clvData.averageLifetimeValue ? clvData.averageLifetimeValue.toFixed(2) : '0.00'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Per customer
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <Card>
         <CardHeader>

@@ -19,7 +19,10 @@ Connect your Shopify store to enable product recommendations and cart tracking f
 5. Go to **Configuration** tab
 6. Under **Admin API access scopes**, enable:
    - `read_products` - To search and recommend products
-   - `read_orders` - To track conversions
+   - `read_orders` - To track conversions and revenue
+   - `read_customers` - To analyze customer lifetime value (CLV)
+   - `read_inventory` - To show real-time stock levels
+   - `read_price_rules` - To promote active discounts
 7. Click **Save**
 8. Go to **API credentials** tab
 9. Click **Install app**
@@ -57,7 +60,7 @@ You can find it in your Shopify admin URL or under **Settings → Domains**
 - Ensure the token hasn't expired
 
 **"Missing permissions"**
-- Make sure you enabled `read_products` and `read_orders` scopes
+- Make sure you enabled all 5 required scopes: `read_products`, `read_orders`, `read_customers`, `read_inventory`, `read_price_rules`
 - Reinstall the app in Shopify if you changed scopes
 
 **"Store not found"**
@@ -67,10 +70,13 @@ You can find it in your Shopify admin URL or under **Settings → Domains**
 ## What's Next?
 
 Once connected, your agent can:
-- Search and recommend products from your catalog
-- Track abandoned carts automatically (when widget is embedded)
-- Show product images and prices in chat
-- Track conversions and revenue
+- **Product Search** - Search and recommend products from your catalog with real-time stock levels
+- **Cart Tracking** - Track abandoned carts automatically (when widget is embedded)
+- **Smart Recovery** - Send personalized cart recovery messages
+- **Revenue Analytics** - Track conversions, revenue, and order metrics
+- **Customer Insights** - Analyze customer lifetime value (CLV) and segment VIP customers
+- **Inventory Sync** - Display live stock levels and low-stock alerts
+- **Promotions** - Automatically mention active discounts and sales to customers
 
 ### Deploy Your Widget
 

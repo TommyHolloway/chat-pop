@@ -561,8 +561,55 @@ serve(async (req) => {
       });
     }
 
+    // Fetch active promotions if Shopify is connected
+    let promotionsContext = '';
+    if (hasShopify) {
+      try {
+        const { data: promotions } = await supabase.functions.invoke('get-active-promotions', {
+          body: { agentId }
+        });
+        
+        if (promotions?.activePromotions?.length > 0) {
+          promotionsContext = '\n\nACTIVE PROMOTIONS (mention these when relevant):\n' +
+            promotions.activePromotions.map((p: any) => 
+              `- ${p.title}: ${p.value}% off (Code: ${p.code || 'Auto-applied'})`
+            ).join('\n');
+        }
+      } catch (error) {
+        console.error('Failed to fetch promotions:', error);
+      }
+    }
+
+    // Check for customer insights if we have email in conversation
+    let customerContext = '';
+    if (hasShopify && conversationHistory.length > 0) {
+      const emailMatch = conversationHistory.map(m => m.content).join(' ').match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+      
+      if (emailMatch) {
+        try {
+          const { data: customerData } = await supabase
+            .from('customer_analytics')
+            .select('*')
+            .eq('agent_id', agentId)
+            .ilike('email', emailMatch[0])
+            .single();
+          
+          if (customerData) {
+            if (customerData.customer_segment === 'vip') {
+              customerContext = `\n\nCUSTOMER INSIGHT: This is a VIP customer with ${customerData.total_orders} orders and $${customerData.total_spent} lifetime value. Provide exceptional service!`;
+            } else if (customerData.customer_segment === 'at_risk') {
+              customerContext = `\n\nCUSTOMER INSIGHT: Customer hasn't ordered in ${customerData.days_since_last_order} days. Consider offering a special incentive to re-engage.`;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch customer insights:', error);
+        }
+      }
+    }
+
     // Build system prompt based on creativity level and visitor context
-    const systemPrompt = generateSystemPrompt(agent, knowledgeContext, visitorContext, hasShopify);
+    const systemPrompt = generateSystemPrompt(agent, knowledgeContext, visitorContext, hasShopify) + 
+                         promotionsContext + customerContext;
     
     // Map creativity level to temperature
     const temperature = mapCreativityToTemperature(agent.creativity_level);

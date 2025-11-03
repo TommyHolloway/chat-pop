@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Webhook, Slack, Mail, Zap, ShoppingBag, ExternalLink } from 'lucide-react';
+import { Webhook, Slack, Mail, Zap, ShoppingBag, ExternalLink, Package, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ShopifyConnectionDialog } from '@/components/ShopifyConnectionDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,12 +12,46 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const [showShopifyDialog, setShowShopifyDialog] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [inventoryStatus, setInventoryStatus] = useState<any>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const isShopifyConnected = agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token;
 
   const handleRefreshAgent = () => {
     // Trigger a page reload to fetch updated agent data
     window.location.reload();
   };
+
+  const handleSyncInventory = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-inventory-levels', {
+        body: { agentId: agent.id }
+      });
+      
+      if (error) throw error;
+      
+      setInventoryStatus(data);
+      toast({
+        title: 'Success',
+        description: 'Inventory synced successfully',
+      });
+    } catch (error: any) {
+      console.error('Inventory sync error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to sync inventory',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isShopifyConnected) {
+      handleSyncInventory();
+    }
+  }, [isShopifyConnected]);
 
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -170,6 +204,66 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Inventory Dashboard */}
+      {isShopifyConnected && inventoryStatus && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Package className="h-6 w-6 text-primary" />
+                <div>
+                  <CardTitle>Inventory Status</CardTitle>
+                  <CardDescription>Real-time stock levels from your store</CardDescription>
+                </div>
+              </div>
+              <Button
+                onClick={handleSyncInventory}
+                disabled={isSyncing}
+                variant="outline"
+                size="sm"
+              >
+                {isSyncing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Sync Now
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="text-2xl font-bold">{inventoryStatus.totalProducts || 0}</div>
+                <div className="text-sm text-muted-foreground">Total Products</div>
+              </div>
+              <div className="bg-green-500/10 rounded-lg p-4">
+                <div className="text-2xl font-bold text-green-600">{inventoryStatus.inStock || 0}</div>
+                <div className="text-sm text-muted-foreground">In Stock</div>
+              </div>
+              <div className="bg-orange-500/10 rounded-lg p-4">
+                <div className="text-2xl font-bold text-orange-600">{inventoryStatus.lowStock || 0}</div>
+                <div className="text-sm text-muted-foreground">Low Stock</div>
+              </div>
+              <div className="bg-red-500/10 rounded-lg p-4">
+                <div className="text-2xl font-bold text-red-600">{inventoryStatus.outOfStock || 0}</div>
+                <div className="text-sm text-muted-foreground">Out of Stock</div>
+              </div>
+            </div>
+            {inventoryStatus.lastSynced && (
+              <p className="text-xs text-muted-foreground mt-4">
+                Last synced: {new Date(inventoryStatus.lastSynced).toLocaleString()}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Coming Soon Integrations */}
       <Card>
