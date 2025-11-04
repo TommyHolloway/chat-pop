@@ -54,11 +54,11 @@ export default function Landing() {
           </p>
           <div className="relative">
             <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
-            <img
-              src="/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"
-              alt="Analytics Dashboard"
-              className="relative rounded-2xl shadow-2xl w-full border border-border/50"
-            />
+          <img
+            src="/lovable-uploads/chatpop-laptop-hero.png"
+            alt="Analytics Dashboard"
+            className="relative rounded-2xl shadow-2xl w-full border border-border/50 object-cover"
+          />
           </div>
         </div>
       </section>
