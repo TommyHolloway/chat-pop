@@ -76,12 +76,12 @@ export const FeatureShowcaseSection = ({
               </div>
             )}
             
-            <div className={`${imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%] pr-8 md:pr-12' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%] pl-8 md:pl-12' : imagePosition === 'left' ? 'md:order-2' : ''} ${textWidth ? `md:max-w-[${textWidth}]` : ''}`}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
+            <div className={`${imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''} ${textWidth ? `md:max-w-[${textWidth}]` : ''}`}>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
                 {title}
               </h2>
               {Array.isArray(description) ? (
-                <ul className="text-lg text-muted-foreground mb-6 leading-relaxed space-y-3">
+                <ul className="text-xl text-muted-foreground mb-6 leading-relaxed space-y-3">
                   {description.map((item, index) => (
                     <li key={index} className="flex items-start">
                       <span className="text-primary mr-3 mt-1">•</span>
