@@ -59,7 +59,7 @@ export const PricingSection = ({ title = "Pricing Plans", description, className
   
   const handleButtonClick = (planName: string) => {
     localStorage.setItem('selectedPlan', planName);
-    navigate('/signup');
+    navigate('/auth/signup');
   };
 
   return (
