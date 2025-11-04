@@ -25,26 +25,51 @@ export const PlanUpgradeDialog = ({
 
   const planDetails = {
     hobby: {
-      name: 'Hobby',
-      price: '$35/month',
+      name: 'Starter',
+      price: '$49/month',
       features: [
-        '2,000 message credits/month',
-        'Up to 20 training links',
-        '2 AI agents',
-        'Advanced chat features',
-        'Priority support'
+        '2,000 customer interactions/month',
+        'Unlimited products in catalog',
+        '2 AI shopping assistants',
+        'Cart abandonment recovery (50/mo)',
+        'Shopify integration',
+        'Priority email support'
+      ]
+    },
+    starter: {
+      name: 'Starter',
+      price: '$49/month',
+      features: [
+        '2,000 customer interactions/month',
+        'Unlimited products in catalog',
+        '2 AI shopping assistants',
+        'Cart abandonment recovery (50/mo)',
+        'Shopify integration',
+        'Priority email support'
       ]
     },
     standard: {
-      name: 'Pro',
-      price: '$147/month', 
+      name: 'Growth',
+      price: '$199/month', 
       features: [
-        '12,000 message credits/month',
-        'Unlimited training links',
-        '5 AI agents',
-        'Advanced analytics',
-        'Custom integrations',
-        'Phone support'
+        '10,000 customer interactions/month',
+        '5 AI shopping assistants',
+        'Cart abandonment recovery (500/mo)',
+        'Advanced revenue analytics',
+        'Custom product recommendation AI',
+        'Priority email support'
+      ]
+    },
+    growth: {
+      name: 'Growth',
+      price: '$199/month', 
+      features: [
+        '10,000 customer interactions/month',
+        '5 AI shopping assistants',
+        'Cart abandonment recovery (500/mo)',
+        'Advanced revenue analytics',
+        'Custom product recommendation AI',
+        'Priority email support'
       ]
     }
   };

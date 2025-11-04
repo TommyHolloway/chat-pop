@@ -43,13 +43,15 @@ export const usePlanLimits = (agentId?: string) => {
       let maxLinks;
       switch (plan) {
         case 'hobby':
-          maxLinks = 20;
+        case 'starter':
+          maxLinks = Infinity; // Unlimited for Starter
           break;
         case 'standard':
-          maxLinks = Infinity;
+        case 'growth':
+          maxLinks = Infinity; // Unlimited for Growth
           break;
         default:
-          maxLinks = 5;
+          maxLinks = 5; // Free plan
       }
 
       setLimits({

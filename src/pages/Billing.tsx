@@ -49,11 +49,13 @@ export const Billing = () => {
   const getPlanLimits = (plan: string) => {
     switch (plan) {
       case 'hobby':
-        return { messageCredits: 2000, agents: 2, links: 20 };
+      case 'starter':
+        return { messageCredits: 2000, agents: 2, links: -1 }; // -1 = unlimited
       case 'standard':
-        return { messageCredits: 12000, agents: 5, links: -1 }; // -1 = unlimited
+      case 'growth':
+        return { messageCredits: 10000, agents: 5, links: -1 }; // -1 = unlimited
       default:
-        return { messageCredits: 100, agents: 1, links: 5 };
+        return { messageCredits: 50, agents: 1, links: 5 };
     }
   };
 
@@ -74,8 +76,8 @@ export const Billing = () => {
               <div className="flex items-center gap-2">
                 <Badge variant={currentPlan === 'free' ? 'secondary' : 'default'}>
                   {currentPlan === 'free' ? 'Free Plan' : 
-                   currentPlan === 'hobby' ? 'Hobby Plan' : 
-                   currentPlan === 'standard' ? 'Pro Plan' : 'Free Plan'}
+                   currentPlan === 'hobby' || currentPlan === 'starter' ? 'Starter Plan' : 
+                   currentPlan === 'standard' || currentPlan === 'growth' ? 'Growth Plan' : 'Free Plan'}
                 </Badge>
                 {isAdminOverride && (
                   <Badge variant="outline" className="text-xs">
@@ -135,8 +137,7 @@ export const Billing = () => {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {currentPlan === 'free' ? '5' : 
-                 currentPlan === 'hobby' ? '20' : 'Unlimited'}
+                {currentPlan === 'free' ? '5' : 'Unlimited'}
               </div>
               <div className="text-sm text-muted-foreground">Training links limit</div>
             </div>
@@ -179,24 +180,24 @@ export const Billing = () => {
           </CardContent>
         </Card>
 
-        {/* Hobby Plan */}
-        <Card className={`relative ${currentPlan === 'hobby' ? 'ring-2 ring-primary' : 'border-primary'}`}>
-          {currentPlan !== 'hobby' && (
+        {/* Starter Plan */}
+        <Card className={`relative ${(currentPlan === 'hobby' || currentPlan === 'starter') ? 'ring-2 ring-primary' : 'border-primary'}`}>
+          {currentPlan !== 'hobby' && currentPlan !== 'starter' && (
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
               <Badge variant="default">Most Popular</Badge>
             </div>
           )}
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Hobby
-              {currentPlan === 'hobby' && <Badge variant="secondary">Current</Badge>}
+              Starter
+              {(currentPlan === 'hobby' || currentPlan === 'starter') && <Badge variant="secondary">Current</Badge>}
             </CardTitle>
-            <CardDescription>Perfect for small teams and growing projects</CardDescription>
-            <div className="text-3xl font-bold">$35<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <CardDescription>Recover abandoned carts and boost revenue</CardDescription>
+            <div className="text-3xl font-bold">$49<span className="text-lg font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
-              {hobbyFeatures.map((feature, index) => (
+              {starterFeatures.map((feature, index) => (
                 <li key={index} className="flex items-center">
                   <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                   <span className="text-sm">{feature}</span>
@@ -205,27 +206,27 @@ export const Billing = () => {
             </ul>
             <Button 
               className="w-full" 
-              disabled={currentPlan === 'hobby'}
-              onClick={() => handleUpgrade('hobby')}
+              disabled={currentPlan === 'hobby' || currentPlan === 'starter'}
+              onClick={() => handleUpgrade('starter')}
             >
-              {currentPlan === 'hobby' ? 'Current Plan' : 'Upgrade to Hobby'}
+              {(currentPlan === 'hobby' || currentPlan === 'starter') ? 'Current Plan' : 'Upgrade to Starter'}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Standard Plan */}
-        <Card className={`relative ${currentPlan === 'standard' ? 'ring-2 ring-primary' : ''}`}>
+        {/* Growth Plan */}
+        <Card className={`relative ${(currentPlan === 'standard' || currentPlan === 'growth') ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Pro
-              {currentPlan === 'standard' && <Badge variant="secondary">Current</Badge>}
+              Growth
+              {(currentPlan === 'standard' || currentPlan === 'growth') && <Badge variant="secondary">Current</Badge>}
             </CardTitle>
-            <CardDescription>For teams that need more power and flexibility</CardDescription>
-            <div className="text-3xl font-bold">$147<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <CardDescription>Scale your recovered revenue to $50K+/mo</CardDescription>
+            <div className="text-3xl font-bold">$199<span className="text-lg font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
-              {standardFeatures.map((feature, index) => (
+              {growthFeatures.map((feature, index) => (
                 <li key={index} className="flex items-center">
                   <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                   <span className="text-sm">{feature}</span>
@@ -234,11 +235,11 @@ export const Billing = () => {
             </ul>
             <Button 
               className="w-full" 
-              variant={currentPlan === 'standard' ? 'default' : 'outline'}
-              disabled={currentPlan === 'standard'}
-              onClick={() => handleUpgrade('standard')}
+              variant={(currentPlan === 'standard' || currentPlan === 'growth') ? 'default' : 'outline'}
+              disabled={currentPlan === 'standard' || currentPlan === 'growth'}
+              onClick={() => handleUpgrade('growth')}
             >
-              {currentPlan === 'standard' ? 'Current Plan' : 'Upgrade to Pro'}
+              {(currentPlan === 'standard' || currentPlan === 'growth') ? 'Current Plan' : 'Upgrade to Growth'}
             </Button>
           </CardContent>
         </Card>
@@ -284,31 +285,33 @@ export const Billing = () => {
 };
 
 const freeFeatures = [
-  'Up to 100 message credits/month',
-  'Up to 5 training links',
-  '1 AI agent',
-  'Basic chat features',
+  '1 AI shopping assistant',
+  '50 customer interactions/month',
+  'Basic product recommendations',
+  '10 products in catalog',
   'Email support'
 ];
 
-const hobbyFeatures = [
+const starterFeatures = [
   'Everything in Free +',
-  'Up to 2,000 message credits/month',
-  'Up to 20 training links',
-  '2 AI agents',
-  'Advanced chat features',
-  'Priority support'
+  '2,000 customer interactions/month',
+  '2 AI shopping assistants',
+  'Unlimited products in catalog',
+  'Cart abandonment recovery (50/mo)',
+  'Revenue attribution analytics',
+  'Shopify integration',
+  'Priority email support'
 ];
 
-const standardFeatures = [
-  'Everything in Hobby +',
-  'Up to 12,000 message credits/month',
-  'Unlimited training links',
-  '5 AI agents',
-  'Visitor Intelligence & Proactive Chat',
-  'Advanced analytics',
-  'Custom integrations',
-  'Phone support'
+const growthFeatures = [
+  'Everything in Starter +',
+  '10,000 customer interactions/month',
+  '5 AI shopping assistants',
+  'Cart abandonment recovery (500/mo)',
+  'Advanced revenue analytics',
+  'Custom product recommendation AI',
+  'Conversion tracking & attribution',
+  'Priority email support'
 ];
 
 const mockInvoices = [

@@ -7,6 +7,7 @@ interface UsageData {
   messages_count: number;
   message_credits_used: number;
   storage_used_bytes: number;
+  cart_recovery_attempts: number;
   plan: string;
   isLoading: boolean;
 }
@@ -18,6 +19,7 @@ export const useUsageData = () => {
     messages_count: 0,
     message_credits_used: 0,
     storage_used_bytes: 0,
+    cart_recovery_attempts: 0,
     plan: 'free',
     isLoading: true
   });
@@ -53,6 +55,7 @@ export const useUsageData = () => {
         messages_count: usageData?.messages_count || 0,
         message_credits_used: usageData?.message_credits_used || 0,
         storage_used_bytes: usageData?.storage_used_bytes || 0,
+        cart_recovery_attempts: (usageData as any)?.cart_recovery_attempts || 0,
         plan: profileData?.plan || 'free',
         isLoading: false
       });

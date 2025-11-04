@@ -17,7 +17,7 @@ export const pricingPlans: PricingPlan[] = [
     description: "Test the power of AI for your store",
     features: [
       "1 AI shopping assistant",
-      "100 customer interactions/month",
+      "50 customer interactions/month",
       "Basic product recommendations",
       "10 products in catalog",
       "Email support"
@@ -53,12 +53,12 @@ export const pricingPlans: PricingPlan[] = [
       "Everything in Starter +",
       "10,000 customer interactions/month",
       "5 AI shopping assistants",
-      "Unlimited cart recovery",
+      "Cart abandonment recovery (500/mo)",
       "Advanced revenue analytics",
       "Custom product recommendation AI",
       "Conversion tracking & attribution",
       "Multi-store management",
-      "Priority phone support"
+      "Priority email support"
     ],
     buttonText: "Scale Revenue",
     buttonVariant: "outline"
@@ -88,7 +88,7 @@ export const faqItems = [
   },
   {
     question: "What happens after my free trial?",
-    answer: "Your free plan includes 100 customer interactions. After that, choose a paid plan or stay on the free tier. We'll never charge you without permission, and you can cancel anytime. Plus, we offer a 30-day money-back guarantee on paid plans."
+    answer: "Your free plan includes 50 customer interactions. After that, choose a paid plan or stay on the free tier. We'll never charge you without permission, and you can cancel anytime. Plus, we offer a 30-day money-back guarantee on paid plans."
   },
   {
     question: "What are customer interactions?",

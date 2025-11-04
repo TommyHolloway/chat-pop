@@ -71,8 +71,8 @@ export const PlanEnforcementWrapper = ({
   const getRecommendedPlan = (): 'hobby' | 'standard' => {
     if (feature === 'visitor_analytics') return 'standard';
     const currentPlan = enforcement.limits.messageCredits;
-    if (currentPlan <= 100) return 'hobby'; // Free -> Hobby
-    return 'standard'; // Hobby -> Pro
+    if (currentPlan <= 50) return 'hobby'; // Free -> Starter (hobby is the internal name)
+    return 'standard'; // Starter -> Growth (standard is the internal name)
   };
 
   const [canPerform, setCanPerform] = useState<boolean | null>(null);
@@ -120,14 +120,14 @@ export const PlanEnforcementWrapper = ({
         </h3>
         <p className="text-sm text-muted-foreground max-w-md">
           {feature === 'visitor_analytics' 
-            ? 'Unlock visitor behavior analytics, proactive chat triggers, and advanced conversion insights with Pro.'
+            ? 'Unlock visitor behavior analytics, proactive chat triggers, and advanced conversion insights with Growth.'
             : `You've reached your ${feature} limit (${getFeatureLimit()})`
           }
         </p>
       </div>
       <Button onClick={() => setShowUpgradeDialog(true)} className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
         <Crown className="h-4 w-4 mr-2" />
-        Upgrade to Pro
+        {enforcement.limits.messageCredits <= 50 ? 'Upgrade to Starter' : 'Upgrade to Growth'}
       </Button>
     </div>
   );

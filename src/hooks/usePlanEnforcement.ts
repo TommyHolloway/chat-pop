@@ -74,22 +74,24 @@ export const usePlanEnforcement = () => {
   const getPlanLimits = (plan: string): PlanLimits => {
     switch (plan) {
       case 'hobby':
+      case 'starter': // Starter plan (renamed from hobby)
         return {
           messageCredits: 2000,
           agents: 2,
-          links: 20,
+          links: -1, // unlimited
           storageGB: 5
         };
-      case 'standard': // Pro plan
+      case 'standard':
+      case 'growth': // Growth plan (renamed from standard/pro)
         return {
-          messageCredits: 12000,
+          messageCredits: 10000,
           agents: 5,
           links: -1, // unlimited
           storageGB: 50
         };
       default: // free
         return {
-          messageCredits: 100,
+          messageCredits: 50,
           agents: 1,
           links: 5,
           storageGB: 1
