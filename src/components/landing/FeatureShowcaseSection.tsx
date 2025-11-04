@@ -39,7 +39,7 @@ export const FeatureShowcaseSection = ({
   };
   return <section className={`${isSticky ? `sticky ${stickyTop || 'top-0'} ${zIndex || ''} py-6` : 'py-8'} px-4 bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl overflow-hidden rounded-2xl">
-        <Card className={`${imageFullHeight ? 'relative overflow-hidden' : ''} p-6 md:p-8 shadow-xl min-h-[400px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
+        <Card className={`${imageFullHeight ? 'relative overflow-hidden' : ''} p-6 md:p-8 shadow-xl h-[500px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
           {imageFullHeight && imagePosition === 'right' && <div className="hidden md:block absolute right-0 top-0 bottom-0 h-full" style={{
           width: imageWidth
         }}>
@@ -58,14 +58,14 @@ export const FeatureShowcaseSection = ({
                 <img src={imageSrc} alt={imageAlt} className="relative rounded-2xl shadow-2xl w-full h-full object-cover" />
               </div>}
             
-            <div className={`${imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''} ${textWidth ? `md:max-w-[${textWidth}]` : ''}`}>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground px-0 py-0 my-0 mx-[81px]">
+            <div className={`flex flex-col justify-center px-8 md:px-12 ${imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''} ${textWidth ? `md:max-w-[${textWidth}]` : ''}`}>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
                 {title}
               </h2>
-              {Array.isArray(description) ? <ul className="text-xl text-muted-foreground mb-6 leading-relaxed space-y-3 mx-[75px]">
+              {Array.isArray(description) ? <ul className="text-xl text-muted-foreground mb-6 leading-relaxed space-y-3">
                   {description.map((item, index) => <li key={index} className="flex items-start">
                       <span className="text-primary mr-3 mt-1">•</span>
-                      <span className="mx-[7px]">{item}</span>
+                      <span>{item}</span>
                     </li>)}
                 </ul> : <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
                   {description}
