@@ -7,13 +7,15 @@ export const StickyFeatureStack = () => {
       <FeatureShowcaseSection
         title="AI That Understands Your Products"
         description="Our AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and preferences. Increase average order value by 40% with smart upsells and cross-sells."
-        imageSrc="/lovable-uploads/baby-clothing-demo.png"
+        imageSrc="/lovable-uploads/ai-product-understanding.png"
         imageAlt="Product Recommendations"
         imagePosition="right"
         gradient={true}
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-10"
+        imageFullHeight={true}
+        imageWidth="40%"
       />
 
       {/* Section 2 - Middle layer (z-20) */}

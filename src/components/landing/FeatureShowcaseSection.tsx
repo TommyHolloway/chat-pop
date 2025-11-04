@@ -13,6 +13,8 @@ interface FeatureShowcaseSectionProps {
   stickyTop?: string;
   zIndex?: string;
   stackIntensity?: 'light' | 'medium' | 'strong';
+  imageFullHeight?: boolean;
+  imageWidth?: string;
 }
 
 export const FeatureShowcaseSection = ({
@@ -26,7 +28,9 @@ export const FeatureShowcaseSection = ({
   isSticky = false,
   stickyTop,
   zIndex,
-  stackIntensity
+  stackIntensity,
+  imageFullHeight = false,
+  imageWidth = '40%'
 }: FeatureShowcaseSectionProps) => {
   const intensityStyles = {
     light: 'border-l-4 border-primary/30',
@@ -37,9 +41,29 @@ export const FeatureShowcaseSection = ({
   return (
     <section className={`${isSticky ? `sticky ${stickyTop || 'top-0'} ${zIndex || ''} py-6` : 'py-8'} px-4 bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl overflow-hidden rounded-2xl">
-        <Card className={`p-6 md:p-8 shadow-xl min-h-[400px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
-          <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
-            {imagePosition === 'left' && (
+        <Card className={`${imageFullHeight ? 'relative overflow-hidden' : ''} p-6 md:p-8 shadow-xl min-h-[400px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
+          {imageFullHeight && imagePosition === 'right' && (
+            <div className="hidden md:block absolute right-0 top-0 bottom-0 h-full" style={{ width: imageWidth }}>
+              <img
+                src={imageSrc}
+                alt={imageAlt}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          
+          {imageFullHeight && imagePosition === 'left' && (
+            <div className="hidden md:block absolute left-0 top-0 bottom-0 h-full" style={{ width: imageWidth }}>
+              <img
+                src={imageSrc}
+                alt={imageAlt}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          <div className={`${imageFullHeight ? '' : 'grid md:grid-cols-2 gap-8 items-center'} ${!imageFullHeight && imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
+            {!imageFullHeight && imagePosition === 'left' && (
               <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
                 <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-2xl" />
                 <img
@@ -50,7 +74,7 @@ export const FeatureShowcaseSection = ({
               </div>
             )}
             
-            <div className={imagePosition === 'left' ? 'md:order-2' : ''}>
+            <div className={imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''}>
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
                 {title}
               </h2>
@@ -60,7 +84,7 @@ export const FeatureShowcaseSection = ({
               {children}
             </div>
             
-            {imagePosition === 'right' && (
+            {!imageFullHeight && imagePosition === 'right' && (
               <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
                 <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-2xl" />
                 <img
