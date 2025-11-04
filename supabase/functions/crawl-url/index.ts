@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { chromium } from 'https://deno.land/x/astral@0.4.1/mod.ts';
+import { DOMParser, Element } from 'https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts';
 import TurndownService from 'https://esm.sh/turndown@7.1.2';
 
 const corsHeaders = {
@@ -20,56 +20,68 @@ const turndown = new TurndownService({
 turndown.remove(['script', 'style', 'noscript', 'iframe', 'svg']);
 
 /**
- * Scrape a single page using Playwright
+ * Scrape a single page using fetch + DOMParser
  */
 async function scrapePage(url: string): Promise<{ success: boolean; title?: string; content?: string; markdown?: string; error?: string }> {
-  let browser;
-  
   try {
-    console.log('Launching browser for URL:', url);
+    console.log('Fetching URL:', url);
     
-    // Launch headless Chrome
-    browser = await chromium.launch({
-      headless: true,
+    // Fetch the HTML content
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
     
-    const page = await browser.newPage({
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    if (!response.ok) {
+      return {
+        success: false,
+        error: `Website returned status ${response.status}`,
+      };
+    }
+    
+    const html = await response.text();
+    
+    console.log('Parsing HTML...');
+    
+    // Parse HTML with DOMParser
+    const document = new DOMParser().parseFromString(html, 'text/html');
+    
+    if (!document) {
+      return {
+        success: false,
+        error: 'Failed to parse HTML',
+      };
+    }
+    
+    // Extract title
+    const title = document.querySelector('title')?.textContent || 'Untitled Page';
+    
+    // Remove unwanted elements
+    const elementsToRemove = ['script', 'style', 'noscript', 'iframe', 'svg', 'nav', 'footer', 'header[role="banner"]'];
+    elementsToRemove.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach(el => el.remove());
     });
     
-    // Navigate to URL with timeout
-    await page.goto(url, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
+    // Get main content or body
+    const mainContent = document.querySelector('main') || 
+                       document.querySelector('article') || 
+                       document.querySelector('[role="main"]') ||
+                       document.body;
     
-    console.log('Page loaded, extracting content...');
+    if (!mainContent) {
+      return {
+        success: false,
+        error: 'No content found on page',
+      };
+    }
     
-    // Extract title and HTML content
-    const pageData = await page.evaluate(() => {
-      // Get title
-      const title = document.title || 'Untitled Page';
-      
-      // Remove unwanted elements before getting HTML
-      const clonedDoc = document.cloneNode(true) as Document;
-      const elementsToRemove = clonedDoc.querySelectorAll('script, style, noscript, iframe, svg, nav, footer, header[role="banner"]');
-      elementsToRemove.forEach(el => el.remove());
-      
-      // Get main content or body
-      const mainContent = clonedDoc.querySelector('main') || 
-                         clonedDoc.querySelector('article') || 
-                         clonedDoc.querySelector('[role="main"]') ||
-                         clonedDoc.body;
-      
-      const html = mainContent ? mainContent.innerHTML : clonedDoc.body.innerHTML;
-      
-      return { title, html };
-    });
-    
-    await browser.close();
+    const contentHtml = mainContent.innerHTML;
     
     // Convert HTML to Markdown
-    const markdown = turndown.turndown(pageData.html);
+    const markdown = turndown.turndown(contentHtml);
     
     // Clean up markdown (remove excessive whitespace)
     const cleanedMarkdown = markdown
@@ -84,30 +96,28 @@ async function scrapePage(url: string): Promise<{ success: boolean; title?: stri
     }
     
     console.log('Scrape successful:', {
-      title: pageData.title,
+      title,
       contentLength: cleanedMarkdown.length,
     });
     
     return {
       success: true,
-      title: pageData.title,
+      title,
       content: cleanedMarkdown,
       markdown: cleanedMarkdown,
     };
     
   } catch (error) {
-    if (browser) {
-      await browser.close().catch(() => {});
-    }
-    
     console.error('Scrape error:', error);
     
     let errorMessage = 'Failed to scrape the website';
     if (error instanceof Error) {
       if (error.message.includes('timeout') || error.message.includes('Timeout')) {
         errorMessage = 'Website took too long to respond. Please try again.';
-      } else if (error.message.includes('net::ERR') || error.message.includes('fetch failed')) {
+      } else if (error.message.includes('fetch failed') || error.message.includes('network')) {
         errorMessage = 'Unable to reach the website. Please check the URL.';
+      } else if (error.message.includes('SSL') || error.message.includes('certificate')) {
+        errorMessage = 'SSL certificate issue with the website.';
       }
     }
     
@@ -115,6 +125,43 @@ async function scrapePage(url: string): Promise<{ success: boolean; title?: stri
       success: false,
       error: errorMessage,
     };
+  }
+}
+
+/**
+ * Extract all internal links from a document
+ */
+function extractLinks(document: any, baseUrl: string): string[] {
+  try {
+    const baseDomain = new URL(baseUrl).hostname;
+    const links: string[] = [];
+    
+    const anchorElements = document.querySelectorAll('a[href]');
+    
+    for (const anchor of anchorElements) {
+      try {
+        const href = (anchor as Element).getAttribute('href');
+        if (!href) continue;
+        
+        // Convert relative URLs to absolute
+        const absoluteUrl = new URL(href, baseUrl).href;
+        const urlObj = new URL(absoluteUrl);
+        
+        // Only include http(s) links from same domain
+        if ((urlObj.protocol === 'http:' || urlObj.protocol === 'https:') &&
+            urlObj.hostname === baseDomain &&
+            !links.includes(absoluteUrl)) {
+          links.push(absoluteUrl);
+        }
+      } catch {
+        // Invalid URL, skip
+      }
+    }
+    
+    return links;
+  } catch (error) {
+    console.error('Error extracting links:', error);
+    return [];
   }
 }
 
@@ -128,18 +175,12 @@ async function crawlWebsite(url: string, crawlLimit: number): Promise<{
   completed?: number;
   error?: string;
 }> {
-  let browser;
   const crawledPages: Array<{ url: string; title: string; content: string; markdown: string; metadata: any }> = [];
   const visitedUrls = new Set<string>();
   const toVisit: string[] = [url];
   
   try {
     console.log('Starting crawl with limit:', crawlLimit);
-    
-    // Launch browser once for all pages
-    browser = await chromium.launch({
-      headless: true,
-    });
     
     const baseUrl = new URL(url);
     const baseDomain = baseUrl.hostname;
@@ -155,79 +196,73 @@ async function crawlWebsite(url: string, crawlLimit: number): Promise<{
       console.log(`Crawling page ${crawledPages.length + 1}/${crawlLimit}:`, currentUrl);
       
       try {
-        const page = await browser.newPage({
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        // Fetch the HTML content
+        const response = await fetch(currentUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          },
+          signal: AbortSignal.timeout(30000),
         });
         
-        await page.goto(currentUrl, {
-          waitUntil: 'networkidle',
-          timeout: 30000,
+        if (!response.ok) {
+          console.error(`Failed to fetch ${currentUrl}: ${response.status}`);
+          continue;
+        }
+        
+        const html = await response.text();
+        const document = new DOMParser().parseFromString(html, 'text/html');
+        
+        if (!document) {
+          console.error(`Failed to parse ${currentUrl}`);
+          continue;
+        }
+        
+        // Extract title
+        const title = document.querySelector('title')?.textContent || 'Untitled Page';
+        
+        // Extract links before removing elements
+        const links = extractLinks(document, currentUrl);
+        
+        // Remove unwanted elements
+        const elementsToRemove = ['script', 'style', 'noscript', 'iframe', 'svg', 'nav', 'footer', 'header[role="banner"]'];
+        elementsToRemove.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach(el => el.remove());
         });
         
-        // Extract content and links
-        const pageData = await page.evaluate(() => {
-          const title = document.title || 'Untitled Page';
+        // Get main content
+        const mainContent = document.querySelector('main') || 
+                           document.querySelector('article') || 
+                           document.querySelector('[role="main"]') ||
+                           document.body;
+        
+        if (mainContent) {
+          const contentHtml = mainContent.innerHTML;
+          const markdown = turndown.turndown(contentHtml);
+          const cleanedMarkdown = markdown
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
           
-          // Get all internal links
-          const links = Array.from(document.querySelectorAll('a[href]'))
-            .map(a => (a as HTMLAnchorElement).href)
-            .filter(href => {
-              try {
-                const linkUrl = new URL(href);
-                return linkUrl.protocol === 'http:' || linkUrl.protocol === 'https:';
-              } catch {
-                return false;
-              }
+          if (cleanedMarkdown && cleanedMarkdown.length >= 50) {
+            crawledPages.push({
+              url: currentUrl,
+              title,
+              content: cleanedMarkdown,
+              markdown: cleanedMarkdown,
+              metadata: {
+                title,
+                sourceURL: currentUrl,
+              },
             });
-          
-          // Remove unwanted elements
-          const clonedDoc = document.cloneNode(true) as Document;
-          const elementsToRemove = clonedDoc.querySelectorAll('script, style, noscript, iframe, svg, nav, footer, header[role="banner"]');
-          elementsToRemove.forEach(el => el.remove());
-          
-          const mainContent = clonedDoc.querySelector('main') || 
-                             clonedDoc.querySelector('article') || 
-                             clonedDoc.querySelector('[role="main"]') ||
-                             clonedDoc.body;
-          
-          const html = mainContent ? mainContent.innerHTML : clonedDoc.body.innerHTML;
-          
-          return { title, html, links };
-        });
-        
-        await page.close();
-        
-        // Convert to markdown
-        const markdown = turndown.turndown(pageData.html);
-        const cleanedMarkdown = markdown
-          .replace(/\n{3,}/g, '\n\n')
-          .trim();
-        
-        if (cleanedMarkdown && cleanedMarkdown.length >= 50) {
-          crawledPages.push({
-            url: currentUrl,
-            title: pageData.title,
-            content: cleanedMarkdown,
-            markdown: cleanedMarkdown,
-            metadata: {
-              title: pageData.title,
-              sourceURL: currentUrl,
-            },
-          });
+          }
         }
         
         // Add new links to visit (same domain only)
-        for (const link of pageData.links) {
-          try {
-            const linkUrl = new URL(link);
-            if (linkUrl.hostname === baseDomain && 
-                !visitedUrls.has(link) && 
-                !toVisit.includes(link) &&
-                crawledPages.length + toVisit.length < crawlLimit) {
-              toVisit.push(link);
-            }
-          } catch {
-            // Invalid URL, skip
+        for (const link of links) {
+          if (!visitedUrls.has(link) && 
+              !toVisit.includes(link) &&
+              crawledPages.length + toVisit.length < crawlLimit) {
+            toVisit.push(link);
           }
         }
         
@@ -236,8 +271,6 @@ async function crawlWebsite(url: string, crawlLimit: number): Promise<{
         // Continue with next page
       }
     }
-    
-    await browser.close();
     
     if (crawledPages.length === 0) {
       return {
@@ -259,10 +292,6 @@ async function crawlWebsite(url: string, crawlLimit: number): Promise<{
     };
     
   } catch (error) {
-    if (browser) {
-      await browser.close().catch(() => {});
-    }
-    
     console.error('Crawl error:', error);
     
     return {
