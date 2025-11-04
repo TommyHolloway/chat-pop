@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { pricingPlans, type PricingPlan } from '@/config/pricing';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 interface PricingSectionProps {
   title?: string;
@@ -17,7 +18,7 @@ interface PricingCardProps {
   onSelect: (planName: string) => void;
 }
 
-const PricingCard = ({ plan, onSelect }: PricingCardProps) => (
+const PricingCard = ({ plan, onSelect, isLoading }: PricingCardProps & { isLoading: boolean }) => (
   <div className={cn(
     "relative flex flex-col h-full p-8 bg-card rounded-2xl border transition-all duration-300 hover:-translate-y-1",
     plan.highlighted
@@ -50,8 +51,16 @@ const PricingCard = ({ plan, onSelect }: PricingCardProps) => (
       size="lg"
       className="w-full"
       onClick={() => onSelect(plan.name)}
+      disabled={isLoading}
     >
-      {plan.buttonText}
+      {isLoading ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Processing...
+        </>
+      ) : (
+        plan.buttonText
+      )}
     </Button>
   </div>
 );
@@ -59,8 +68,11 @@ const PricingCard = ({ plan, onSelect }: PricingCardProps) => (
 export const PricingSection = ({ title = "Pricing Plans", description, className = "" }: PricingSectionProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleButtonClick = async (planName: string) => {
+    console.log('[PricingSection] Button clicked for plan:', planName);
+    
     // Free plan - go straight to signup
     if (planName === 'Free') {
       localStorage.setItem('selectedPlan', planName);
@@ -69,29 +81,48 @@ export const PricingSection = ({ title = "Pricing Plans", description, className
     }
     
     // Paid plans - create Stripe checkout first
+    setIsLoading(true);
     try {
       const planKeyMap: Record<string, string> = {
         "Starter": "starter",
         "Growth": "growth"
       };
       
+      const planKey = planKeyMap[planName];
+      console.log('[PricingSection] Mapped plan key:', planKey);
+      
+      const requestBody = { 
+        plan: planKey,
+        successUrl: `${window.location.origin}/auth/signup?plan=${planKey}`,
+        cancelUrl: window.location.origin
+      };
+      console.log('[PricingSection] Invoking edge function with body:', requestBody);
+      
       const { data, error } = await supabase.functions.invoke('create-checkout-anonymous', {
-        body: { 
-          plan: planKeyMap[planName],
-          successUrl: `${window.location.origin}/auth/signup?plan=${planKeyMap[planName]}`,
-          cancelUrl: window.location.origin
-        }
+        body: requestBody
       });
       
-      if (error) throw error;
+      console.log('[PricingSection] Edge function response:', { data, error });
       
+      if (error) {
+        console.error('[PricingSection] Edge function error:', error);
+        throw error;
+      }
+      
+      if (!data?.url) {
+        console.error('[PricingSection] No URL in response:', data);
+        throw new Error('No checkout URL received from server');
+      }
+      
+      console.log('[PricingSection] Redirecting to Stripe:', data.url);
       // Redirect to Stripe checkout
       window.location.href = data.url;
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('[PricingSection] Checkout error:', error);
+      setIsLoading(false);
       toast({
         title: "Error",
-        description: "Failed to create checkout session. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create checkout session. Please try again.",
         variant: "destructive"
       });
     }
@@ -108,7 +139,7 @@ export const PricingSection = ({ title = "Pricing Plans", description, className
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {pricingPlans.map((plan) => (
-            <PricingCard key={plan.name} plan={plan} onSelect={handleButtonClick} />
+            <PricingCard key={plan.name} plan={plan} onSelect={handleButtonClick} isLoading={isLoading} />
           ))}
         </div>
         <div className="mt-16 text-center">
