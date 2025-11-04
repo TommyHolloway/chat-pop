@@ -1317,6 +1317,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_cart_recovery_attempts: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       log_pii_access: {
         Args: {
           access_reason?: string

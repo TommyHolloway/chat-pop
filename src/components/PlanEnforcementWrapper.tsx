@@ -6,7 +6,7 @@ import { Lock, Crown } from 'lucide-react';
 
 interface PlanEnforcementWrapperProps {
   children: ReactNode;
-  feature: 'agent' | 'message' | 'link' | 'storage' | 'visitor_analytics';
+  feature: 'agent' | 'message' | 'link' | 'storage' | 'visitor_analytics' | 'cart_recovery';
   agentId?: string;
   fileSize?: number;
   fallbackContent?: ReactNode;
@@ -39,6 +39,8 @@ export const PlanEnforcementWrapper = ({
         return enforcement.canSendMessage;
       case 'visitor_analytics':
         return enforcement.canViewVisitorAnalytics;
+      case 'cart_recovery':
+        return enforcement.canUseCartRecovery;
       case 'link':
         if (!agentId) return false;
         const linkResult = await enforcement.canAddLink(agentId);
@@ -59,6 +61,8 @@ export const PlanEnforcementWrapper = ({
         return `${enforcement.usage.currentMessageCredits}/${enforcement.limits.messageCredits === -1 ? '∞' : enforcement.limits.messageCredits} credits`;
       case 'visitor_analytics':
         return 'Pro plan required';
+      case 'cart_recovery':
+        return `${enforcement.usage.currentCartRecovery}/${enforcement.limits.cartRecovery === -1 ? '∞' : enforcement.limits.cartRecovery} cart recovery attempts`;
       case 'link':
         return `${enforcement.limits.links === -1 ? '∞' : enforcement.limits.links} links per agent`;
       case 'storage':

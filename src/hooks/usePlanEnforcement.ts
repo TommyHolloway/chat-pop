@@ -16,6 +16,7 @@ interface PlanLimits {
   agents: number;
   links: number;
   storageGB: number;
+  cartRecovery: number;
 }
 
 interface PlanUsage {
@@ -23,6 +24,7 @@ interface PlanUsage {
   currentMessageCredits: number;
   currentLinks: number;
   currentStorageBytes: number;
+  currentCartRecovery: number;
 }
 
 interface PlanEnforcement {
@@ -46,8 +48,8 @@ export const usePlanEnforcement = () => {
   const { plan: userPlan, isLoading: planLoading } = useUserPlan();
   const { usage } = useUsageData();
   const [enforcement, setEnforcement] = useState<PlanEnforcement>({
-    limits: { messageCredits: 100, agents: 1, links: 5, storageGB: 1 },
-    usage: { currentAgents: 0, currentMessageCredits: 0, currentLinks: 0, currentStorageBytes: 0 },
+    limits: { messageCredits: 100, agents: 1, links: 5, storageGB: 1, cartRecovery: 0 },
+    usage: { currentAgents: 0, currentMessageCredits: 0, currentLinks: 0, currentStorageBytes: 0, currentCartRecovery: 0 },
     canCreateAgent: true,
     canSendMessage: true,
     canViewVisitorAnalytics: false,
@@ -79,7 +81,8 @@ export const usePlanEnforcement = () => {
           messageCredits: 2000,
           agents: 2,
           links: -1, // unlimited
-          storageGB: 5
+          storageGB: 5,
+          cartRecovery: 50
         };
       case 'standard':
       case 'growth': // Growth plan (renamed from standard/pro)
@@ -87,14 +90,16 @@ export const usePlanEnforcement = () => {
           messageCredits: 10000,
           agents: 5,
           links: -1, // unlimited
-          storageGB: 50
+          storageGB: 50,
+          cartRecovery: 500
         };
       default: // free
         return {
           messageCredits: 50,
           agents: 1,
           links: 5,
-          storageGB: 1
+          storageGB: 1,
+          cartRecovery: 0
         };
     }
   };
@@ -134,11 +139,17 @@ export const usePlanEnforcement = () => {
         p_feature_type: 'storage'
       }) as { data: PlanLimitResponse };
 
+      const { data: cartRecoveryCheck } = await supabase.rpc('check_user_plan_limits', {
+        p_user_id: user.id,
+        p_feature_type: 'cart_recovery'
+      }) as { data: PlanLimitResponse };
+
       const currentUsage: PlanUsage = {
         currentAgents: agentCheck?.current_usage || 0,
         currentMessageCredits: messageCheck?.current_usage || 0,
         currentLinks: 0, // Will be checked per agent
-        currentStorageBytes: storageCheck?.current_usage || 0
+        currentStorageBytes: storageCheck?.current_usage || 0,
+        currentCartRecovery: cartRecoveryCheck?.current_usage || 0
       };
 
       const canCreateAgent = agentCheck?.can_perform || false;

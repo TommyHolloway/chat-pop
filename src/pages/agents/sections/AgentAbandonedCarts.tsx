@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAbandonedCarts, AbandonedCart } from '@/hooks/useAbandonedCarts';
+import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,8 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
     status: statusFilter,
     searchQuery,
   });
+
+  const { limits, usage, canUseCartRecovery } = usePlanEnforcement();
 
   const getStatusBadge = (cart: AbandonedCart) => {
     if (cart.recovered) {
@@ -124,6 +127,7 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
               </Button>
               <Button
                 size="sm"
+                disabled={!canUseCartRecovery}
                 onClick={async () => {
                   for (const cartId of selectedCarts) {
                     const cart = carts.find(c => c.id === cartId);
@@ -145,7 +149,7 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
         <CardHeader>
           <CardTitle>Cart Overview</CardTitle>
           <CardDescription>
-            {carts.length} abandoned cart{carts.length !== 1 ? 's' : ''} found
+            {carts.length} abandoned cart{carts.length !== 1 ? 's' : ''} found • {usage.currentCartRecovery}/{limits.cartRecovery === -1 ? '∞' : limits.cartRecovery} recovery attempts used this month
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -232,6 +236,7 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
                           <Button
                             size="sm"
                             variant="outline"
+                            disabled={!canUseCartRecovery}
                             onClick={(e) => {
                               e.stopPropagation();
                               sendRecoveryMessage(cart);
@@ -370,6 +375,7 @@ export const AgentAbandonedCarts = ({ agent }: AgentAbandonedCartsProps) => {
               {!selectedCart.recovered && !selectedCart.recovery_attempted && (
                 <Button
                   className="w-full"
+                  disabled={!canUseCartRecovery}
                   onClick={() => {
                     sendRecoveryMessage(selectedCart);
                     setSelectedCart(null);

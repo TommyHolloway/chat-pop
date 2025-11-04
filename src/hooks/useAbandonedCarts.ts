@@ -74,6 +74,31 @@ export const useAbandonedCarts = (agentId: string, filters?: FilterOptions) => {
 
   const sendRecoveryMessage = async (cart: AbandonedCart) => {
     try {
+      // Check plan limits before sending
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to send recovery messages',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { data: limitCheck } = await supabase.rpc('check_user_plan_limits', {
+        p_user_id: user.id,
+        p_feature_type: 'cart_recovery'
+      }) as { data: { can_perform: boolean; current_usage: number; limit: number } };
+
+      if (!limitCheck?.can_perform) {
+        toast({
+          title: 'Limit Reached',
+          description: `You've reached your cart recovery limit (${limitCheck.current_usage}/${limitCheck.limit} this month). Upgrade to send more.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Get agent's proactive config for cart abandonment message
       const { data: agent } = await supabase
         .from('agents')
@@ -117,6 +142,11 @@ export const useAbandonedCarts = (agentId: string, filters?: FilterOptions) => {
         .eq('id', cart.id);
 
       if (updateError) throw updateError;
+
+      // Increment cart recovery attempts counter
+      await supabase.rpc('increment_cart_recovery_attempts', {
+        p_user_id: user.id
+      });
 
       toast({
         title: 'Success',
