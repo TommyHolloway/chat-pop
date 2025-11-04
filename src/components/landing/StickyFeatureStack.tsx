@@ -2,7 +2,7 @@ import { FeatureShowcaseSection } from './FeatureShowcaseSection';
 
 export const StickyFeatureStack = () => {
   return (
-    <div className="relative h-[200vh]">
+    <div className="relative h-[120vh]">
       {/* Section 1 - Bottom layer (z-10 - lowest) */}
       <FeatureShowcaseSection
         title="AI That Understands Your Products"
