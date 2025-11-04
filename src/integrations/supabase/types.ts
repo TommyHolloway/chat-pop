@@ -960,6 +960,7 @@ export type Database = {
       }
       usage_tracking: {
         Row: {
+          cart_recovery_attempts: number | null
           conversations_count: number | null
           created_at: string
           id: string
@@ -971,6 +972,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cart_recovery_attempts?: number | null
           conversations_count?: number | null
           created_at?: string
           id?: string
@@ -982,6 +984,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cart_recovery_attempts?: number | null
           conversations_count?: number | null
           created_at?: string
           id?: string
