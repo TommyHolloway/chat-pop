@@ -3,6 +3,8 @@ import { Check } from 'lucide-react';
 import { pricingPlans, type PricingPlan } from '@/config/pricing';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PricingSectionProps {
   title?: string;
@@ -56,10 +58,43 @@ const PricingCard = ({ plan, onSelect }: PricingCardProps) => (
 
 export const PricingSection = ({ title = "Pricing Plans", description, className = "" }: PricingSectionProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
-  const handleButtonClick = (planName: string) => {
-    localStorage.setItem('selectedPlan', planName);
-    navigate('/auth/signup');
+  const handleButtonClick = async (planName: string) => {
+    // Free plan - go straight to signup
+    if (planName === 'Free') {
+      localStorage.setItem('selectedPlan', planName);
+      navigate('/auth/signup');
+      return;
+    }
+    
+    // Paid plans - create Stripe checkout first
+    try {
+      const planKeyMap: Record<string, string> = {
+        "Starter": "starter",
+        "Growth": "growth"
+      };
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout-anonymous', {
+        body: { 
+          plan: planKeyMap[planName],
+          successUrl: `${window.location.origin}/auth/signup?plan=${planKeyMap[planName]}`,
+          cancelUrl: window.location.origin
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create checkout session. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

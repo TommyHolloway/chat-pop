@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { useUsageData } from "@/hooks/useUsageData";
 import { useUserPlan } from "@/hooks/useUserPlan";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Billing = () => {
   const { user } = useAuth();
@@ -14,6 +16,28 @@ export const Billing = () => {
   const { usage } = useUsageData();
   const { plan: currentPlan, isAdminOverride, stripePlan } = useUserPlan();
   const { toast } = useToast();
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      if (!subscription.subscribed) return;
+      
+      setLoadingInvoices(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('get-customer-invoices');
+        if (!error && data) {
+          setInvoices(data.invoices || []);
+        }
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+      } finally {
+        setLoadingInvoices(false);
+      }
+    };
+    
+    fetchInvoices();
+  }, [subscription.subscribed]);
 
   const handleUpgrade = async (plan: string) => {
     try {
@@ -253,31 +277,58 @@ export const Billing = () => {
             Billing History
           </CardTitle>
           <CardDescription>
-            Download your invoices and view payment history
+            {subscription.subscribed 
+              ? "Download your invoices and view payment history"
+              : "No billing history yet. Upgrade to a paid plan to start."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {mockInvoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <div className="font-medium">{invoice.description}</div>
-                  <div className="text-sm text-muted-foreground">{invoice.date}</div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="font-medium">${invoice.amount}</div>
-                    <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
-                      {invoice.status}
-                    </Badge>
+          {!subscription.subscribed ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>You don't have any invoices yet.</p>
+              <p className="text-sm mt-2">Upgrade to a paid plan to get started.</p>
+            </div>
+          ) : loadingInvoices ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : invoices.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No invoices yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {invoices.map((invoice) => (
+                <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <div className="font-medium">{invoice.description || `Invoice ${invoice.number}`}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(invoice.created * 1000).toLocaleDateString()}
+                    </div>
                   </div>
-                  <Button variant="outline" size="icon">
-                    <Download className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="font-medium">
+                        ${(invoice.amount_paid / 100).toFixed(2)}
+                      </div>
+                      <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
+                        {invoice.status}
+                      </Badge>
+                    </div>
+                    {invoice.invoice_pdf && (
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => window.open(invoice.invoice_pdf, '_blank')}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -312,28 +363,4 @@ const growthFeatures = [
   'Custom product recommendation AI',
   'Conversion tracking & attribution',
   'Priority email support'
-];
-
-const mockInvoices = [
-  {
-    id: '1',
-    description: 'Hobby Plan - March 2024',
-    date: 'March 1, 2024',
-    amount: '7.99',
-    status: 'paid' as const
-  },
-  {
-    id: '2',
-    description: 'Hobby Plan - February 2024',
-    date: 'February 1, 2024',
-    amount: '7.99',
-    status: 'paid' as const
-  },
-  {
-    id: '3',
-    description: 'Hobby Plan - January 2024',
-    date: 'January 1, 2024',
-    amount: '7.99',
-    status: 'paid' as const
-  }
 ];

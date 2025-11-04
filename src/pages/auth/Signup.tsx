@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,9 @@ export const Signup = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createCheckout } = useSubscription();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session_id');
+  const planFromUrl = searchParams.get('plan');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -103,6 +106,22 @@ export const Signup = () => {
     setIsLoading(true);
 
     try {
+      // If there's a session_id, verify it with Stripe first
+      let verifiedPlan = 'free';
+      let stripeCustomerId = null;
+      
+      if (sessionId && planFromUrl) {
+        const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
+          'verify-checkout-session',
+          { body: { sessionId } }
+        );
+        
+        if (!verifyError && verifyData.verified) {
+          verifiedPlan = planFromUrl === 'starter' ? 'hobby' : planFromUrl === 'growth' ? 'standard' : 'free';
+          stripeCustomerId = verifyData.customerId;
+        }
+      }
+      
       const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { data, error } = await supabase.auth.signUp({
@@ -113,6 +132,8 @@ export const Signup = () => {
           data: {
             full_name: formData.name,
             phone: formData.phone,
+            plan: verifiedPlan,
+            stripe_customer_id: stripeCustomerId,
           },
         },
       });
@@ -129,32 +150,25 @@ export const Signup = () => {
       }
 
       if (data.user) {
+        // Clear any stored plan preference
+        localStorage.removeItem('selectedPlan');
+        
         toast({
           title: "Welcome to ChatPop!",
           description: "Your account has been created successfully.",
         });
         
-        // If user is immediately confirmed, check for selected plan
+        // If user is immediately confirmed, navigate to dashboard
         if (data.session) {
-          const selectedPlan = localStorage.getItem('selectedPlan');
-          if (selectedPlan && selectedPlan !== 'Free') {
-            // User signed up for a paid plan, redirect to checkout
-            localStorage.removeItem('selectedPlan');
-            try {
-              const planKeyMap: Record<string, string> = {
-                "Starter": "hobby",
-                "Growth": "standard"
-              };
-              const planKey = planKeyMap[selectedPlan];
-              await createCheckout(planKey);
-              toast({
-                title: "Redirecting to checkout",
-                description: "Complete your subscription to get started.",
-              });
-            } catch (checkoutError) {
-              console.error('Checkout error:', checkoutError);
-              // If checkout fails, let AuthContext handle navigation
-            }
+          // Update profile with stripe customer ID if we have it
+          if (stripeCustomerId) {
+            await supabase
+              .from('profiles')
+              .update({ 
+                stripe_customer_id: stripeCustomerId,
+                plan: verifiedPlan
+              })
+              .eq('user_id', data.user.id);
           }
           // Let AuthContext handle navigation for immediate confirmation
         } else {
