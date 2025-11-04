@@ -38,13 +38,15 @@ export const StickyFeatureStack = () => {
       <FeatureShowcaseSection
         title="Real-Time Shopping Assistance"
         description="Engage customers with intelligent conversations that understand context, product details, and customer intent. Provide instant answers to questions about sizing, compatibility, shipping, and more."
-        imageSrc="/lovable-uploads/3d616246-b965-46e7-ac41-1c080309fd9d.png"
+        imageSrc="/lovable-uploads/real-time-shopping-bg.png"
         imageAlt="Real-time Chat"
         imagePosition="right"
         gradient={true}
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-30"
+        imageFullHeight={true}
+        imageWidth="40%"
       />
     </div>
   );
