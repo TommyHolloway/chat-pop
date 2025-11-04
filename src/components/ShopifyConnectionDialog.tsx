@@ -141,7 +141,7 @@ export const ShopifyConnectionDialog = ({
                 <ol className="list-decimal pl-4 mt-2 space-y-1">
                   <li>Go to your Shopify Admin → Settings → Apps and sales channels</li>
                   <li>Click "Develop apps" → "Create an app"</li>
-                  <li>Configure Admin API scopes: <code className="text-xs bg-muted px-1 py-0.5 rounded">read_products, read_orders, read_customers, read_inventory, read_price_rules</code></li>
+                  <li>Configure Admin API scopes: <code className="text-xs bg-muted px-1 py-0.5 rounded">read_products, read_orders, read_customers, read_inventory, read_discounts</code></li>
                   <li>Install the app and copy your Admin API access token</li>
                 </ol>
                 <a 

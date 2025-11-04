@@ -22,7 +22,7 @@ Connect your Shopify store to enable product recommendations and cart tracking f
    - `read_orders` - To track conversions and revenue
    - `read_customers` - To analyze customer lifetime value (CLV)
    - `read_inventory` - To show real-time stock levels
-   - `read_price_rules` - To promote active discounts
+   - `read_discounts` - To promote active discounts and sales
 7. Click **Save**
 8. Go to **API credentials** tab
 9. Click **Install app**
@@ -60,7 +60,7 @@ You can find it in your Shopify admin URL or under **Settings → Domains**
 - Ensure the token hasn't expired
 
 **"Missing permissions"**
-- Make sure you enabled all 5 required scopes: `read_products`, `read_orders`, `read_customers`, `read_inventory`, `read_price_rules`
+- Make sure you enabled all 5 required scopes: `read_products`, `read_orders`, `read_customers`, `read_inventory`, `read_discounts`
 - Reinstall the app in Shopify if you changed scopes
 
 **"Store not found"**
