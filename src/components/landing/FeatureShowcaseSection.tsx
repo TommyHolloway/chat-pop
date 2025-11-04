@@ -38,7 +38,15 @@ export const FeatureShowcaseSection = ({
     <section className={`${isSticky ? `sticky ${stickyTop || 'top-0'} ${zIndex || ''} py-6` : 'py-8'} px-4 bg-background ${gradient ? 'gradient-peach-blob' : ''}`}>
       <div className="container mx-auto max-w-6xl overflow-hidden rounded-2xl">
         <Card className={`p-6 md:p-8 shadow-xl min-h-[400px] ${isSticky && stackIntensity ? intensityStyles[stackIntensity] : ''}`}>
-          <div className={`grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
+          <div className={`relative grid md:grid-cols-2 gap-8 items-center ${imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
+            {/* Background image on the right side */}
+            <div className="absolute right-0 top-0 bottom-0 w-[40%] hidden md:block overflow-hidden">
+              <img
+                src="/lovable-uploads/feature-showcase-bg.png"
+                alt="Feature showcase background"
+                className="w-full h-full object-cover"
+              />
+            </div>
             {imagePosition === 'left' && (
               <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
                 <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-2xl" />
