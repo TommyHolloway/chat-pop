@@ -77,3 +77,12 @@ verify_jwt = true
 
 [functions.get-active-promotions]
 verify_jwt = true
+
+[functions.create-checkout-anonymous]
+verify_jwt = false
+
+[functions.verify-checkout-session]
+verify_jwt = false
+
+[functions.get-customer-invoices]
+verify_jwt = true
