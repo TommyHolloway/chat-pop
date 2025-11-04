@@ -31,39 +31,77 @@ serve(async (req) => {
 
     const { store_domain, admin_api_token } = agent.shopify_config;
 
+    // Fetch customers using GraphQL with pagination
+    let hasNextPage = true;
+    let cursor = null;
     let allCustomers = [];
-    let nextPageUrl = `https://${store_domain}/admin/api/2024-10/customers.json?limit=250`;
 
-    while (nextPageUrl) {
-      const response = await fetch(nextPageUrl, {
+    while (hasNextPage) {
+      const graphqlQuery = `
+        query($cursor: String) {
+          customers(first: 250, after: $cursor) {
+            edges {
+              node {
+                id
+                email
+                ordersCount
+                totalSpent {
+                  amount
+                }
+                createdAt
+                updatedAt
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      `;
+
+      const response = await fetch(`https://${store_domain}/admin/api/2024-10/graphql.json`, {
+        method: 'POST',
         headers: {
           'X-Shopify-Access-Token': admin_api_token,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables: { cursor }
+        })
       });
 
       if (!response.ok) {
-        throw new Error(`Shopify API error: ${response.status}`);
+        throw new Error(`Shopify GraphQL API error: ${response.status}`);
       }
 
-      const data = await response.json();
-      allCustomers = allCustomers.concat(data.customers);
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
 
-      const linkHeader = response.headers.get('Link');
-      nextPageUrl = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)?.[1] || null;
+      allCustomers = allCustomers.concat(result.data.customers.edges);
+      hasNextPage = result.data.customers.pageInfo.hasNextPage;
+      cursor = result.data.customers.pageInfo.endCursor;
     }
 
-    console.log(`Fetched ${allCustomers.length} customers from Shopify`);
+    console.log(`Fetched ${allCustomers.length} customers from Shopify GraphQL`);
 
     const customerAnalytics = allCustomers
-      .filter((c: any) => c.orders_count > 0)
-      .map((customer: any) => {
-        const daysSinceLastOrder = customer.last_order_name 
-          ? Math.floor((Date.now() - new Date(customer.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+      .filter((edge: any) => edge.node.ordersCount > 0)
+      .map((edge: any) => {
+        const customer = edge.node;
+        const customerId = customer.id.split('/').pop(); // Extract numeric ID from GraphQL global ID
+        const totalSpent = parseFloat(customer.totalSpent.amount);
+        
+        const daysSinceLastOrder = customer.updatedAt
+          ? Math.floor((Date.now() - new Date(customer.updatedAt).getTime()) / (1000 * 60 * 60 * 24))
           : null;
 
         let segment = 'regular';
-        if (parseFloat(customer.total_spent) > 1000) {
+        if (totalSpent > 1000) {
           segment = 'vip';
         } else if (daysSinceLastOrder && daysSinceLastOrder > 180) {
           segment = 'lapsed';
@@ -73,13 +111,13 @@ serve(async (req) => {
 
         return {
           agent_id: agentId,
-          shopify_customer_id: customer.id.toString(),
+          shopify_customer_id: customerId,
           email: customer.email,
-          total_orders: customer.orders_count,
-          total_spent: parseFloat(customer.total_spent),
-          average_order_value: parseFloat(customer.total_spent) / customer.orders_count,
-          first_order_date: customer.created_at,
-          last_order_date: customer.updated_at,
+          total_orders: customer.ordersCount,
+          total_spent: totalSpent,
+          average_order_value: customer.ordersCount > 0 ? totalSpent / customer.ordersCount : 0,
+          first_order_date: customer.createdAt,
+          last_order_date: customer.updatedAt,
           days_since_last_order: daysSinceLastOrder,
           customer_segment: segment,
           updated_at: new Date().toISOString(),

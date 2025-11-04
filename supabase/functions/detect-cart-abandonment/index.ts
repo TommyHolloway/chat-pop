@@ -59,49 +59,82 @@ serve(async (req) => {
         // Smart recovery: Check if cart was already completed in Shopify
         let alreadyPurchased = false;
         if (agent.shopify_config?.store_domain && agent.shopify_config?.admin_api_token) {
-          try {
+        try {
+            const graphqlQuery = `
+              query($query: String!) {
+                orders(first: 50, query: $query) {
+                  edges {
+                    node {
+                      id
+                      name
+                      createdAt
+                      lineItems(first: 50) {
+                        edges {
+                          node {
+                            title
+                            quantity
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
             const recentOrdersResponse = await fetch(
-              `https://${agent.shopify_config.store_domain}/admin/api/2024-10/orders.json?created_at_min=${cart.created_at}&limit=50`,
+              `https://${agent.shopify_config.store_domain}/admin/api/2024-10/graphql.json`,
               {
+                method: 'POST',
                 headers: {
                   'X-Shopify-Access-Token': agent.shopify_config.admin_api_token,
                   'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                  query: graphqlQuery,
+                  variables: {
+                    query: `created_at:>='${cart.created_at}'`
+                  }
+                })
               }
             );
 
             if (recentOrdersResponse.ok) {
-              const ordersData = await recentOrdersResponse.json();
+              const result = await recentOrdersResponse.json();
               
-              const cartItemTitles = cart.cart_items.map((item: any) => 
-                item.title?.toLowerCase()
-              );
-              
-              const matchingOrder = ordersData.orders.find((order: any) => {
-                const orderItemTitles = order.line_items.map((item: any) => 
+              if (!result.errors && result.data?.orders?.edges) {
+                const cartItemTitles = cart.cart_items.map((item: any) => 
                   item.title?.toLowerCase()
                 );
                 
-                const matches = cartItemTitles.filter((title: string) => 
-                  orderItemTitles.includes(title)
-                );
-                
-                return matches.length >= cartItemTitles.length * 0.5;
-              });
+                const matchingOrder = result.data.orders.edges.find((edge: any) => {
+                  const order = edge.node;
+                  const orderItems = order.lineItems.edges.map((itemEdge: any) =>
+                    itemEdge.node.title.toLowerCase()
+                  );
+                  
+                  // Check if order contains items from the abandoned cart
+                  const matches = cartItemTitles.filter((cartTitle: string) =>
+                    orderItems.some((orderItem: string) => orderItem.includes(cartTitle))
+                  );
+                  
+                  return matches.length >= cartItemTitles.length * 0.5;
+                });
 
-              if (matchingOrder) {
-                console.log(`Cart ${cart.id} already converted as order ${matchingOrder.id}, marking as recovered`);
-                alreadyPurchased = true;
-                
-                await supabase
-                  .from('abandoned_carts')
-                  .update({ 
-                    recovered: true,
-                    recovered_at: new Date().toISOString()
-                  })
-                  .eq('id', cart.id);
-                
-                continue;
+                if (matchingOrder) {
+                  console.log(`Cart ${cart.id} already converted as order ${matchingOrder.node.name}, marking as recovered`);
+                  alreadyPurchased = true;
+                  
+                  await supabase
+                    .from('abandoned_carts')
+                    .update({ 
+                      recovered: true,
+                      recovered_at: new Date().toISOString()
+                    })
+                    .eq('id', cart.id);
+                  
+                  continue;
+                }
               }
             }
           } catch (error) {

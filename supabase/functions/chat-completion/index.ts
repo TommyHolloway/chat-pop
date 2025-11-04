@@ -79,88 +79,134 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
   }
   
   try {
-    const shopifyUrl = `https://${shopifyConfig.store_domain}/admin/api/2024-10/products.json`;
-    const response = await fetch(`${shopifyUrl}?limit=5&title=${encodeURIComponent(query)}`, {
+    // Single GraphQL query to get products with inventory
+    const graphqlQuery = `
+      query($query: String!) {
+        products(first: 5, query: $query) {
+          edges {
+            node {
+              id
+              title
+              description
+              handle
+              onlineStoreUrl
+              productType
+              vendor
+              featuredImage {
+                url
+                altText
+              }
+              variants(first: 10) {
+                edges {
+                  node {
+                    id
+                    title
+                    price
+                    compareAtPrice
+                    availableForSale
+                    inventoryItem {
+                      id
+                      inventoryLevels(first: 10) {
+                        edges {
+                          node {
+                            available
+                            location {
+                              id
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(`https://${shopifyConfig.store_domain}/admin/api/2024-10/graphql.json`, {
+      method: 'POST',
       headers: {
         'X-Shopify-Access-Token': shopifyConfig.admin_api_token,
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify({
+        query: graphqlQuery,
+        variables: { query: `title:*${query}*` }
+      })
     });
     
     if (!response.ok) {
-      console.error('Shopify API error:', response.status);
+      console.error('Shopify GraphQL error:', response.status);
       return null;
     }
     
-    const data = await response.json();
+    const result = await response.json();
     
-    // Fetch inventory levels for real-time stock
-    const inventoryItemIds = [];
-    for (const product of data.products || []) {
-      for (const variant of product.variants || []) {
-        if (variant.inventory_item_id) {
-          inventoryItemIds.push(variant.inventory_item_id);
-        }
-      }
+    if (result.errors) {
+      console.error('GraphQL errors:', result.errors);
+      return null;
     }
     
-    let inventoryLevels = [];
-    if (inventoryItemIds.length > 0) {
-      try {
-        const inventoryResponse = await fetch(
-          `https://${shopifyConfig.store_domain}/admin/api/2024-10/inventory_levels.json?inventory_item_ids=${inventoryItemIds.join(',')}`,
-          {
-            headers: {
-              'X-Shopify-Access-Token': shopifyConfig.admin_api_token,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        if (inventoryResponse.ok) {
-          const inventoryData = await inventoryResponse.json();
-          inventoryLevels = inventoryData.inventory_levels || [];
-        }
-      } catch (error) {
-        console.error('Failed to fetch inventory:', error);
-      }
-    }
-    
-    const products = data.products?.slice(0, 5).map((p: any) => {
-      // Construct proper product URL
-      const storeDomain = shopifyConfig.store_domain;
-      let productUrl: string;
-
-      if (storeDomain.includes('.myshopify.com')) {
-        const baseUrl = storeDomain.replace('.myshopify.com', '');
-        productUrl = `https://${baseUrl}.myshopify.com/products/${p.handle}`;
-      } else {
-        productUrl = `https://${storeDomain}/products/${p.handle}`;
-      }
+    const products = result.data.products.edges.map((edge: any) => {
+      const product = edge.node;
+      const productId = product.id.split('/').pop();
+      
+      // Get variants with inventory
+      const variants = product.variants.edges.map((variantEdge: any) => {
+        const variant = variantEdge.node;
+        const variantId = variant.id.split('/').pop();
+        
+        // Calculate total available inventory across all locations
+        const totalAvailable = variant.inventoryItem?.inventoryLevels?.edges.reduce(
+          (sum: number, levelEdge: any) => sum + (levelEdge.node.available || 0),
+          0
+        ) || 0;
+        
+        return {
+          id: variantId,
+          title: variant.title,
+          price: variant.price,
+          compare_at_price: variant.compareAtPrice,
+          available: totalAvailable > 0,
+          inventory_quantity: totalAvailable,
+        };
+      });
       
       // Calculate total stock across all variants
-      let totalStock = 0;
-      for (const variant of p.variants || []) {
-        const level = inventoryLevels.find((l: any) => l.inventory_item_id === variant.inventory_item_id);
-        if (level) {
-          totalStock += level.available || 0;
-        }
+      const totalStock = variants.reduce((sum: number, v: any) => sum + v.inventory_quantity, 0);
+      
+      // Construct product URL
+      const storeDomain = shopifyConfig.store_domain;
+      let productUrl: string;
+      
+      if (product.onlineStoreUrl) {
+        productUrl = product.onlineStoreUrl;
+      } else if (storeDomain.includes('.myshopify.com')) {
+        const baseUrl = storeDomain.replace('.myshopify.com', '');
+        productUrl = `https://${baseUrl}.myshopify.com/products/${product.handle}`;
+      } else {
+        productUrl = `https://${storeDomain}/products/${product.handle}`;
       }
       
       return {
-        id: p.id.toString(),
-        title: p.title,
-        price: p.variants?.[0]?.price || '0',
-        currency: p.variants?.[0]?.price_currency || 'USD',
+        id: productId,
+        title: product.title,
+        price: variants[0]?.price || '0',
+        currency: 'USD',
         url: productUrl,
-        image: p.images?.[0]?.src,
-        description: p.body_html?.replace(/<[^>]*>/g, '').slice(0, 200),
+        image: product.featuredImage?.url,
+        description: product.description?.replace(/<[^>]*>/g, '').slice(0, 200),
         available: totalStock > 0,
         stock_level: totalStock,
         low_stock: totalStock > 0 && totalStock < 10,
-        type: p.product_type,
-        vendor: p.vendor
+        type: product.productType,
+        vendor: product.vendor
       };
-    }) || [];
+    });
     
     // Cache the results
     if (products && products.length > 0) {
