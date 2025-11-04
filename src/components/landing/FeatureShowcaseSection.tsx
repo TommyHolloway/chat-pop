@@ -59,7 +59,7 @@ export const FeatureShowcaseSection = ({
               </div>}
             
             <div className={`${imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''} ${textWidth ? `md:max-w-[${textWidth}]` : ''}`}>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground px-0 py-0 my-0 mx-[75px]">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground px-0 py-0 my-0 mx-[81px]">
                 {title}
               </h2>
               {Array.isArray(description) ? <ul className="text-xl text-muted-foreground mb-6 leading-relaxed space-y-3 mx-[75px]">
