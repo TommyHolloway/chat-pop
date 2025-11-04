@@ -22,13 +22,16 @@ export const StickyFeatureStack = () => {
       <FeatureShowcaseSection
         title="Recover 30% of Abandoned Carts Automatically"
         description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
-        imageSrc="/lovable-uploads/6dc6879a-ad3c-479e-b8c4-99b7af2ab3ec.png"
+        imageSrc="/lovable-uploads/cart-recovery-bg.png"
         imageAlt="Cart Recovery Chat"
         imagePosition="left"
         gradient={true}
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-20"
+        imageFullHeight={true}
+        imageWidth="40%"
+        textWidth="50%"
       />
 
       {/* Section 3 - Top layer (z-30 - highest) */}

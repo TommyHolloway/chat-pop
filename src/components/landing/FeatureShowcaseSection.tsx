@@ -15,6 +15,7 @@ interface FeatureShowcaseSectionProps {
   stackIntensity?: 'light' | 'medium' | 'strong';
   imageFullHeight?: boolean;
   imageWidth?: string;
+  textWidth?: string;
 }
 
 export const FeatureShowcaseSection = ({
@@ -30,7 +31,8 @@ export const FeatureShowcaseSection = ({
   zIndex,
   stackIntensity,
   imageFullHeight = false,
-  imageWidth = '40%'
+  imageWidth = '40%',
+  textWidth
 }: FeatureShowcaseSectionProps) => {
   const intensityStyles = {
     light: 'border-l-4 border-primary/30',
@@ -74,7 +76,7 @@ export const FeatureShowcaseSection = ({
               </div>
             )}
             
-            <div className={imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''}>
+            <div className={`${imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''} ${textWidth ? `md:max-w-[${textWidth}]` : ''}`}>
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
                 {title}
               </h2>
