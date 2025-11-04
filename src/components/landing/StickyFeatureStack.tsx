@@ -6,7 +6,11 @@ export const StickyFeatureStack = () => {
       {/* Section 1 - Bottom layer (z-10 - lowest) */}
       <FeatureShowcaseSection
         title="AI That Understands Your Products"
-        description="Our AI learns your entire product catalog and makes intelligent recommendations based on customer questions, browsing behavior, and preferences. Increase average order value by 40% with smart upsells and cross-sells."
+        description={[
+          "Learns your entire product catalog automatically",
+          "Makes intelligent recommendations based on customer behavior",
+          "Increases average order value by 40% with smart upsells"
+        ]}
         imageSrc="/lovable-uploads/ai-product-understanding.png"
         imageAlt="Product Recommendations"
         imagePosition="right"
@@ -16,13 +20,17 @@ export const StickyFeatureStack = () => {
         zIndex="z-10"
         imageFullHeight={true}
         imageWidth="40%"
-        textWidth="40%"
+        textWidth="35%"
       />
 
       {/* Section 2 - Middle layer (z-20) */}
       <FeatureShowcaseSection
-        title="Recover 30% of Abandoned Carts Automatically"
-        description="Stop losing revenue to cart abandonment. Our AI detects when shoppers are about to leave and starts a conversation at the perfect moment to address concerns, answer questions, and complete the sale."
+        title="Recover Abandoned Carts Automatically"
+        description={[
+          "Detects when shoppers are about to leave",
+          "Starts conversations at the perfect moment",
+          "Addresses concerns and completes the sale"
+        ]}
         imageSrc="/lovable-uploads/cart-recovery-bg.png"
         imageAlt="Cart Recovery Chat"
         imagePosition="left"
@@ -32,13 +40,17 @@ export const StickyFeatureStack = () => {
         zIndex="z-20"
         imageFullHeight={true}
         imageWidth="40%"
-        textWidth="40%"
+        textWidth="35%"
       />
 
       {/* Section 3 - Top layer (z-30 - highest) */}
       <FeatureShowcaseSection
         title="Real-Time Shopping Assistance"
-        description="Engage customers with intelligent conversations that understand context, product details, and customer intent. Provide instant answers to questions about sizing, compatibility, shipping, and more."
+        description={[
+          "Understands context, product details, and customer intent",
+          "Provides instant answers to sizing and compatibility questions",
+          "Offers 24/7 shopping assistance"
+        ]}
         imageSrc="/lovable-uploads/real-time-shopping-bg.png"
         imageAlt="Real-time Chat"
         imagePosition="right"
@@ -48,7 +60,7 @@ export const StickyFeatureStack = () => {
         zIndex="z-30"
         imageFullHeight={true}
         imageWidth="40%"
-        textWidth="40%"
+        textWidth="35%"
       />
     </div>
   );

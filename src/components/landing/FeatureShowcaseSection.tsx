@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 
 interface FeatureShowcaseSectionProps {
   title: string;
-  description: string;
+  description: string | string[];
   imageSrc: string;
   imageAlt: string;
   imagePosition?: 'left' | 'right';
@@ -80,9 +80,20 @@ export const FeatureShowcaseSection = ({
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
                 {title}
               </h2>
-              <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
-                {description}
-              </p>
+              {Array.isArray(description) ? (
+                <ul className="text-xl text-muted-foreground mb-6 leading-relaxed space-y-3">
+                  {description.map((item, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-primary mr-3 mt-1">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
+                  {description}
+                </p>
+              )}
               {children}
             </div>
             
