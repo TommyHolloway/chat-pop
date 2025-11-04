@@ -27,7 +27,7 @@ export const pricingPlans: PricingPlan[] = [
   },
   {
     name: "Starter",
-    price: "$49",
+    price: "$47",
     period: "per month",
     description: "Recover up to $10K/mo in abandoned carts",
     features: [
@@ -46,7 +46,7 @@ export const pricingPlans: PricingPlan[] = [
   },
   {
     name: "Growth",
-    price: "$199",
+    price: "$197",
     period: "per month",
     description: "Scale to $50K+/mo in recovered revenue",
     features: [

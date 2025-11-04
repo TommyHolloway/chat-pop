@@ -35,9 +35,9 @@ serve(async (req) => {
 
     let productId;
     if (plan === 'hobby') {
-      productId = 'prod_Sk0g0bYZD5o0ho';
+      productId = 'prod_TMZ2r6gJsJwMq6';
     } else if (plan === 'standard') {
-      productId = 'prod_Sk0ii5az1WTZXm';
+      productId = 'prod_TMZ2dGeLsNO31t';
     } else {
       throw new Error("Invalid plan selected");
     }
