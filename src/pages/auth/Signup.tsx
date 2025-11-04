@@ -141,7 +141,11 @@ export const Signup = () => {
             // User signed up for a paid plan, redirect to checkout
             localStorage.removeItem('selectedPlan');
             try {
-              const planKey = selectedPlan === "Hobby" ? "hobby" : "standard";
+              const planKeyMap: Record<string, string> = {
+                "Starter": "hobby",
+                "Growth": "standard"
+              };
+              const planKey = planKeyMap[selectedPlan];
               await createCheckout(planKey);
               toast({
                 title: "Redirecting to checkout",
