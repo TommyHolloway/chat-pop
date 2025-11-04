@@ -20,7 +20,7 @@ export const StickyFeatureStack = () => {
         zIndex="z-10"
         imageFullHeight={true}
         imageWidth="40%"
-        textWidth="35%"
+        textWidth="28%"
       />
 
       {/* Section 2 - Middle layer (z-20) */}
@@ -40,7 +40,7 @@ export const StickyFeatureStack = () => {
         zIndex="z-20"
         imageFullHeight={true}
         imageWidth="40%"
-        textWidth="35%"
+        textWidth="28%"
       />
 
       {/* Section 3 - Top layer (z-30 - highest) */}
@@ -60,7 +60,7 @@ export const StickyFeatureStack = () => {
         zIndex="z-30"
         imageFullHeight={true}
         imageWidth="40%"
-        textWidth="35%"
+        textWidth="28%"
       />
     </div>
   );
