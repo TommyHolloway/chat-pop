@@ -13,7 +13,7 @@ export const SEO = ({
   title, 
   description, 
   canonical = 'https://chatpop.ai',
-  image = 'https://chatpop.ai/lovable-uploads/chatpop-logo-light.png',
+  image = 'https://chatpop.ai/og-image.png',
   type = 'website',
   keywords
 }: SEOProps) => {

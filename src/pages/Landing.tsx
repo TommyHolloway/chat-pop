@@ -1,4 +1,5 @@
 import { SEO } from '@/components/SEO';
+import { StructuredData } from '@/components/StructuredData';
 import { HeroWithStoreInput } from '@/components/landing/HeroWithStoreInput';
 import { LargeProductMockup } from '@/components/landing/LargeProductMockup';
 import { FeatureShowcaseSection } from '@/components/landing/FeatureShowcaseSection';
@@ -16,6 +17,25 @@ export default function Landing() {
         description="Create intelligent AI chatbots in minutes. Upload your knowledge, train your bot, and deploy anywhere. Perfect for customer support, lead generation, and more."
         canonical="https://chatpop.ai"
         keywords="AI chatbot, customer support automation, chatbot builder, AI assistant, business automation, lead generation bot"
+      />
+      <StructuredData 
+        type="Organization"
+        data={{
+          name: "ChatPop",
+          url: "https://chatpop.ai",
+          logo: "https://chatpop.ai/lovable-uploads/chatpop-logo-light.png",
+          description: "AI chatbots for e-commerce businesses. Automate customer support, recover abandoned carts, and boost conversions with intelligent AI shopping assistants.",
+          sameAs: [
+            "https://twitter.com/chatpop",
+            "https://linkedin.com/company/chatpop"
+          ],
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "Customer Service",
+            email: "support@chatpop.ai",
+            availableLanguage: "en"
+          }
+        }}
       />
       <div className="min-h-screen bg-background">
       {/* 1. Hero Section with Store Input */}

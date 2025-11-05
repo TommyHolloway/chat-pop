@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SEO } from '@/components/SEO';
+import { StructuredData } from '@/components/StructuredData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,34 @@ export const Features = () => {
         description="Discover ChatPop's AI-powered features: smart product recommendations, cart abandonment recovery, size & fit assistant, order tracking, and revenue analytics for e-commerce."
         canonical="https://chatpop.ai/features"
         keywords="AI shopping assistant, product recommendations, cart recovery, e-commerce AI, customer support automation, revenue analytics"
+      />
+      <StructuredData 
+        type="SoftwareApplication"
+        data={{
+          name: "ChatPop AI Shopping Assistant",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          description: "AI-powered shopping assistant for e-commerce. Smart product recommendations, cart abandonment recovery, size & fit guidance, and 24/7 customer support automation.",
+          offers: {
+            "@type": "Offer",
+            price: "49.00",
+            priceCurrency: "USD",
+            priceValidUntil: "2026-12-31"
+          },
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "4.8",
+            ratingCount: "150"
+          },
+          featureList: [
+            "Smart Product Recommendations",
+            "Cart Abandonment Recovery",
+            "Size & Fit Assistant",
+            "Order Tracking",
+            "Revenue Analytics",
+            "24/7 Availability"
+          ]
+        }}
       />
       <div className="min-h-screen">
       {/* Hero Section */}
