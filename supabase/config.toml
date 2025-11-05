@@ -12,9 +12,6 @@ verify_jwt = true
 [functions.get-widget-config]
 verify_jwt = false
 
-[functions.chat-widget-enhanced]
-verify_jwt = false
-
 [functions.public-chat]
 verify_jwt = false
 

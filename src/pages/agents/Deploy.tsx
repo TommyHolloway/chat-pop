@@ -104,7 +104,7 @@ export const Deploy = () => {
   const scriptCode = `<script>
 (function() {
   var script = document.createElement('script');
-  script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget-enhanced?agentId=${id}&position=${widgetPosition}&theme=${widgetTheme}';
+  script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=${id}&position=${widgetPosition}&theme=${widgetTheme}';
   document.head.appendChild(script);
 })();
 </script>`;
