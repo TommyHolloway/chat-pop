@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, Play, Loader2 } from 'lucide-react';
@@ -34,7 +35,11 @@ export const AgentForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen bg-muted/30">
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
@@ -97,5 +102,6 @@ export const AgentForm = () => {
         </div>
       </form>
     </div>
+    </>
   );
 };

@@ -1,10 +1,21 @@
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 export const PrivacyPolicy = () => {
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO 
+        title="Privacy Policy | ChatPop"
+        description="Learn how ChatPop collects, uses, and protects your information. We prioritize your privacy and data security."
+        canonical="https://chatpop.ai/privacy"
+      />
+      <Helmet>
+        <meta name="robots" content="noindex, follow" />
+      </Helmet>
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-5"></div>
@@ -55,6 +66,7 @@ export const PrivacyPolicy = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useLeads, Lead } from '@/hooks/useLeads';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,11 @@ const Leads: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-6 py-8">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="container mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Leads Management</h1>
@@ -202,6 +207,7 @@ const Leads: React.FC = () => {
         </>
       )}
     </div>
+    </>
   );
 };
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -50,7 +51,11 @@ export const Agents = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <div className="border-b bg-background">
         <div className="container mx-auto px-4 py-6">
@@ -113,5 +118,6 @@ export const Agents = () => {
         />
       )}
     </div>
+    </>
   );
 };

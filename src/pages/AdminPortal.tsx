@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, UserCog, Activity } from 'lucide-react';
@@ -10,7 +11,11 @@ export default function AdminPortal() {
   const [activeTab, setActiveTab] = useState('users');
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Admin Portal</h1>
@@ -79,5 +84,6 @@ export default function AdminPortal() {
         </Tabs>
       </div>
     </div>
+    </>
   );
 }

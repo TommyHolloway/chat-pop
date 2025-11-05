@@ -1,10 +1,21 @@
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollText } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 export const TermsOfService = () => {
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO 
+        title="Terms of Service | ChatPop"
+        description="Read ChatPop's terms of service. By using our AI chatbot platform, you agree to these terms and conditions."
+        canonical="https://chatpop.ai/terms"
+      />
+      <Helmet>
+        <meta name="robots" content="noindex, follow" />
+      </Helmet>
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-5"></div>
@@ -55,6 +66,7 @@ export const TermsOfService = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

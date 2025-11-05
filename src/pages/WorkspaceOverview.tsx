@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Plus, Users, Calendar, BarChart3, Settings, Edit2 } from 'lucide-react';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useAgents } from '@/hooks/useAgents';
@@ -32,7 +33,11 @@ export const WorkspaceOverview = () => {
 
   if (!currentWorkspace) {
     return (
-      <div className="container mx-auto py-8">
+      <>
+        <Helmet>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <div className="container mx-auto py-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">Welcome to your AI workspace</h1>
           <p className="text-muted-foreground mb-8">Create your first workspace to get started</p>
@@ -53,11 +58,16 @@ export const WorkspaceOverview = () => {
           onOpenChange={setShowCreateWorkspace} 
         />
       </div>
+      </>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="container mx-auto py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -239,5 +249,6 @@ export const WorkspaceOverview = () => {
         workspace={currentWorkspace}
       />
     </div>
+    </>
   );
 };

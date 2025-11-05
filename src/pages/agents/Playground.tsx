@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -169,7 +170,11 @@ export const Playground = () => {
   const actionsCount = enabledActions.length;
 
   return (
-    <div className="h-[calc(100vh-4rem)] bg-background flex flex-col overflow-hidden">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="h-[calc(100vh-4rem)] bg-background flex flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <div className="w-80 border-r bg-card flex flex-col">
@@ -511,5 +516,6 @@ export const Playground = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

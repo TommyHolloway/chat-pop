@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -120,7 +121,11 @@ export const Deploy = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <div className="border-b bg-background">
         <div className="container mx-auto px-4 py-6">
@@ -353,5 +358,6 @@ export const Deploy = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

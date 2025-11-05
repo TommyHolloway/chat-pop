@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,7 +43,11 @@ export const Settings = () => {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-8">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="flex-1 space-y-8 p-8">
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
@@ -253,5 +258,6 @@ export const Settings = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };

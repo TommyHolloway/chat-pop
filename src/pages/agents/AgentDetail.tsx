@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -187,7 +188,11 @@ export const AgentDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <div className="border-b bg-background">
         <div className="container mx-auto px-4 py-6">
@@ -256,5 +261,6 @@ export const AgentDetail = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

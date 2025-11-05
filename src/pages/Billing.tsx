@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,7 +87,11 @@ export const Billing = () => {
   const planLimits = getPlanLimits(currentPlan);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold">Billing & Plans</h1>
         <p className="text-muted-foreground text-lg">Choose the perfect plan for your AI assistant needs</p>
@@ -332,6 +337,7 @@ export const Billing = () => {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 };
 
