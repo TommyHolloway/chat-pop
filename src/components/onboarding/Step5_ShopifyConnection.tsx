@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingBag, ArrowRight, X, Package, TrendingUp, Users, Tag, AlertCircle, Clock } from 'lucide-react';
-import { ShopifyConnectionDialog } from '@/components/ShopifyConnectionDialog';
+import { ShopifyOAuthButton } from '@/components/ShopifyOAuthButton';
 
 interface Step5Props {
   agentId: string;
@@ -11,12 +10,6 @@ interface Step5Props {
 }
 
 export const Step5_ShopifyConnection = ({ agentId, onNext, onSkip }: Step5Props) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const handleSuccess = () => {
-    setIsDialogOpen(false);
-    onNext();
-  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -127,22 +120,16 @@ export const Step5_ShopifyConnection = ({ agentId, onNext, onSkip }: Step5Props)
             </div>
           </div>
           
-          <div className="flex gap-3">
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="flex-1"
-              size="lg"
-            >
-              Connect Shopify Store
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+          <div className="space-y-3">
+            <ShopifyOAuthButton agentId={agentId} onSuccess={onNext} />
             
             <Button
               variant="ghost"
               onClick={onSkip}
               size="lg"
+              className="w-full"
             >
-              <X className="h-4 w-4" />
+              Skip for Now
             </Button>
           </div>
           
@@ -151,13 +138,6 @@ export const Step5_ShopifyConnection = ({ agentId, onNext, onSkip }: Step5Props)
           </p>
         </CardContent>
       </Card>
-      
-      <ShopifyConnectionDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        agentId={agentId}
-        onSuccess={handleSuccess}
-      />
     </div>
   );
 };

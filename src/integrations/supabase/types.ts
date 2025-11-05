@@ -925,6 +925,109 @@ export type Database = {
           },
         ]
       }
+      shopify_connections: {
+        Row: {
+          agent_id: string
+          connected_at: string | null
+          encrypted_access_token: string
+          granted_scopes: string[] | null
+          id: string
+          last_verified: string | null
+          revoked: boolean | null
+          shop_domain: string
+        }
+        Insert: {
+          agent_id: string
+          connected_at?: string | null
+          encrypted_access_token: string
+          granted_scopes?: string[] | null
+          id?: string
+          last_verified?: string | null
+          revoked?: boolean | null
+          shop_domain: string
+        }
+        Update: {
+          agent_id?: string
+          connected_at?: string | null
+          encrypted_access_token?: string
+          granted_scopes?: string[] | null
+          id?: string
+          last_verified?: string | null
+          revoked?: boolean | null
+          shop_domain?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_connections_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_oauth_states: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          shop_domain: string
+          state: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          shop_domain: string
+          state: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          shop_domain?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_oauth_states_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_webhook_events: {
+        Row: {
+          id: string
+          payload: Json
+          processed: boolean | null
+          received_at: string | null
+          shop_domain: string
+          topic: string
+        }
+        Insert: {
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          received_at?: string | null
+          shop_domain: string
+          topic: string
+        }
+        Update: {
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          received_at?: string | null
+          shop_domain?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -1248,6 +1351,7 @@ export type Database = {
       }
       cleanup_empty_conversations: { Args: never; Returns: undefined }
       cleanup_expired_cache: { Args: never; Returns: undefined }
+      cleanup_expired_oauth_states: { Args: never; Returns: undefined }
       cleanup_old_visitor_data: { Args: never; Returns: undefined }
       cleanup_visitor_privacy_data: { Args: never; Returns: undefined }
       comprehensive_security_maintenance: { Args: never; Returns: undefined }

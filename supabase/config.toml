@@ -1,5 +1,17 @@
 project_id = "etwjtxqjcwyxdamlcorf"
 
+[functions.shopify-oauth-install]
+verify_jwt = true
+
+[functions.shopify-oauth-callback]
+verify_jwt = false
+
+[functions.shopify-oauth-disconnect]
+verify_jwt = true
+
+[functions.shopify-webhook]
+verify_jwt = false
+
 [functions.extract-brand-info]
 verify_jwt = true
 

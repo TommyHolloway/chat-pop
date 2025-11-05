@@ -4,17 +4,36 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { ShopifyConnectionDialog } from '@/components/ShopifyConnectionDialog';
+import { ShopifyOAuthButton } from '@/components/ShopifyOAuthButton';
 import { supabase } from '@/integrations/supabase/client';
 
 export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const { toast } = useToast();
-  const [showShopifyDialog, setShowShopifyDialog] = useState(false);
+  const [shopifyConnection, setShopifyConnection] = useState<any>(null);
+  const [loadingConnection, setLoadingConnection] = useState(true);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [inventoryStatus, setInventoryStatus] = useState<any>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  const isShopifyConnected = agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token;
+  
+  // Fetch OAuth connection
+  useEffect(() => {
+    const fetchConnection = async () => {
+      const { data } = await supabase
+        .from('shopify_connections')
+        .select('*')
+        .eq('agent_id', agent.id)
+        .eq('revoked', false)
+        .single();
+
+      setShopifyConnection(data);
+      setLoadingConnection(false);
+    };
+
+    fetchConnection();
+  }, [agent.id]);
+
+  const isShopifyConnected = !!shopifyConnection;
 
   const handleRefreshAgent = () => {
     // Trigger a page reload to fetch updated agent data
@@ -96,10 +115,9 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
 
     setIsDisconnecting(true);
     try {
-      const { error } = await supabase
-        .from('agents')
-        .update({ shopify_config: null })
-        .eq('id', agent.id);
+      const { error } = await supabase.functions.invoke('shopify-oauth-disconnect', {
+        body: { agent_id: agent.id }
+      });
 
       if (error) throw error;
 
@@ -147,32 +165,21 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!isShopifyConnected ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Connect your existing Shopify store to enable:
-              </p>
-              <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-                <li>AI-powered product recommendations</li>
-                <li>Cart abandonment detection and recovery</li>
-                <li>E-commerce analytics and conversion tracking</li>
-                <li>Product search in chat conversations</li>
-              </ul>
-              <div className="pt-2">
-                <Button onClick={() => setShowShopifyDialog(true)}>
-                  Connect Shopify Store
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                You'll need your Shopify store domain and Admin API access token
-              </p>
+          {loadingConnection ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
+          ) : !isShopifyConnected ? (
+            <ShopifyOAuthButton agentId={agent.id} onSuccess={handleRefreshAgent} />
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                 <div>
                   <p className="text-sm font-medium">Store Domain</p>
-                  <p className="text-sm text-muted-foreground">{agent.shopify_config?.store_domain}</p>
+                  <p className="text-sm text-muted-foreground">{shopifyConnection.shop_domain}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Connected via OAuth on {new Date(shopifyConnection.connected_at).toLocaleDateString()}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -192,7 +199,7 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <ExternalLink className="h-3 w-3" />
                 <a 
-                  href={`https://${agent.shopify_config?.store_domain}/admin`}
+                  href={`https://${shopifyConnection.shop_domain}/admin`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:underline"
@@ -318,13 +325,6 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
         </CardContent>
       </Card>
 
-      {/* Shopify Connection Dialog */}
-      <ShopifyConnectionDialog
-        open={showShopifyDialog}
-        onOpenChange={setShowShopifyDialog}
-        agentId={agent.id}
-        onSuccess={handleRefreshAgent}
-      />
     </div>
   );
 };
