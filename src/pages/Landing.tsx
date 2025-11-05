@@ -11,13 +11,12 @@ import { StickyFeatureStack } from '@/components/landing/StickyFeatureStack';
 export default function Landing() {
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = 'https://chatpop.ai/widget.js';
+    script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=light';
     script.async = true;
-    script.setAttribute('data-agent-id', '84cc95ba-e47a-490f-a71f-c9a09e95e9e9');
-    document.body.appendChild(script);
+    document.head.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      document.head.removeChild(script);
     };
   }, []);
 
