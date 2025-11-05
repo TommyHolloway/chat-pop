@@ -56,6 +56,25 @@ export const Features = () => {
           ]
         }}
       />
+      <StructuredData 
+        type="BreadcrumbList"
+        data={{
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://chatpop.ai"
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Features",
+              item: "https://chatpop.ai/features"
+            }
+          ]
+        }}
+      />
       <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-b from-background to-muted/30">

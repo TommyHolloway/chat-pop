@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SEO } from '@/components/SEO';
+import { StructuredData } from '@/components/StructuredData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,6 +66,25 @@ export const Contact = () => {
         description="Get in touch with ChatPop's expert team. Email, phone, and live chat support available. Quick response time within 4-6 hours. Book a demo today."
         canonical="https://chatpop.ai/contact"
         keywords="contact support, chatbot demo, sales inquiry, customer service, book demo, ChatPop support"
+      />
+      <StructuredData 
+        type="BreadcrumbList"
+        data={{
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://chatpop.ai"
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Contact",
+              item: "https://chatpop.ai/contact"
+            }
+          ]
+        }}
       />
       <div className="min-h-screen">
       {/* Hero Section */}

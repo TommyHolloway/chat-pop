@@ -1,4 +1,5 @@
 import { SEO } from '@/components/SEO';
+import { StructuredData } from '@/components/StructuredData';
 import { PricingSection } from '@/components/PricingSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +18,25 @@ export const Pricing = () => {
         description="Simple, transparent pricing for ChatPop AI chatbots. Free plan available. Starter at $49/mo, Growth at $199/mo. 14-day free trial, no credit card required."
         canonical="https://chatpop.ai/pricing"
         keywords="chatbot pricing, AI pricing plans, free trial, subscription pricing, e-commerce AI cost, chatbot subscription"
+      />
+      <StructuredData 
+        type="BreadcrumbList"
+        data={{
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://chatpop.ai"
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Pricing",
+              item: "https://chatpop.ai/pricing"
+            }
+          ]
+        }}
       />
       <div className="min-h-screen">
       {/* Hero Section */}

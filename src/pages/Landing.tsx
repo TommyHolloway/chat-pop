@@ -37,6 +37,19 @@ export default function Landing() {
           }
         }}
       />
+      <StructuredData 
+        type="BreadcrumbList"
+        data={{
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://chatpop.ai"
+            }
+          ]
+        }}
+      />
       <div className="min-h-screen bg-background">
       {/* 1. Hero Section with Store Input */}
       <HeroWithStoreInput />
