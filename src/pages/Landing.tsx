@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { HeroWithStoreInput } from '@/components/landing/HeroWithStoreInput';
 import { LargeProductMockup } from '@/components/landing/LargeProductMockup';
 import { FeatureShowcaseSection } from '@/components/landing/FeatureShowcaseSection';
@@ -9,13 +8,6 @@ import { InteractiveTriggerDemo } from '@/components/landing/InteractiveTriggerD
 import { StickyFeatureStack } from '@/components/landing/StickyFeatureStack';
 
 export default function Landing() {
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://etwjtxqjcwyxdamlcorf.supabase.co/functions/v1/chat-widget?agentId=be66d317-4d73-4394-8a16-fe59067ce716&position=bottom-right&theme=light';
-    script.async = true;
-    document.head.appendChild(script);
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       {/* 1. Hero Section with Store Input */}
