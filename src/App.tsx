@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { HelmetProvider } from 'react-helmet-async';
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PublicNavbar } from "@/components/Layout/PublicNavbar";
 import { AuthenticatedNavbar } from "@/components/Layout/AuthenticatedNavbar";
@@ -65,13 +66,14 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => (
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={
@@ -174,6 +176,7 @@ const App = () => (
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
+    </HelmetProvider>
   </ErrorBoundary>
 );
 

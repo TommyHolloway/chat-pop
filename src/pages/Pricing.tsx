@@ -1,3 +1,4 @@
+import { SEO } from '@/components/SEO';
 import { PricingSection } from '@/components/PricingSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,7 +11,14 @@ export const Pricing = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO 
+        title="Pricing Plans | ChatPop - AI Chatbot for E-commerce"
+        description="Simple, transparent pricing for ChatPop AI chatbots. Free plan available. Starter at $49/mo, Growth at $199/mo. 14-day free trial, no credit card required."
+        canonical="https://chatpop.ai/pricing"
+        keywords="chatbot pricing, AI pricing plans, free trial, subscription pricing, e-commerce AI cost, chatbot subscription"
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4">
@@ -166,6 +174,7 @@ export const Pricing = () => {
           </Card>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 };

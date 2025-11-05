@@ -1,3 +1,4 @@
+import { SEO } from '@/components/SEO';
 import { HeroWithStoreInput } from '@/components/landing/HeroWithStoreInput';
 import { LargeProductMockup } from '@/components/landing/LargeProductMockup';
 import { FeatureShowcaseSection } from '@/components/landing/FeatureShowcaseSection';
@@ -9,7 +10,14 @@ import { StickyFeatureStack } from '@/components/landing/StickyFeatureStack';
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <SEO 
+        title="ChatPop - AI Chatbots for Business | Automate Customer Support 24/7"
+        description="Create intelligent AI chatbots in minutes. Upload your knowledge, train your bot, and deploy anywhere. Perfect for customer support, lead generation, and more."
+        canonical="https://chatpop.ai"
+        keywords="AI chatbot, customer support automation, chatbot builder, AI assistant, business automation, lead generation bot"
+      />
+      <div className="min-h-screen bg-background">
       {/* 1. Hero Section with Store Input */}
       <HeroWithStoreInput />
 
@@ -78,6 +86,7 @@ export default function Landing() {
 
       {/* 13. Gradient CTA Banner */}
       <GradientCTABanner />
-    </div>
+      </div>
+    </>
   );
 }

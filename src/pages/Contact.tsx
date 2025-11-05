@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SEO } from '@/components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,7 +59,14 @@ export const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO 
+        title="Contact Sales & Support | ChatPop"
+        description="Get in touch with ChatPop's expert team. Email, phone, and live chat support available. Quick response time within 4-6 hours. Book a demo today."
+        canonical="https://chatpop.ai/contact"
+        keywords="contact support, chatbot demo, sales inquiry, customer service, book demo, ChatPop support"
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-5"></div>
@@ -265,7 +273,8 @@ export const Contact = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +20,14 @@ import { Link } from 'react-router-dom';
 export const Features = () => {
 
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO 
+        title="AI Shopping Assistant Features | ChatPop"
+        description="Discover ChatPop's AI-powered features: smart product recommendations, cart abandonment recovery, size & fit assistant, order tracking, and revenue analytics for e-commerce."
+        canonical="https://chatpop.ai/features"
+        keywords="AI shopping assistant, product recommendations, cart recovery, e-commerce AI, customer support automation, revenue analytics"
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4">
@@ -190,7 +198,8 @@ export const Features = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 };
 
