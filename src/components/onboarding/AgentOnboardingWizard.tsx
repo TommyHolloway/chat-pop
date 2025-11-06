@@ -57,7 +57,6 @@ export const AgentOnboardingWizard = () => {
   const [knowledgeBaseCrawlStatus, setKnowledgeBaseCrawlStatus] = useState<'pending' | 'in_progress' | 'completed' | 'failed'>('pending');
   const [crawlProgress, setCrawlProgress] = useState({ pagesProcessed: 0, pagesFound: 0 });
   const [currentLinkId, setCurrentLinkId] = useState<string | null>(null);
-  const [crawlError, setCrawlError] = useState<string | null>(null);
   
   const agentLinksHook = useAgentLinks(agentId || undefined);
 
@@ -106,11 +105,9 @@ export const AgentOnboardingWizard = () => {
           if (newData.status === 'completed') {
             setKnowledgeBaseCrawlStatus('completed');
             setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
-            setCrawlError(null);
           } else if (newData.status === 'failed') {
             setKnowledgeBaseCrawlStatus('failed');
             setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
-            setCrawlError(newData.error_message || 'Crawl failed. Please try again.');
           }
         }
       )
@@ -451,8 +448,6 @@ export const AgentOnboardingWizard = () => {
             agentId={agentId}
             progressState={progressState}
             crawlProgress={crawlProgress}
-            linkId={currentLinkId}
-            crawlError={crawlError}
           />
         );
       case 3:
