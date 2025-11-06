@@ -446,6 +446,7 @@ export const AgentOnboardingWizard = () => {
           <Step2_CrawlingProgress
             websiteUrl={websiteUrl}
             agentId={agentId}
+            linkId={currentLinkId}
             progressState={progressState}
             crawlProgress={crawlProgress}
           />

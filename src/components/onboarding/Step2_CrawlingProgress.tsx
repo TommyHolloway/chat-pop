@@ -1,13 +1,15 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Globe, Sparkles, Check, Loader2, Database, FileText } from 'lucide-react';
+import { Globe, Sparkles, Check, Loader2, Database, ExternalLink } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { KnowledgeBaseFlow } from './KnowledgeBaseFlow';
 
 interface Step2Props {
   websiteUrl: string;
   agentId?: string | null;
+  linkId?: string | null;
   progressState: {
     links: 'pending' | 'processing' | 'completed';
     prompt: 'pending' | 'processing' | 'completed';
@@ -16,10 +18,12 @@ interface Step2Props {
   crawlProgress?: { pagesProcessed: number; pagesFound: number };
 }
 
-interface PageInfo {
+interface CrawledPage {
+  id: string;
   url: string;
   title: string;
   status: 'pending' | 'processing' | 'completed';
+  created_at: string;
 }
 
 const ProgressItem = ({ icon, label, status, progressText }: {
@@ -44,51 +48,72 @@ const ProgressItem = ({ icon, label, status, progressText }: {
   </div>
 );
 
-export const Step2_CrawlingProgress = ({ websiteUrl, agentId, progressState, crawlProgress }: Step2Props) => {
-  const [discoveredPages, setDiscoveredPages] = useState<PageInfo[]>([]);
+export const Step2_CrawlingProgress = ({ websiteUrl, agentId, linkId, progressState, crawlProgress }: Step2Props) => {
+  const [crawledPages, setCrawledPages] = useState<CrawledPage[]>([]);
+  const [knowledgeChunks, setKnowledgeChunks] = useState(0);
 
-  // Fetch discovered pages in real-time
+  // Fetch crawled pages from agent_crawl_pages in real-time
   useEffect(() => {
-    if (!agentId || progressState.knowledgeBase !== 'processing') return;
+    if (!linkId || progressState.knowledgeBase !== 'processing') return;
 
     const fetchPages = async () => {
       const { data, error } = await supabase
-        .from('agent_text_knowledge')
-        .select('id, content')
-        .eq('agent_id', agentId)
-        .order('created_at', { ascending: false })
-        .limit(30);
+        .from('agent_crawl_pages')
+        .select('id, url, title, status, created_at')
+        .eq('agent_link_id', linkId)
+        .order('created_at', { ascending: false });
 
       if (!error && data) {
-        // Group by unique content titles to avoid showing chunks as separate pages
-        const uniquePages = new Map<string, PageInfo>();
-        
-        data.forEach((item, index) => {
-          // Extract title from content (first line)
-          const contentLines = item.content?.split('\n').filter(line => line.trim()) || [];
-          const title = contentLines[0]?.replace(/^#+\s*/, '').substring(0, 60) || `Page ${index + 1}`;
-          
-          // Use a hash of the title as a unique key to avoid duplicates
-          const key = title.toLowerCase();
-          if (!uniquePages.has(key)) {
-            uniquePages.set(key, {
-              url: `Content section ${uniquePages.size + 1}`,
-              title: title,
-              status: 'completed' as const
-            });
-          }
-        });
-        
-        setDiscoveredPages(Array.from(uniquePages.values()).slice(0, 15));
+        setCrawledPages(data as CrawledPage[]);
       }
     };
 
     // Initial fetch
     fetchPages();
 
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('knowledge_updates')
+    // Subscribe to real-time updates for crawled pages
+    const pagesChannel = supabase
+      .channel('crawl_pages_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agent_crawl_pages',
+          filter: `agent_link_id=eq.${linkId}`
+        },
+        () => {
+          fetchPages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(pagesChannel);
+    };
+  }, [linkId, progressState.knowledgeBase]);
+
+  // Track knowledge base chunks being created
+  useEffect(() => {
+    if (!agentId || progressState.knowledgeBase !== 'processing') return;
+
+    const fetchChunks = async () => {
+      const { count, error } = await supabase
+        .from('agent_text_knowledge')
+        .select('*', { count: 'exact', head: true })
+        .eq('agent_id', agentId);
+
+      if (!error && count !== null) {
+        setKnowledgeChunks(count);
+      }
+    };
+
+    // Initial fetch
+    fetchChunks();
+
+    // Subscribe to real-time updates for knowledge chunks
+    const chunksChannel = supabase
+      .channel('kb_chunks_updates')
       .on(
         'postgres_changes',
         {
@@ -98,106 +123,171 @@ export const Step2_CrawlingProgress = ({ websiteUrl, agentId, progressState, cra
           filter: `agent_id=eq.${agentId}`
         },
         () => {
-          fetchPages();
+          fetchChunks();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(chunksChannel);
     };
   }, [agentId, progressState.knowledgeBase]);
 
-  // Calculate progress text for knowledge base
-  const knowledgeBaseProgressText = crawlProgress && crawlProgress.pagesFound > 0
-    ? `${crawlProgress.pagesProcessed}/${crawlProgress.pagesFound} pages`
-    : undefined;
+  const flowStatus = progressState.knowledgeBase === 'completed' 
+    ? 'completed' 
+    : crawlProgress && crawlProgress.pagesProcessed > 0 
+      ? 'processing' 
+      : 'discovering';
+
+  // Calculate estimated time remaining
+  const estimatedTimeRemaining = crawlProgress && crawlProgress.pagesFound > 0 && crawlProgress.pagesProcessed > 0
+    ? Math.ceil(((crawlProgress.pagesFound - crawlProgress.pagesProcessed) * 2)) // ~2 seconds per page
+    : null;
 
   return (
     <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
-    {/* Left: Progress Indicators */}
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold">Analyzing your site</h2>
-        <p className="text-muted-foreground text-lg mt-2">
-          We're analyzing your website to create a personalized AI assistant.
-        </p>
-      </div>
-      
-      <Card className="border-2">
-        <CardContent className="pt-6 space-y-4">
-          <ProgressItem
-            icon={<Globe className="h-5 w-5" />}
-            label="Analyzing website structure"
-            status={progressState.links}
-          />
-          <Separator />
-          <ProgressItem
-            icon={<Sparkles className="h-5 w-5" />}
-            label="Generating AI instructions"
-            status={progressState.prompt}
-          />
-          <Separator />
-          <ProgressItem
-            icon={<Database className="h-5 w-5" />}
-            label="Building knowledge base"
-            status={progressState.knowledgeBase}
-            progressText={knowledgeBaseProgressText}
-          />
-        </CardContent>
-      </Card>
-    </div>
-    
-    {/* Right: Live Website Card with Page List */}
-    <div className="flex flex-col gap-4">
-      <Card className="w-full border-2 shadow-lg">
-        <CardContent className="pt-6 space-y-4">
-          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-            <Globe className="h-12 w-12 text-muted-foreground" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{websiteUrl}</span>
-            {progressState.links === "completed" && (
-              <Check className="h-4 w-4 text-green-600 ml-auto" />
-            )}
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Discovered Pages List */}
-      {progressState.knowledgeBase === 'processing' && discoveredPages.length > 0 && (
-        <Card className="w-full border-2">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-semibold">Discovered Pages</span>
-              <span className="text-xs text-muted-foreground ml-auto">
-                {discoveredPages.length} pages
-              </span>
-            </div>
-            <ScrollArea className="h-[200px] pr-4">
-              <div className="space-y-2">
-                {discoveredPages.map((page, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-start gap-2 p-2 rounded-lg bg-muted/50 text-xs"
-                  >
-                    <Check className="h-3 w-3 text-green-600 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{page.title}</div>
-                      <div className="text-muted-foreground truncate text-[10px]">
-                        {page.url}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+      {/* Left: Progress Flow & Basic Steps */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold">Analyzing your site</h2>
+          <p className="text-muted-foreground text-lg mt-2">
+            We're crawling your website and building an AI knowledge base.
+          </p>
+        </div>
+        
+        {/* Basic Progress Steps */}
+        <Card className="border-2">
+          <CardContent className="pt-6 space-y-4">
+            <ProgressItem
+              icon={<Globe className="h-5 w-5" />}
+              label="Analyzing website structure"
+              status={progressState.links}
+            />
+            <Separator />
+            <ProgressItem
+              icon={<Sparkles className="h-5 w-5" />}
+              label="Generating AI instructions"
+              status={progressState.prompt}
+            />
+            <Separator />
+            <ProgressItem
+              icon={<Database className="h-5 w-5" />}
+              label="Crawling website pages"
+              status={progressState.knowledgeBase}
+              progressText={crawlProgress ? `${crawlProgress.pagesProcessed}/${crawlProgress.pagesFound} pages` : undefined}
+            />
           </CardContent>
         </Card>
-      )}
+
+        {/* Knowledge Base Flow Visualization */}
+        {progressState.knowledgeBase === 'processing' && crawlProgress && (
+          <KnowledgeBaseFlow
+            pagesFound={crawlProgress.pagesFound}
+            pagesProcessed={crawlProgress.pagesProcessed}
+            knowledgeChunks={knowledgeChunks}
+            status={flowStatus}
+          />
+        )}
+
+        {/* Statistics Card */}
+        {progressState.knowledgeBase === 'processing' && crawlProgress && crawlProgress.pagesFound > 0 && (
+          <Card className="border-2 bg-muted/50">
+            <CardContent className="pt-6">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Crawl Statistics
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Pages Found</p>
+                  <p className="text-2xl font-bold">{crawlProgress.pagesFound}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Pages Processed</p>
+                  <p className="text-2xl font-bold">{crawlProgress.pagesProcessed}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Knowledge Chunks</p>
+                  <p className="text-2xl font-bold">{knowledgeChunks}</p>
+                </div>
+                {estimatedTimeRemaining !== null && estimatedTimeRemaining > 0 && (
+                  <div>
+                    <p className="text-muted-foreground">Est. Remaining</p>
+                    <p className="text-2xl font-bold">~{estimatedTimeRemaining}s</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+      
+      {/* Right: Live Crawled Pages Feed */}
+      <div className="flex flex-col gap-4">
+        <Card className="w-full border-2 shadow-lg">
+          <CardContent className="pt-6 space-y-4">
+            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+              <Globe className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm truncate">{websiteUrl}</span>
+              {progressState.links === "completed" && (
+                <Check className="h-4 w-4 text-green-600 ml-auto flex-shrink-0" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Live Crawled Pages Feed */}
+        {progressState.knowledgeBase === 'processing' && crawledPages.length > 0 && (
+          <Card className="w-full border-2">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-semibold">Discovered Pages</span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {crawledPages.length} pages
+                </span>
+              </div>
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="space-y-2">
+                  {crawledPages.map((page) => {
+                    const statusIcon = page.status === 'completed' 
+                      ? <Check className="h-3 w-3 text-green-600 flex-shrink-0 mt-0.5" />
+                      : page.status === 'processing'
+                      ? <Loader2 className="h-3 w-3 text-primary flex-shrink-0 mt-0.5 animate-spin" />
+                      : <div className="h-3 w-3 rounded-full border-2 border-muted flex-shrink-0 mt-0.5" />;
+
+                    return (
+                      <div 
+                        key={page.id}
+                        className={`flex items-start gap-2 p-2 rounded-lg text-xs transition-all ${
+                          page.status === 'completed' 
+                            ? 'bg-green-500/10' 
+                            : page.status === 'processing'
+                            ? 'bg-primary/10'
+                            : 'bg-muted/50'
+                        }`}
+                      >
+                        {statusIcon}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">
+                            {page.title || 'Untitled Page'}
+                          </div>
+                          <div className="text-muted-foreground truncate text-[10px]">
+                            {page.url}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
-  </div>
   );
 };
