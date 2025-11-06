@@ -20,6 +20,9 @@ export const HeroWithStoreInput = () => {
       
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center">
+          <p className="text-sm uppercase tracking-wider mb-4 gradient-text font-medium animate-fade-in">
+            The bot that won't let them leave
+          </p>
           <h1 className="font-alice text-5xl md:text-7xl mb-6 text-foreground leading-tight">
             Turn Online Shoppers Into
             <br />
