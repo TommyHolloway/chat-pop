@@ -19,6 +19,7 @@ interface Step2Props {
   crawlProgress?: { pagesProcessed: number; pagesFound: number };
   isChunking: boolean;
   chunkingComplete: boolean;
+  finalChunkCount?: number;
   onContinue: () => void;
 }
 
@@ -60,10 +61,19 @@ export const Step2_CrawlingProgress = ({
   crawlProgress,
   isChunking,
   chunkingComplete,
+  finalChunkCount,
   onContinue
 }: Step2Props) => {
   const [crawledPages, setCrawledPages] = useState<CrawledPage[]>([]);
   const [knowledgeChunks, setKnowledgeChunks] = useState(0);
+
+  // Override with parent's authoritative count when chunking is complete
+  useEffect(() => {
+    if (chunkingComplete && finalChunkCount !== undefined && finalChunkCount > 0) {
+      console.log('Updating UI with final chunk count from parent:', finalChunkCount);
+      setKnowledgeChunks(finalChunkCount);
+    }
+  }, [chunkingComplete, finalChunkCount]);
 
   // Fetch crawled pages from agent_crawl_pages in real-time
   useEffect(() => {

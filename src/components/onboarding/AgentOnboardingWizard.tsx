@@ -59,6 +59,7 @@ export const AgentOnboardingWizard = () => {
   const [currentLinkId, setCurrentLinkId] = useState<string | null>(null);
   const [isChunking, setIsChunking] = useState(false);
   const [chunkingComplete, setChunkingComplete] = useState(false);
+  const [finalChunkCount, setFinalChunkCount] = useState(0);
   
   const agentLinksHook = useAgentLinks(agentId || undefined);
 
@@ -140,6 +141,7 @@ export const AgentOnboardingWizard = () => {
       
       // Use the actual count from database if available
       const finalChunkCount = count || data?.totalChunks || 0;
+      setFinalChunkCount(finalChunkCount);
       
       // Only mark as complete if we actually created chunks
       if (finalChunkCount > 0) {
@@ -512,6 +514,7 @@ export const AgentOnboardingWizard = () => {
             crawlProgress={crawlProgress}
             isChunking={isChunking}
             chunkingComplete={chunkingComplete}
+            finalChunkCount={finalChunkCount}
             onContinue={handleContinueToStep3}
           />
         );
