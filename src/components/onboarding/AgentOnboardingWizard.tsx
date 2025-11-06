@@ -119,25 +119,39 @@ export const AgentOnboardingWizard = () => {
       console.log('Starting knowledge base chunking...');
       
       // Call train-agent to chunk the crawled pages
-      const { error } = await supabase.functions.invoke('train-agent', {
+      const { data, error } = await supabase.functions.invoke('train-agent', {
         body: { agentId }
       });
       
       if (error) throw error;
       
-      setChunkingComplete(true);
-      setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+      console.log('Chunking result:', data);
       
-      toast({
-        title: "Knowledge Base Ready",
-        description: "Your AI has been trained on your website content.",
-      });
+      // Only mark as complete if we actually created chunks
+      if (data?.totalChunks > 0) {
+        setChunkingComplete(true);
+        setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+        
+        toast({
+          title: "Knowledge Base Ready",
+          description: `Your AI has been trained with ${data.totalChunks} knowledge chunks from ${data.crawledPagesCount || 0} pages.`,
+        });
+      } else {
+        toast({
+          title: "Warning",
+          description: "No content was chunked. Please check if pages were crawled successfully.",
+          variant: "destructive",
+        });
+        // Still mark as complete so user can continue
+        setChunkingComplete(true);
+        setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+      }
       
     } catch (error) {
       console.error('Chunking error:', error);
       toast({
-        title: "Warning",
-        description: "Knowledge base may be incomplete, but you can retrain later.",
+        title: "Error",
+        description: "Failed to build knowledge base. Please try again.",
         variant: "destructive",
       });
       // Still mark as complete so user can continue

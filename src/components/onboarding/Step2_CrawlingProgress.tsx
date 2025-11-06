@@ -106,9 +106,9 @@ export const Step2_CrawlingProgress = ({
     };
   }, [linkId, progressState.knowledgeBase]);
 
-  // Track knowledge base chunks being created
+  // Track knowledge base chunks being created - initial fetch on mount
   useEffect(() => {
-    if (!agentId || progressState.knowledgeBase !== 'processing') return;
+    if (!agentId) return;
 
     const fetchChunks = async () => {
       const { count, error } = await supabase
@@ -144,7 +144,7 @@ export const Step2_CrawlingProgress = ({
     return () => {
       supabase.removeChannel(chunksChannel);
     };
-  }, [agentId, progressState.knowledgeBase]);
+  }, [agentId]);
 
   const flowStatus = progressState.knowledgeBase === 'completed' 
     ? 'completed' 

@@ -66,7 +66,7 @@ serve(async (req) => {
     }
 
     // Fetch all knowledge sources for the agent
-    const [linksResult, filesResult] = await Promise.all([
+    const [linksResult, filesResult, crawledPagesResult] = await Promise.all([
       supabase
         .from('agent_links')
         .select('*')
@@ -75,16 +75,32 @@ serve(async (req) => {
       supabase
         .from('knowledge_files')
         .select('*')
-        .eq('agent_id', agentId)
+        .eq('agent_id', agentId),
+      supabase
+        .from('agent_crawl_pages')
+        .select(`
+          id,
+          url,
+          title,
+          content,
+          markdown,
+          agent_link_id,
+          agent_links!inner(agent_id, status)
+        `)
+        .eq('agent_links.agent_id', agentId)
+        .eq('agent_links.status', 'completed')
+        .eq('status', 'completed')
     ]);
 
     if (linksResult.error) throw linksResult.error;
     if (filesResult.error) throw filesResult.error;
+    if (crawledPagesResult.error) throw crawledPagesResult.error;
 
     const links = linksResult.data || [];
     const files = filesResult.data || [];
+    const crawledPages = crawledPagesResult.data || [];
 
-    console.log(`Training with ${links.length} links and ${files.length} files`);
+    console.log(`Training with ${links.length} links, ${files.length} files, and ${crawledPages.length} crawled pages`);
 
     let totalChunks = 0;
 
@@ -133,6 +149,31 @@ serve(async (req) => {
         }
       }
     }
+    
+    // Process crawled pages into chunks
+    for (const page of crawledPages) {
+      const pageContent = page.markdown || page.content;
+      
+      if (pageContent) {
+        console.log(`Chunking crawled page: ${page.url}`);
+        
+        const { data: chunkResult, error: chunkError } = await supabase.functions.invoke('chunk-content', {
+          body: {
+            agentId,
+            sourceId: page.id,
+            sourceType: 'crawled_page',
+            content: pageContent
+          }
+        });
+
+        if (chunkError) {
+          console.error(`Error chunking page ${page.url}:`, chunkError);
+        } else {
+          totalChunks += chunkResult?.chunks_created || 0;
+          console.log(`Chunked page ${page.url}: ${chunkResult?.chunks_created} chunks`);
+        }
+      }
+    }
 
     // Update agent with training status
     const { error: updateError } = await supabase
@@ -152,6 +193,7 @@ serve(async (req) => {
       totalChunks,
       linksCount: links.length,
       filesCount: files.length,
+      crawledPagesCount: crawledPages.length,
       chunkingEnabled: true
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
