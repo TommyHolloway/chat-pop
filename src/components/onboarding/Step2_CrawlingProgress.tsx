@@ -112,7 +112,7 @@ export const Step2_CrawlingProgress = ({
 
     const fetchChunks = async () => {
       const { count, error } = await supabase
-        .from('agent_text_knowledge')
+        .from('agent_knowledge_chunks')
         .select('*', { count: 'exact', head: true })
         .eq('agent_id', agentId);
 
@@ -132,7 +132,7 @@ export const Step2_CrawlingProgress = ({
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'agent_text_knowledge',
+          table: 'agent_knowledge_chunks',
           filter: `agent_id=eq.${agentId}`
         },
         () => {

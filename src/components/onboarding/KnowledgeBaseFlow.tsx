@@ -18,10 +18,10 @@ export const KnowledgeBaseFlow = ({
   const discoveryProgress = pagesFound > 0 ? 100 : 0;
   const extractionProgress = pagesFound > 0 ? Math.round((pagesProcessed / pagesFound) * 100) : 0;
   
-  // Calculate chunking progress: 0% if no chunks, 50% if pages processed but no chunks yet, then progressive
+  // Calculate chunking progress: 0% until chunks are actually created
   const chunkingProgress = knowledgeChunks > 0
     ? Math.min(100, Math.round((knowledgeChunks / (pagesProcessed * 5)) * 100))
-    : pagesProcessed === pagesFound && pagesProcessed > 0 ? 50 : 0;
+    : 0;
 
   return (
     <Card className="border-2">
