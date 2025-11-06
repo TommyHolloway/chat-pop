@@ -1,9 +1,12 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Globe, Sparkles, Check, Loader2, Database, FileText } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Globe, Sparkles, Check, Loader2, Database, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { CrawlActivityFeed } from './CrawlActivityFeed';
+import { CrawlStatistics } from './CrawlStatistics';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Step2Props {
   websiteUrl: string;
@@ -14,142 +17,175 @@ interface Step2Props {
     knowledgeBase: 'pending' | 'processing' | 'completed';
   };
   crawlProgress?: { pagesProcessed: number; pagesFound: number };
+  linkId?: string | null;
+  crawlError?: string | null;
 }
 
-interface PageInfo {
-  url: string;
-  title: string;
-  status: 'pending' | 'processing' | 'completed';
-}
-
-const ProgressItem = ({ icon, label, status, progressText }: {
+const ProgressItem = ({ 
+  icon, 
+  label, 
+  status, 
+  progress 
+}: {
   icon: React.ReactNode;
   label: string;
   status: 'pending' | 'processing' | 'completed';
-  progressText?: string;
+  progress?: number;
 }) => (
-  <div className="flex items-center gap-3">
-    <div className="flex-shrink-0 text-muted-foreground">{icon}</div>
-    <div className="flex-1">
-      <span className="font-medium">{label}</span>
-      {progressText && (
-        <span className="text-sm text-muted-foreground ml-2">
-          {progressText}
-        </span>
-      )}
+  <div className="space-y-2">
+    <div className="flex items-center gap-3">
+      <div className="flex-shrink-0 text-muted-foreground">{icon}</div>
+      <div className="flex-1">
+        <span className="font-medium">{label}</span>
+        {progress !== undefined && status === 'processing' && (
+          <span className="text-sm text-muted-foreground ml-2">
+            {Math.round(progress)}%
+          </span>
+        )}
+      </div>
+      {status === 'pending' && <div className="h-4 w-4 rounded-full border-2 border-muted" />}
+      {status === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+      {status === 'completed' && <Check className="h-4 w-4 text-green-600" />}
     </div>
-    {status === 'pending' && <div className="h-4 w-4 rounded-full border-2 border-muted" />}
-    {status === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-    {status === 'completed' && <Check className="h-4 w-4 text-green-600" />}
+    {status === 'processing' && progress !== undefined && (
+      <Progress value={progress} className="h-2" />
+    )}
   </div>
 );
 
-export const Step2_CrawlingProgress = ({ websiteUrl, agentId, progressState, crawlProgress }: Step2Props) => {
-  const [discoveredPages, setDiscoveredPages] = useState<PageInfo[]>([]);
+export const Step2_CrawlingProgress = ({ 
+  websiteUrl, 
+  agentId, 
+  progressState, 
+  crawlProgress,
+  linkId,
+  crawlError 
+}: Step2Props) => {
+  const [startTime] = useState(Date.now());
+  const [currentLinkId, setCurrentLinkId] = useState<string | null>(null);
 
-  // Fetch discovered pages in real-time
+  // Track the link ID from agent_links
   useEffect(() => {
-    if (!agentId || progressState.knowledgeBase !== 'processing') return;
+    if (!agentId || !linkId) return;
+    setCurrentLinkId(linkId);
+  }, [agentId, linkId]);
 
-    const fetchPages = async () => {
-      const { data, error } = await supabase
-        .from('agent_text_knowledge')
-        .select('id, content')
-        .eq('agent_id', agentId)
-        .order('created_at', { ascending: false })
-        .limit(30);
+  // Calculate progress percentages
+  const linksProgress = progressState.links === 'completed' ? 100 : 
+                        progressState.links === 'processing' ? 50 : 0;
+  const promptProgress = progressState.prompt === 'completed' ? 100 : 
+                         progressState.prompt === 'processing' ? 50 : 0;
+  
+  const knowledgeBaseProgress = crawlProgress && crawlProgress.pagesFound > 0
+    ? (crawlProgress.pagesProcessed / crawlProgress.pagesFound) * 100
+    : progressState.knowledgeBase === 'processing' ? 10 : 0;
 
-      if (!error && data) {
-        // Group by unique content titles to avoid showing chunks as separate pages
-        const uniquePages = new Map<string, PageInfo>();
-        
-        data.forEach((item, index) => {
-          // Extract title from content (first line)
-          const contentLines = item.content?.split('\n').filter(line => line.trim()) || [];
-          const title = contentLines[0]?.replace(/^#+\s*/, '').substring(0, 60) || `Page ${index + 1}`;
-          
-          // Use a hash of the title as a unique key to avoid duplicates
-          const key = title.toLowerCase();
-          if (!uniquePages.has(key)) {
-            uniquePages.set(key, {
-              url: `Content section ${uniquePages.size + 1}`,
-              title: title,
-              status: 'completed' as const
-            });
-          }
-        });
-        
-        setDiscoveredPages(Array.from(uniquePages.values()).slice(0, 15));
-      }
-    };
+  // Calculate statistics
+  const successRate = crawlProgress && crawlProgress.pagesProcessed > 0
+    ? Math.round((crawlProgress.pagesProcessed / crawlProgress.pagesProcessed) * 100)
+    : 100;
 
-    // Initial fetch
-    fetchPages();
+  const elapsedSeconds = (Date.now() - startTime) / 1000;
+  const avgTimePerPage = crawlProgress && crawlProgress.pagesProcessed > 0
+    ? elapsedSeconds / crawlProgress.pagesProcessed
+    : undefined;
 
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('knowledge_updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'agent_text_knowledge',
-          filter: `agent_id=eq.${agentId}`
-        },
-        () => {
-          fetchPages();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [agentId, progressState.knowledgeBase]);
-
-  // Calculate progress text for knowledge base
-  const knowledgeBaseProgressText = crawlProgress && crawlProgress.pagesFound > 0
-    ? `${crawlProgress.pagesProcessed}/${crawlProgress.pagesFound} pages`
+  const pagesRemaining = crawlProgress 
+    ? Math.max(0, crawlProgress.pagesFound - crawlProgress.pagesProcessed)
+    : 0;
+  const estimatedTimeRemaining = avgTimePerPage && pagesRemaining > 0
+    ? avgTimePerPage * pagesRemaining
     : undefined;
 
   return (
-    <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
-    {/* Left: Progress Indicators */}
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
       <div>
         <h2 className="text-3xl font-bold">Analyzing your site</h2>
         <p className="text-muted-foreground text-lg mt-2">
-          We're analyzing your website to create a personalized AI assistant.
+          We're crawling your website to create a personalized AI assistant.
         </p>
       </div>
-      
+
+      {/* Error Alert */}
+      {crawlError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="font-semibold mb-1">Crawling Error</div>
+            <div className="text-sm">{crawlError}</div>
+            <div className="text-xs mt-2">
+              The crawl will continue with available pages. You can add more content manually later.
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Progress Cards */}
       <Card className="border-2">
         <CardContent className="pt-6 space-y-4">
           <ProgressItem
             icon={<Globe className="h-5 w-5" />}
             label="Analyzing website structure"
             status={progressState.links}
+            progress={linksProgress}
           />
           <Separator />
           <ProgressItem
             icon={<Sparkles className="h-5 w-5" />}
             label="Generating AI instructions"
             status={progressState.prompt}
+            progress={promptProgress}
           />
           <Separator />
           <ProgressItem
             icon={<Database className="h-5 w-5" />}
             label="Building knowledge base"
             status={progressState.knowledgeBase}
-            progressText={knowledgeBaseProgressText}
+            progress={knowledgeBaseProgress}
           />
+          {progressState.knowledgeBase === 'processing' && crawlProgress && (
+            <div className="text-xs text-muted-foreground pl-8">
+              {crawlProgress.pagesProcessed} of {crawlProgress.pagesFound} pages processed
+              {estimatedTimeRemaining && estimatedTimeRemaining > 0 && (
+                <span className="ml-2">
+                  • ~{Math.round(estimatedTimeRemaining)}s remaining
+                </span>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
-    </div>
-    
-    {/* Right: Live Website Card with Page List */}
-    <div className="flex flex-col gap-4">
+
+      {/* Live Activity and Statistics */}
+      {progressState.knowledgeBase === 'processing' && crawlProgress && (
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Statistics */}
+          <CrawlStatistics
+            pagesProcessed={crawlProgress.pagesProcessed}
+            pagesFound={crawlProgress.pagesFound}
+            successRate={successRate}
+            avgTimePerPage={avgTimePerPage}
+            estimatedTimeRemaining={estimatedTimeRemaining}
+          />
+
+          {/* Activity Feed */}
+          <Card className="border-2">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                <span className="text-sm font-semibold">Live Activity</span>
+              </div>
+              <CrawlActivityFeed 
+                linkId={currentLinkId} 
+                isActive={progressState.knowledgeBase === 'processing'}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Website Preview */}
       <Card className="w-full border-2 shadow-lg">
         <CardContent className="pt-6 space-y-4">
           <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
@@ -164,40 +200,6 @@ export const Step2_CrawlingProgress = ({ websiteUrl, agentId, progressState, cra
           </div>
         </CardContent>
       </Card>
-      
-      {/* Discovered Pages List */}
-      {progressState.knowledgeBase === 'processing' && discoveredPages.length > 0 && (
-        <Card className="w-full border-2">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-semibold">Discovered Pages</span>
-              <span className="text-xs text-muted-foreground ml-auto">
-                {discoveredPages.length} pages
-              </span>
-            </div>
-            <ScrollArea className="h-[200px] pr-4">
-              <div className="space-y-2">
-                {discoveredPages.map((page, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-start gap-2 p-2 rounded-lg bg-muted/50 text-xs"
-                  >
-                    <Check className="h-3 w-3 text-green-600 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{page.title}</div>
-                      <div className="text-muted-foreground truncate text-[10px]">
-                        {page.url}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
     </div>
-  </div>
   );
 };
