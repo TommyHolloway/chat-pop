@@ -71,7 +71,7 @@ serve(async (req) => {
         .from('agent_links')
         .select('*')
         .eq('agent_id', agentId)
-        .eq('status', 'crawled'),
+        .eq('status', 'completed'),
       supabase
         .from('knowledge_files')
         .select('*')

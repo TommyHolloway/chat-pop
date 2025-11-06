@@ -127,14 +127,28 @@ export const AgentOnboardingWizard = () => {
       
       console.log('Chunking result:', data);
       
+      // Wait for database to commit all inserts
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Manually refetch chunk count to ensure UI synchronization
+      const { count } = await supabase
+        .from('agent_knowledge_chunks')
+        .select('*', { count: 'exact', head: true })
+        .eq('agent_id', agentId);
+      
+      console.log('Final chunk count from database:', count);
+      
+      // Use the actual count from database if available
+      const finalChunkCount = count || data?.totalChunks || 0;
+      
       // Only mark as complete if we actually created chunks
-      if (data?.totalChunks > 0) {
+      if (finalChunkCount > 0) {
         setChunkingComplete(true);
         setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
         
         toast({
           title: "Knowledge Base Ready",
-          description: `Your AI has been trained with ${data.totalChunks} knowledge chunks from ${data.crawledPagesCount || 0} pages.`,
+          description: `Your AI has been trained with ${finalChunkCount} knowledge chunks from ${data.crawledPagesCount || 0} pages.`,
         });
       } else {
         toast({

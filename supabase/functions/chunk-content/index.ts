@@ -134,10 +134,11 @@ serve(async (req) => {
       .insert(chunkInserts);
 
     if (insertError) {
+      console.error('Error inserting chunks:', insertError);
       throw new Error(`Failed to insert chunks: ${insertError.message}`);
     }
 
-    console.log(`Successfully stored ${chunks.length} chunks`);
+    console.log(`✅ Successfully inserted ${chunks.length} chunks for agent ${agentId}, source: ${sourceType}/${sourceId}`);
 
     return new Response(JSON.stringify({
       success: true,
