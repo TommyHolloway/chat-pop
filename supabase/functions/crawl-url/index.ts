@@ -50,21 +50,21 @@ serve(async (req) => {
     console.log('Starting', crawlMode, 'for URL:', url);
 
     if (crawlMode === 'crawl') {
-      // Use crawling mode for multiple pages
-      console.log('Using Firecrawl crawl mode with limit:', crawlLimit);
+      // Use crawling mode for multiple pages with real-time updates
+      console.log('Using Firecrawl async crawl mode with limit:', crawlLimit);
       
       try {
-        const crawlResult = await firecrawl.crawlUrl(url, {
+        // Start async crawl
+        const crawlJob = await firecrawl.asyncCrawlUrl(url, {
           limit: Math.min(crawlLimit, 100),
           scrapeOptions: {
             formats: ['markdown'],
           }
         });
 
-        if (!crawlResult.success) {
-          console.error('Firecrawl crawl failed:', crawlResult.error);
+        if (!crawlJob.success) {
+          console.error('Failed to start crawl job:', crawlJob.error);
           
-          // Update agent_links with failed status
           if (linkId) {
             await supabase
               .from('agent_links')
@@ -77,7 +77,7 @@ serve(async (req) => {
 
           return new Response(JSON.stringify({
             success: false,
-            error: crawlResult.error || 'Failed to crawl website',
+            error: crawlJob.error || 'Failed to start crawl',
             details: 'Firecrawl API returned an error'
           }), {
             status: 200,
@@ -85,58 +85,165 @@ serve(async (req) => {
           });
         }
 
-        const pages = crawlResult.data || [];
-        const completedPages = pages.length;
-        const totalPages = pages.length;
+        console.log('Crawl job started with ID:', crawlJob.id);
 
-        console.log('Firecrawl crawl successful:', {
-          pagesCompleted: completedPages,
-          totalPages: totalPages
-        });
+        // Poll for crawl results with real-time updates
+        let pagesDiscovered = 0;
+        let pagesProcessed = 0;
+        let allContent: string[] = [];
+        let isComplete = false;
+        const maxAttempts = 60; // Poll for up to 2 minutes
+        let attempts = 0;
 
-        // Update agent_links with crawl progress
-        if (linkId) {
-          await supabase
-            .from('agent_links')
-            .update({
-              status: 'completed',
-              pages_found: totalPages,
-              pages_processed: completedPages,
-              updated_at: 'now()'
-            })
-            .eq('id', linkId);
-
-          // Store individual crawled pages
-          if (pages.length > 0) {
-            const crawlPages = pages.map((page: any) => ({
-              agent_link_id: linkId,
-              url: page.url || page.metadata?.url || url,
-              title: page.metadata?.title || page.title || 'Untitled Page',
-              content: page.markdown || page.content || '',
-              markdown: page.markdown || page.content || '',
-              metadata_json: page.metadata || {},
-              status: 'completed'
-            }));
-
-            await supabase
-              .from('agent_crawl_pages')
-              .insert(crawlPages);
+        while (!isComplete && attempts < maxAttempts) {
+          attempts++;
+          
+          try {
+            const status = await firecrawl.checkCrawlStatus(crawlJob.id);
+            
+            if (status.status === 'completed') {
+              console.log('Crawl completed:', status);
+              isComplete = true;
+              
+              const pages = status.data || [];
+              
+              // Insert any remaining pages
+              for (const page of pages) {
+                if (linkId) {
+                  const pageContent = page.markdown || page.content || '';
+                  allContent.push(pageContent);
+                  
+                  const { error } = await supabase
+                    .from('agent_crawl_pages')
+                    .insert({
+                      agent_link_id: linkId,
+                      url: page.url || page.metadata?.url || url,
+                      title: page.metadata?.title || page.title || 'Untitled Page',
+                      content: pageContent,
+                      markdown: pageContent,
+                      metadata_json: page.metadata || {},
+                      status: 'completed'
+                    });
+                  
+                  if (!error) {
+                    pagesProcessed++;
+                  }
+                }
+              }
+              
+              pagesDiscovered = pages.length;
+              
+              // Update final status
+              if (linkId) {
+                await supabase
+                  .from('agent_links')
+                  .update({
+                    status: 'completed',
+                    pages_found: pagesDiscovered,
+                    pages_processed: pagesProcessed,
+                    updated_at: 'now()'
+                  })
+                  .eq('id', linkId);
+              }
+              
+            } else if (status.status === 'failed') {
+              console.error('Crawl failed:', status);
+              isComplete = true;
+              
+              if (linkId) {
+                await supabase
+                  .from('agent_links')
+                  .update({ 
+                    status: 'failed',
+                    updated_at: 'now()'
+                  })
+                  .eq('id', linkId);
+              }
+              
+              return new Response(JSON.stringify({
+                success: false,
+                error: 'Crawl job failed',
+                details: status.error || 'Unknown error'
+              }), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+              
+            } else if (status.status === 'scraping') {
+              // Update progress with partial results
+              const partialPages = status.data || [];
+              
+              for (const page of partialPages) {
+                // Check if page already inserted
+                const { data: existingPages } = await supabase
+                  .from('agent_crawl_pages')
+                  .select('id')
+                  .eq('agent_link_id', linkId)
+                  .eq('url', page.url || page.metadata?.url || url)
+                  .limit(1);
+                
+                if (!existingPages || existingPages.length === 0) {
+                  const pageContent = page.markdown || page.content || '';
+                  allContent.push(pageContent);
+                  
+                  const { error } = await supabase
+                    .from('agent_crawl_pages')
+                    .insert({
+                      agent_link_id: linkId,
+                      url: page.url || page.metadata?.url || url,
+                      title: page.metadata?.title || page.title || 'Untitled Page',
+                      content: pageContent,
+                      markdown: pageContent,
+                      metadata_json: page.metadata || {},
+                      status: 'completed'
+                    });
+                  
+                  if (!error) {
+                    pagesProcessed++;
+                  }
+                }
+              }
+              
+              pagesDiscovered = Math.max(pagesDiscovered, partialPages.length);
+              
+              // Update progress
+              if (linkId) {
+                await supabase
+                  .from('agent_links')
+                  .update({
+                    status: 'processing',
+                    pages_found: pagesDiscovered,
+                    pages_processed: pagesProcessed,
+                    updated_at: 'now()'
+                  })
+                  .eq('id', linkId);
+              }
+              
+              console.log(`Crawl in progress: ${pagesProcessed}/${pagesDiscovered} pages processed`);
+            }
+            
+            // Wait before next poll (2 seconds)
+            if (!isComplete) {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+          } catch (statusError) {
+            console.error('Error checking crawl status:', statusError);
+            // Continue polling despite errors
           }
         }
 
-        // Combine all page content for training
-        const combinedContent = pages.map((page: any) => 
-          page.markdown || page.content || ''
-        ).join('\n\n');
+        // Combine all page content
+        const combinedContent = allContent.join('\n\n');
 
         return new Response(JSON.stringify({
           success: true,
-          title: `Crawled ${completedPages} pages from ${new URL(url).hostname}`,
+          title: `Crawled ${pagesProcessed} pages from ${new URL(url).hostname}`,
           content: combinedContent,
           url,
           crawlMode,
-          pagesFound: totalPages,
-          pagesProcessed: completedPages
+          pagesFound: pagesDiscovered,
+          pagesProcessed: pagesProcessed
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -144,7 +251,6 @@ serve(async (req) => {
       } catch (error) {
         console.error('Firecrawl crawl error:', error);
         
-        // Update agent_links with failed status
         if (linkId) {
           await supabase
             .from('agent_links')
