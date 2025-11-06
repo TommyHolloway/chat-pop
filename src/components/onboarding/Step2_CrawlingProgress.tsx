@@ -1,7 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Globe, Sparkles, Check, Loader2, Database, ExternalLink } from 'lucide-react';
+import { Globe, Sparkles, Check, Loader2, Database, ExternalLink, ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { KnowledgeBaseFlow } from './KnowledgeBaseFlow';
@@ -16,6 +17,9 @@ interface Step2Props {
     knowledgeBase: 'pending' | 'processing' | 'completed';
   };
   crawlProgress?: { pagesProcessed: number; pagesFound: number };
+  isChunking: boolean;
+  chunkingComplete: boolean;
+  onContinue: () => void;
 }
 
 interface CrawledPage {
@@ -48,7 +52,16 @@ const ProgressItem = ({ icon, label, status, progressText }: {
   </div>
 );
 
-export const Step2_CrawlingProgress = ({ websiteUrl, agentId, linkId, progressState, crawlProgress }: Step2Props) => {
+export const Step2_CrawlingProgress = ({ 
+  websiteUrl, 
+  agentId, 
+  linkId, 
+  progressState, 
+  crawlProgress,
+  isChunking,
+  chunkingComplete,
+  onContinue
+}: Step2Props) => {
   const [crawledPages, setCrawledPages] = useState<CrawledPage[]>([]);
   const [knowledgeChunks, setKnowledgeChunks] = useState(0);
 
@@ -179,14 +192,36 @@ export const Step2_CrawlingProgress = ({ websiteUrl, agentId, linkId, progressSt
           </CardContent>
         </Card>
 
-        {/* Knowledge Base Flow Visualization */}
-        {progressState.knowledgeBase === 'processing' && crawlProgress && (
+        {/* Knowledge Base Flow Visualization - Always show when processing or chunking */}
+        {(progressState.knowledgeBase === 'processing' || isChunking || chunkingComplete) && crawlProgress && (
           <KnowledgeBaseFlow
             pagesFound={crawlProgress.pagesFound}
             pagesProcessed={crawlProgress.pagesProcessed}
             knowledgeChunks={knowledgeChunks}
-            status={flowStatus}
+            status={chunkingComplete ? 'completed' : flowStatus}
           />
+        )}
+
+        {/* Continue Button - Show when chunking is complete */}
+        {chunkingComplete && (
+          <div className="flex justify-center">
+            <Button 
+              size="lg" 
+              onClick={onContinue}
+              className="min-w-[200px]"
+            >
+              Looks Good, Continue
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Processing Status - Show while chunking */}
+        {isChunking && (
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Processing knowledge base...</span>
+          </div>
         )}
 
         {/* Statistics Card */}

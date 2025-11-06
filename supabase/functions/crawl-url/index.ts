@@ -89,11 +89,22 @@ serve(async (req) => {
 
         // Poll for crawl results with real-time updates
         let pagesDiscovered = 0;
-        let pagesProcessed = 0;
+        const insertedUrls = new Set<string>(); // Track unique inserted URLs
         let allContent: string[] = [];
         let isComplete = false;
         const maxAttempts = 60; // Poll for up to 2 minutes
         let attempts = 0;
+        
+        // Helper function to normalize URLs
+        const normalizeUrl = (url: string) => {
+          try {
+            const urlObj = new URL(url);
+            // Remove trailing slash and convert to lowercase
+            return `${urlObj.origin}${urlObj.pathname}`.replace(/\/$/, '').toLowerCase();
+          } catch {
+            return url.toLowerCase().replace(/\/$/, '');
+          }
+        };
 
         while (!isComplete && attempts < maxAttempts) {
           attempts++;
@@ -107,40 +118,46 @@ serve(async (req) => {
               
               const pages = status.data || [];
               
-              // Insert any remaining pages
+              // Insert any remaining pages (avoid duplicates)
               for (const page of pages) {
                 if (linkId) {
-                  const pageContent = page.markdown || page.content || '';
-                  allContent.push(pageContent);
+                  const pageUrl = page.url || page.metadata?.url || url;
+                  const normalizedUrl = normalizeUrl(pageUrl);
                   
-                  const { error } = await supabase
-                    .from('agent_crawl_pages')
-                    .insert({
-                      agent_link_id: linkId,
-                      url: page.url || page.metadata?.url || url,
-                      title: page.metadata?.title || page.title || 'Untitled Page',
-                      content: pageContent,
-                      markdown: pageContent,
-                      metadata_json: page.metadata || {},
-                      status: 'completed'
-                    });
-                  
-                  if (!error) {
-                    pagesProcessed++;
+                  // Only insert if not already inserted
+                  if (!insertedUrls.has(normalizedUrl)) {
+                    const pageContent = page.markdown || page.content || '';
+                    allContent.push(pageContent);
+                    
+                    const { error } = await supabase
+                      .from('agent_crawl_pages')
+                      .insert({
+                        agent_link_id: linkId,
+                        url: pageUrl,
+                        title: page.metadata?.title || page.title || 'Untitled Page',
+                        content: pageContent,
+                        markdown: pageContent,
+                        metadata_json: page.metadata || {},
+                        status: 'completed'
+                      });
+                    
+                    if (!error) {
+                      insertedUrls.add(normalizedUrl);
+                    }
                   }
                 }
               }
               
-              pagesDiscovered = pages.length;
+              pagesDiscovered = Math.max(pagesDiscovered, pages.length, insertedUrls.size);
               
-              // Update final status
+              // Update final status with accurate counts
               if (linkId) {
                 await supabase
                   .from('agent_links')
                   .update({
                     status: 'completed',
-                    pages_found: pagesDiscovered,
-                    pages_processed: pagesProcessed,
+                    pages_found: insertedUrls.size,
+                    pages_processed: insertedUrls.size,
                     updated_at: 'now()'
                   })
                   .eq('id', linkId);
@@ -170,19 +187,15 @@ serve(async (req) => {
               });
               
             } else if (status.status === 'scraping') {
-              // Update progress with partial results
+              // Update progress with partial results (avoid duplicates)
               const partialPages = status.data || [];
               
               for (const page of partialPages) {
-                // Check if page already inserted
-                const { data: existingPages } = await supabase
-                  .from('agent_crawl_pages')
-                  .select('id')
-                  .eq('agent_link_id', linkId)
-                  .eq('url', page.url || page.metadata?.url || url)
-                  .limit(1);
+                const pageUrl = page.url || page.metadata?.url || url;
+                const normalizedUrl = normalizeUrl(pageUrl);
                 
-                if (!existingPages || existingPages.length === 0) {
+                // Only insert if not already inserted
+                if (!insertedUrls.has(normalizedUrl)) {
                   const pageContent = page.markdown || page.content || '';
                   allContent.push(pageContent);
                   
@@ -190,7 +203,7 @@ serve(async (req) => {
                     .from('agent_crawl_pages')
                     .insert({
                       agent_link_id: linkId,
-                      url: page.url || page.metadata?.url || url,
+                      url: pageUrl,
                       title: page.metadata?.title || page.title || 'Untitled Page',
                       content: pageContent,
                       markdown: pageContent,
@@ -199,27 +212,28 @@ serve(async (req) => {
                     });
                   
                   if (!error) {
-                    pagesProcessed++;
+                    insertedUrls.add(normalizedUrl);
                   }
                 }
               }
               
-              pagesDiscovered = Math.max(pagesDiscovered, partialPages.length);
+              // Update discovered count based on status total or current unique pages
+              pagesDiscovered = Math.max(pagesDiscovered, status.total || partialPages.length, insertedUrls.size);
               
-              // Update progress
+              // Update progress with accurate counts
               if (linkId) {
                 await supabase
                   .from('agent_links')
                   .update({
                     status: 'processing',
                     pages_found: pagesDiscovered,
-                    pages_processed: pagesProcessed,
+                    pages_processed: insertedUrls.size,
                     updated_at: 'now()'
                   })
                   .eq('id', linkId);
               }
               
-              console.log(`Crawl in progress: ${pagesProcessed}/${pagesDiscovered} pages processed`);
+              console.log(`Crawl in progress: ${insertedUrls.size}/${pagesDiscovered} pages processed`);
             }
             
             // Wait before next poll (2 seconds)
@@ -238,12 +252,12 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({
           success: true,
-          title: `Crawled ${pagesProcessed} pages from ${new URL(url).hostname}`,
+          title: `Crawled ${insertedUrls.size} pages from ${new URL(url).hostname}`,
           content: combinedContent,
           url,
           crawlMode,
-          pagesFound: pagesDiscovered,
-          pagesProcessed: pagesProcessed
+          pagesFound: insertedUrls.size,
+          pagesProcessed: insertedUrls.size
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

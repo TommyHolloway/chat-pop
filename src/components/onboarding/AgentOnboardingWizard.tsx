@@ -57,22 +57,12 @@ export const AgentOnboardingWizard = () => {
   const [knowledgeBaseCrawlStatus, setKnowledgeBaseCrawlStatus] = useState<'pending' | 'in_progress' | 'completed' | 'failed'>('pending');
   const [crawlProgress, setCrawlProgress] = useState({ pagesProcessed: 0, pagesFound: 0 });
   const [currentLinkId, setCurrentLinkId] = useState<string | null>(null);
+  const [isChunking, setIsChunking] = useState(false);
+  const [chunkingComplete, setChunkingComplete] = useState(false);
   
   const agentLinksHook = useAgentLinks(agentId || undefined);
 
-  // Auto-advance to Step 3 when knowledge base is completed
-  useEffect(() => {
-    if (currentStep === 2 && knowledgeBaseCrawlStatus === 'completed') {
-      toast({
-        title: "Website Analysis Complete",
-        description: "All pages have been successfully crawled and added to the knowledge base.",
-      });
-      
-      setTimeout(() => {
-        setCurrentStep(3);
-      }, 1500);
-    }
-  }, [currentStep, knowledgeBaseCrawlStatus, toast]);
+  // No auto-advance - user will click Continue button
 
   // Real-time subscription for crawl progress
   useEffect(() => {
@@ -101,10 +91,11 @@ export const AgentOnboardingWizard = () => {
             });
           }
 
-          // Check if crawl completed
+          // Check if crawl completed - then start chunking
           if (newData.status === 'completed') {
             setKnowledgeBaseCrawlStatus('completed');
-            setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+            // Don't mark knowledge base as complete yet - need to chunk
+            handleChunkKnowledge();
           } else if (newData.status === 'failed') {
             setKnowledgeBaseCrawlStatus('failed');
             setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
@@ -118,6 +109,48 @@ export const AgentOnboardingWizard = () => {
       supabase.removeChannel(channel);
     };
   }, [currentLinkId]);
+
+  const handleChunkKnowledge = async () => {
+    if (!agentId) return;
+    
+    setIsChunking(true);
+    
+    try {
+      console.log('Starting knowledge base chunking...');
+      
+      // Call train-agent to chunk the crawled pages
+      const { error } = await supabase.functions.invoke('train-agent', {
+        body: { agentId }
+      });
+      
+      if (error) throw error;
+      
+      setChunkingComplete(true);
+      setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+      
+      toast({
+        title: "Knowledge Base Ready",
+        description: "Your AI has been trained on your website content.",
+      });
+      
+    } catch (error) {
+      console.error('Chunking error:', error);
+      toast({
+        title: "Warning",
+        description: "Knowledge base may be incomplete, but you can retrain later.",
+        variant: "destructive",
+      });
+      // Still mark as complete so user can continue
+      setChunkingComplete(true);
+      setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
+    } finally {
+      setIsChunking(false);
+    }
+  };
+
+  const handleContinueToStep3 = () => {
+    setCurrentStep(3);
+  };
 
   const handleStartCrawling = async () => {
     setCurrentStep(2);
@@ -449,6 +482,9 @@ export const AgentOnboardingWizard = () => {
             linkId={currentLinkId}
             progressState={progressState}
             crawlProgress={crawlProgress}
+            isChunking={isChunking}
+            chunkingComplete={chunkingComplete}
+            onContinue={handleContinueToStep3}
           />
         );
       case 3:
