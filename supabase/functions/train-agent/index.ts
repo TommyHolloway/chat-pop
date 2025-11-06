@@ -160,7 +160,7 @@ serve(async (req) => {
         const { data: chunkResult, error: chunkError } = await supabase.functions.invoke('chunk-content', {
           body: {
             agentId,
-            sourceId: page.agent_link_id,
+            sourceId: page.id, // Use unique page ID to avoid race condition
             sourceType: 'link',
             content: pageContent
           }
