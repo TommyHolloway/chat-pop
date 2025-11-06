@@ -123,37 +123,45 @@ export const usePlanEnforcement = () => {
         planLoading
       });
 
-      // Use database functions to check current usage and limits
-      const { data: agentCheck } = await supabase.rpc('check_user_plan_limits', {
+      // Use database functions to check current usage and limits with error handling for each
+      const agentResponse = await supabase.rpc('check_user_plan_limits', {
         p_user_id: user.id,
         p_feature_type: 'agent'
-      }) as { data: PlanLimitResponse };
+      });
+      const agentCheck = agentResponse.error ? null : agentResponse.data;
 
-      const { data: messageCheck } = await supabase.rpc('check_user_plan_limits', {
+      const messageResponse = await supabase.rpc('check_user_plan_limits', {
         p_user_id: user.id,
         p_feature_type: 'message'
-      }) as { data: PlanLimitResponse };
+      });
+      const messageCheck = messageResponse.error ? null : messageResponse.data;
 
-      const { data: storageCheck } = await supabase.rpc('check_user_plan_limits', {
+      // Storage check can fail with integer overflow - handle gracefully
+      const storageResponse = await supabase.rpc('check_user_plan_limits', {
         p_user_id: user.id,
         p_feature_type: 'storage'
-      }) as { data: PlanLimitResponse };
+      });
+      if (storageResponse.error) {
+        console.warn('Storage check failed (integer overflow), using defaults:', storageResponse.error);
+      }
+      const storageCheck = storageResponse.error ? null : storageResponse.data;
 
-      const { data: cartRecoveryCheck } = await supabase.rpc('check_user_plan_limits', {
+      const cartRecoveryResponse = await supabase.rpc('check_user_plan_limits', {
         p_user_id: user.id,
         p_feature_type: 'cart_recovery'
-      }) as { data: PlanLimitResponse };
+      });
+      const cartRecoveryCheck = cartRecoveryResponse.error ? null : cartRecoveryResponse.data;
 
       const currentUsage: PlanUsage = {
-        currentAgents: agentCheck?.current_usage || 0,
-        currentMessageCredits: messageCheck?.current_usage || 0,
+        currentAgents: (agentCheck as unknown as PlanLimitResponse | null)?.current_usage || 0,
+        currentMessageCredits: (messageCheck as unknown as PlanLimitResponse | null)?.current_usage || 0,
         currentLinks: 0, // Will be checked per agent
-        currentStorageBytes: storageCheck?.current_usage || 0,
-        currentCartRecovery: cartRecoveryCheck?.current_usage || 0
+        currentStorageBytes: (storageCheck as unknown as PlanLimitResponse | null)?.current_usage || 0,
+        currentCartRecovery: (cartRecoveryCheck as unknown as PlanLimitResponse | null)?.current_usage || 0
       };
 
-      const canCreateAgent = agentCheck?.can_perform || false;
-      const canSendMessage = messageCheck?.can_perform || false;
+      const canCreateAgent = (agentCheck as unknown as PlanLimitResponse | null)?.can_perform || false;
+      const canSendMessage = (messageCheck as unknown as PlanLimitResponse | null)?.can_perform || false;
       const canViewVisitorAnalytics = currentPlan === 'standard';
       const canUseShopify = currentPlan !== 'free';
       const canUseCartRecovery = currentPlan !== 'free';
