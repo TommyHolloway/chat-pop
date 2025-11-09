@@ -50,11 +50,11 @@ serve(async (req) => {
 
     const { data: agent } = await supabase
       .from('agents')
-      .select('id, workspace_id, workspaces(user_id)')
+      .select('id, user_id')
       .eq('id', agent_id)
-      .single();
+      .maybeSingle();
 
-    if (!agent || agent.workspaces?.user_id !== user.id) {
+    if (!agent || agent.user_id !== user.id) {
       throw new Error('Agent not found or unauthorized');
     }
 
