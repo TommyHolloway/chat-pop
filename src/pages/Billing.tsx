@@ -10,31 +10,34 @@ import { useUserPlan } from "@/hooks/useUserPlan";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ShopifyBillingCard } from "@/components/ShopifyBillingCard";
 
 export const Billing = () => {
   const { user } = useAuth();
   const { subscription, checkSubscription, createCheckout, openCustomerPortal } = useSubscription();
   const { usage } = useUsageData();
-  const { plan: currentPlan, isAdminOverride, stripePlan } = useUserPlan();
+  const { plan: currentPlan, isAdminOverride, stripePlan, shopifySubscription, billingProvider, refetch: refetchPlan } = useUserPlan();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
-  const [billingProvider, setBillingProvider] = useState<string>('stripe');
+  const [agentId, setAgentId] = useState<string | undefined>();
 
   useEffect(() => {
-    const fetchBillingProvider = async () => {
+    const fetchAgentId = async () => {
       if (!user) return;
       
-      const { data } = await supabase
-        .from('profiles')
-        .select('billing_provider')
+      const { data: agents } = await supabase
+        .from('agents')
+        .select('id')
         .eq('user_id', user.id)
-        .single();
+        .limit(1);
       
-      setBillingProvider(data?.billing_provider || 'stripe');
+      if (agents && agents.length > 0) {
+        setAgentId(agents[0].id);
+      }
     };
     
-    fetchBillingProvider();
+    fetchAgentId();
   }, [user]);
 
   useEffect(() => {
@@ -137,6 +140,15 @@ export const Billing = () => {
         <p className="text-muted-foreground text-lg">Choose the perfect plan for your AI assistant needs</p>
       </div>
 
+      {/* Shopify Subscription Details */}
+      {billingProvider === 'shopify' && shopifySubscription && (
+        <ShopifyBillingCard 
+          subscription={shopifySubscription} 
+          agentId={agentId}
+          onRefresh={refetchPlan}
+        />
+      )}
+
       {/* Current Plan Section */}
       <Card>
         <CardHeader>
@@ -161,7 +173,10 @@ export const Billing = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={checkSubscription}
+                  onClick={() => {
+                    checkSubscription();
+                    refetchPlan();
+                  }}
                   disabled={subscription.isLoading}
                 >
                   {subscription.isLoading ? (
@@ -217,7 +232,7 @@ export const Billing = () => {
             </div>
           </div>
           
-          {subscription.subscribed && (
+          {subscription.subscribed && billingProvider === 'stripe' && (
             <div className="mt-6 pt-6 border-t">
               <Button onClick={handleManageSubscription} variant="outline" className="w-full">
                 Manage Subscription

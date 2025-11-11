@@ -18,6 +18,18 @@ verify_jwt = false
 [functions.shopify-connection-status]
 verify_jwt = true
 
+[functions.shopify-create-subscription]
+verify_jwt = true
+
+[functions.shopify-check-subscription]
+verify_jwt = true
+
+[functions.shopify-cancel-subscription]
+verify_jwt = true
+
+[functions.shopify-subscription-webhook]
+verify_jwt = false
+
 [functions.extract-brand-info]
 verify_jwt = true
 

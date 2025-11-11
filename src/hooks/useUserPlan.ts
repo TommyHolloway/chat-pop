@@ -3,11 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 
+interface ShopifySubscription {
+  status: string;
+  plan_name: string;
+  current_period_end?: string;
+  trial_days?: number;
+  amount?: number;
+  cancelled_at?: string;
+}
+
 interface UserPlanData {
   plan: string;
   isLoading: boolean;
   isAdminOverride: boolean;
   stripePlan?: string;
+  shopifySubscription?: ShopifySubscription;
+  billingProvider: string;
 }
 
 export const useUserPlan = () => {
@@ -17,7 +28,9 @@ export const useUserPlan = () => {
     plan: 'free',
     isLoading: true,
     isAdminOverride: false,
-    stripePlan: undefined
+    stripePlan: undefined,
+    shopifySubscription: undefined,
+    billingProvider: 'stripe'
   });
 
   const fetchUserPlan = async () => {
@@ -29,25 +42,50 @@ export const useUserPlan = () => {
     try {
       setPlanData(prev => ({ ...prev, isLoading: true }));
 
-      // Get database plan from profiles table (admin can override this)
+      // Get database plan and billing provider from profiles table
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('plan')
+        .select('plan, billing_provider')
         .eq('user_id', user.id)
         .maybeSingle();
 
       const databasePlan = profileData?.plan || 'free';
+      const billingProvider = profileData?.billing_provider || 'stripe';
       const stripePlan = subscription.subscription_tier || 'free';
+      
+      let shopifySubscription: ShopifySubscription | undefined;
+
+      // If billing provider is Shopify, fetch Shopify subscription data
+      if (billingProvider === 'shopify') {
+        try {
+          const { data: shopifyData, error: shopifyError } = await supabase.functions.invoke('shopify-check-subscription');
+          
+          if (!shopifyError && shopifyData) {
+            shopifySubscription = {
+              status: shopifyData.status,
+              plan_name: shopifyData.subscription_tier,
+              current_period_end: shopifyData.subscription_end,
+              trial_days: shopifyData.trial_days,
+              amount: shopifyData.amount,
+              cancelled_at: shopifyData.cancelled_at
+            };
+          }
+        } catch (shopifyError) {
+          console.error('Error fetching Shopify subscription:', shopifyError);
+        }
+      }
       
       // Database plan takes precedence (admin override)
       const finalPlan = databasePlan;
-      const isAdminOverride = databasePlan !== stripePlan && stripePlan !== 'free';
+      const isAdminOverride = billingProvider === 'stripe' && databasePlan !== stripePlan && stripePlan !== 'free';
 
       setPlanData({
         plan: finalPlan,
         isLoading: false,
         isAdminOverride,
-        stripePlan
+        stripePlan,
+        shopifySubscription,
+        billingProvider
       });
     } catch (error) {
       console.error('Error fetching user plan:', error);
@@ -55,7 +93,9 @@ export const useUserPlan = () => {
         plan: 'free',
         isLoading: false,
         isAdminOverride: false,
-        stripePlan: subscription.subscription_tier
+        stripePlan: subscription.subscription_tier,
+        shopifySubscription: undefined,
+        billingProvider: 'stripe'
       });
     }
   };
@@ -66,12 +106,12 @@ export const useUserPlan = () => {
     }
   }, [user, subscription.subscription_tier]);
 
-  // Subscribe to profile changes for real-time updates
+  // Subscribe to profile and shopify_subscriptions changes for real-time updates
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('profile-plan-changes')
+      .channel('plan-changes')
       .on(
         'postgres_changes',
         {
@@ -81,6 +121,18 @@ export const useUserPlan = () => {
           filter: `user_id=eq.${user.id}`
         },
         () => {
+          fetchUserPlan();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shopify_subscriptions'
+        },
+        (payload) => {
+          // Only refetch if this is for one of the user's agents
           fetchUserPlan();
         }
       )
