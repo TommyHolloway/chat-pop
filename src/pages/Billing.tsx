@@ -19,10 +19,27 @@ export const Billing = () => {
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [billingProvider, setBillingProvider] = useState<string>('stripe');
+
+  useEffect(() => {
+    const fetchBillingProvider = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('billing_provider')
+        .eq('user_id', user.id)
+        .single();
+      
+      setBillingProvider(data?.billing_provider || 'stripe');
+    };
+    
+    fetchBillingProvider();
+  }, [user]);
 
   useEffect(() => {
     const fetchInvoices = async () => {
-      if (!subscription.subscribed) return;
+      if (!subscription.subscribed || billingProvider === 'shopify') return;
       
       setLoadingInvoices(true);
       try {
@@ -38,15 +55,38 @@ export const Billing = () => {
     };
     
     fetchInvoices();
-  }, [subscription.subscribed]);
+  }, [subscription.subscribed, billingProvider]);
 
   const handleUpgrade = async (plan: string) => {
     try {
-      await createCheckout(plan);
-      toast({
-        title: "Redirecting to checkout",
-        description: "You'll be redirected to Stripe to complete your subscription.",
-      });
+      if (billingProvider === 'shopify') {
+        // Use Shopify billing
+        const { data: agents } = await supabase
+          .from('agents')
+          .select('id')
+          .eq('user_id', user?.id)
+          .limit(1);
+        
+        if (!agents || agents.length === 0) {
+          throw new Error('No agent found');
+        }
+        
+        const { data, error } = await supabase.functions.invoke('shopify-create-subscription', {
+          body: { agent_id: agents[0].id, plan }
+        });
+        
+        if (error) throw error;
+        
+        // Redirect to Shopify confirmation
+        window.location.href = data.confirmationUrl;
+      } else {
+        // Use Stripe billing (existing)
+        await createCheckout(plan);
+        toast({
+          title: "Redirecting to checkout",
+          description: "You'll be redirected to Stripe to complete your subscription.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -108,6 +148,11 @@ export const Billing = () => {
                    currentPlan === 'hobby' || currentPlan === 'starter' ? 'Starter Plan' : 
                    currentPlan === 'standard' || currentPlan === 'growth' ? 'Growth Plan' : 'Free Plan'}
                 </Badge>
+                {billingProvider === 'shopify' && (
+                  <Badge variant="outline" className="text-xs">
+                    Billed via Shopify
+                  </Badge>
+                )}
                 {isAdminOverride && (
                   <Badge variant="outline" className="text-xs">
                     Admin Override

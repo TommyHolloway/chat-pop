@@ -193,6 +193,7 @@ async function registerWebhooks(shop: string, token: string, agentId: string) {
     'products/update',
     'inventory_levels/update',
     'app/uninstalled', // Critical for billing_provider cleanup
+    'app_subscriptions/update', // For Shopify Billing API
   ];
 
   for (const topic of topics) {

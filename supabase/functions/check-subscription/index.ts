@@ -43,6 +43,40 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Check if user has Shopify billing provider
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('billing_provider')
+      .eq('user_id', user.id)
+      .single();
+
+    // If Shopify billing, delegate to Shopify subscription checker
+    if (profile?.billing_provider === 'shopify') {
+      try {
+        logStep("User has Shopify billing, delegating to Shopify checker");
+        const shopifyCheckUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/shopify-check-subscription`;
+        const shopifyCheckResponse = await fetch(shopifyCheckUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const shopifyData = await shopifyCheckResponse.json();
+        logStep("Shopify subscription check completed", { result: shopifyData });
+        
+        return new Response(JSON.stringify(shopifyData), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: shopifyCheckResponse.status,
+        });
+      } catch (error) {
+        console.error('Error checking Shopify subscription:', error);
+        // Fall through to default logic if Shopify check fails
+        logStep("Shopify check failed, falling back to Stripe");
+      }
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     

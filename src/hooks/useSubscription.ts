@@ -45,6 +45,18 @@ export const useSubscription = () => {
   const createCheckout = async (plan: string) => {
     if (!user) throw new Error('User not authenticated');
 
+    // Check billing provider
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('billing_provider')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profile?.billing_provider === 'shopify') {
+      throw new Error('Please use Shopify billing management');
+    }
+
+    // Continue with Stripe
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { plan }
     });

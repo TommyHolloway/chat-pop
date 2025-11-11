@@ -38,6 +38,22 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
     }
   }, [agent]);
 
+  // Handle Shopify charge approval callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const chargeApproved = params.get('shopify_charge_approved');
+
+    if (chargeApproved === 'true') {
+      toast({
+        title: 'Subscription Activated!',
+        description: 'Your Shopify subscription is now active.',
+      });
+      
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [toast]);
+
   const handleSave = async () => {
     if (!formData.name.trim()) {
       toast({
