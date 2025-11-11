@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { toast } from '@/hooks/use-toast';
 
 interface ShopifySubscription {
   status: string;
@@ -32,6 +33,7 @@ export const useUserPlan = () => {
     shopifySubscription: undefined,
     billingProvider: 'stripe'
   });
+  const previousShopifyStatus = useRef<string | undefined>();
 
   const fetchUserPlan = async () => {
     if (!user) {
@@ -87,6 +89,45 @@ export const useUserPlan = () => {
         shopifySubscription,
         billingProvider
       });
+
+      // Show toast notifications for Shopify subscription status changes
+      if (billingProvider === 'shopify' && shopifySubscription) {
+        const currentStatus = shopifySubscription.status;
+        const previousStatus = previousShopifyStatus.current;
+
+        if (previousStatus && previousStatus !== currentStatus) {
+          if (currentStatus === 'active' && previousStatus === 'pending') {
+            toast({
+              title: `🎉 Your ${shopifySubscription.plan_name} subscription is now active!`,
+              description: 'Enjoy all premium features.',
+            });
+          } else if (currentStatus === 'active' && shopifySubscription.trial_days && shopifySubscription.trial_days > 0) {
+            toast({
+              title: `✨ Your free trial has started!`,
+              description: `Enjoy ${shopifySubscription.trial_days} days of premium features.`,
+            });
+          } else if (currentStatus === 'cancelled') {
+            toast({
+              title: '⚠️ Subscription Cancelled',
+              description: "You've been downgraded to the free plan.",
+              variant: 'destructive',
+            });
+          } else if (currentStatus === 'expired') {
+            toast({
+              title: '❌ Subscription Expired',
+              description: 'Upgrade to continue using premium features.',
+              variant: 'destructive',
+            });
+          } else if (previousStatus === 'active' && finalPlan !== previousShopifyStatus.current) {
+            toast({
+              title: `🚀 Upgraded to ${finalPlan}!`,
+              description: 'Enjoy your new features.',
+            });
+          }
+        }
+
+        previousShopifyStatus.current = currentStatus;
+      }
     } catch (error) {
       console.error('Error fetching user plan:', error);
       setPlanData({

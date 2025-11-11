@@ -3,7 +3,8 @@ import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Download, Loader2, RefreshCw, CreditCard } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Check, Download, Loader2, RefreshCw, CreditCard, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useUsageData } from "@/hooks/useUsageData";
 import { useUserPlan } from "@/hooks/useUserPlan";
@@ -139,6 +140,36 @@ export const Billing = () => {
         <h1 className="text-4xl font-bold">Billing & Plans</h1>
         <p className="text-muted-foreground text-lg">Choose the perfect plan for your AI assistant needs</p>
       </div>
+
+      {/* Shopify Subscription Status Indicators */}
+      {billingProvider === 'shopify' && shopifySubscription && (
+        <>
+          {shopifySubscription.status === 'pending' && (
+            <Alert className="border-warning bg-warning/10">
+              <Clock className="h-4 w-4" />
+              <AlertDescription>
+                Your subscription is pending approval. Complete the payment to activate premium features.
+              </AlertDescription>
+            </Alert>
+          )}
+          {shopifySubscription.status === 'active' && shopifySubscription.trial_days && shopifySubscription.trial_days > 0 && (
+            <Alert className="border-primary bg-primary/10">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>
+                🎉 Free trial active! You have {shopifySubscription.trial_days} days remaining to explore premium features.
+              </AlertDescription>
+            </Alert>
+          )}
+          {(shopifySubscription.status === 'cancelled' || shopifySubscription.status === 'expired') && (
+            <Alert className="border-destructive bg-destructive/10">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Your subscription is {shopifySubscription.status}. Upgrade to restore premium features.
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
+      )}
 
       {/* Shopify Subscription Details */}
       {billingProvider === 'shopify' && shopifySubscription && (

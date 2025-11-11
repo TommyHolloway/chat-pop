@@ -28,7 +28,13 @@ serve(async (req) => {
       const subscriptionId = payload.admin_graphql_api_id || `gid://shopify/AppSubscription/${payload.id}`;
       const status = (payload.status || '').toLowerCase();
 
-      console.log('Processing subscription update:', { subscriptionId, status });
+      console.log('Processing subscription update:', { 
+        subscriptionId, 
+        status,
+        billingOn: payload.billing_on,
+        currentPeriodEnd: payload.current_period_end,
+        payload: JSON.stringify(payload)
+      });
 
       // Update subscription status
       const { error } = await supabase
@@ -87,13 +93,23 @@ serve(async (req) => {
             .eq('id', subscription.agent_id)
             .single();
 
-          if (agent?.user_id) {
+          if (agent?.user_id && subscription.plan_name) {
+            // Normalize plan names for consistency
+            const normalizedPlan = subscription.plan_name.toLowerCase();
+            
             await supabase
               .from('profiles')
-              .update({ plan: subscription.plan_name })
+              .update({ 
+                plan: normalizedPlan,
+                billing_provider: 'shopify'
+              })
               .eq('user_id', agent.user_id);
 
-            console.log('User plan upgraded to:', subscription.plan_name);
+            console.log('User plan upgraded:', { 
+              userId: agent.user_id, 
+              plan: normalizedPlan,
+              originalPlanName: subscription.plan_name
+            });
           }
         }
       }

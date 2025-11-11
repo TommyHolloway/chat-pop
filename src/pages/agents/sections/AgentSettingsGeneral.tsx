@@ -38,21 +38,48 @@ export const AgentSettingsGeneral = ({ agent }: { agent: any }) => {
     }
   }, [agent]);
 
-  // Handle Shopify charge approval callback
+  // Handle Shopify subscription lifecycle callbacks
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const chargeApproved = params.get('shopify_charge_approved');
+    const chargeDeclined = params.get('shopify_charge_declined');
+    const subscriptionCancelled = params.get('subscription_cancelled');
+    const trialExpired = params.get('trial_expired');
+    const subscriptionUpdated = params.get('subscription_updated');
 
     if (chargeApproved === 'true') {
       toast({
         title: 'Subscription Activated!',
         description: 'Your Shopify subscription is now active.',
       });
-      
-      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (chargeDeclined === 'true') {
+      toast({
+        title: 'Subscription Not Activated',
+        description: 'The subscription charge was declined. Please try again or contact support.',
+        variant: 'destructive'
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (subscriptionCancelled === 'true') {
+      toast({
+        title: 'Subscription Cancelled',
+        description: "Your subscription has been cancelled and you've been downgraded to the free plan.",
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (trialExpired === 'true') {
+      toast({
+        title: 'Trial Expired',
+        description: 'Your free trial has ended. Upgrade to continue using premium features.',
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (subscriptionUpdated === 'true') {
+      toast({
+        title: 'Subscription Updated',
+        description: 'Your subscription plan has been updated successfully.',
+      });
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [toast]);
+  }, []);
 
   const handleSave = async () => {
     if (!formData.name.trim()) {

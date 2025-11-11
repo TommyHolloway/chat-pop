@@ -57,7 +57,7 @@ export const usePlanLimits = (agentId?: string) => {
       setLimits({
         maxLinks,
         currentLinks,
-        canAddMore: plan === 'standard' || currentLinks < maxLinks,
+        canAddMore: ['starter', 'growth', 'hobby', 'standard'].includes(plan) || currentLinks < maxLinks,
         plan
       });
     } catch (error) {
