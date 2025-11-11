@@ -15,22 +15,48 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const [isTesting, setIsTesting] = useState(false);
   const [inventoryStatus, setInventoryStatus] = useState<any>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [connectionHealth, setConnectionHealth] = useState<any>(null);
   
-  // Fetch OAuth connection
+  // Fetch OAuth connection and verify health
   useEffect(() => {
-    const fetchConnection = async () => {
-      const { data } = await supabase
-        .from('shopify_connections')
-        .select('*')
-        .eq('agent_id', agent.id)
-        .eq('revoked', false)
-        .single();
+    const fetchConnectionStatus = async () => {
+      try {
+        // First check if connection exists in DB
+        const { data } = await supabase
+          .from('shopify_connections')
+          .select('*')
+          .eq('agent_id', agent.id)
+          .eq('revoked', false)
+          .maybeSingle();
 
-      setShopifyConnection(data);
-      setLoadingConnection(false);
+        setShopifyConnection(data);
+
+        // If connection exists, verify it's still valid
+        if (data) {
+          const { data: healthData } = await supabase.functions.invoke('shopify-connection-status', {
+            body: { agent_id: agent.id }
+          });
+          
+          setConnectionHealth(healthData);
+          
+          // If connection is invalid, clear local state
+          if (healthData && !healthData.connected) {
+            setShopifyConnection(null);
+            toast({
+              title: 'Shopify Connection Lost',
+              description: 'Your Shopify connection is no longer valid. Please reconnect.',
+              variant: 'destructive',
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking connection status:', error);
+      } finally {
+        setLoadingConnection(false);
+      }
     };
 
-    fetchConnection();
+    fetchConnectionStatus();
   }, [agent.id]);
 
   const isShopifyConnected = !!shopifyConnection;
@@ -180,6 +206,11 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
                   <p className="text-xs text-muted-foreground mt-1">
                     Connected via OAuth on {new Date(shopifyConnection.connected_at).toLocaleDateString()}
                   </p>
+                  {connectionHealth?.last_verified && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      ✓ Verified {new Date(connectionHealth.last_verified).toLocaleString()}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button 

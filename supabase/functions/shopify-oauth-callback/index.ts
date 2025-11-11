@@ -133,6 +133,23 @@ serve(async (req) => {
       throw upsertError;
     }
 
+    // Get user_id from agent to update billing_provider
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('user_id')
+      .eq('id', stateRecord.agent_id)
+      .single();
+
+    if (agent?.user_id) {
+      // Set billing_provider to 'shopify' on successful connection
+      await supabase
+        .from('profiles')
+        .update({ billing_provider: 'shopify' })
+        .eq('user_id', agent.user_id);
+      
+      console.log('Set billing_provider to shopify for user:', agent.user_id);
+    }
+
     // Clear old shopify_config from agents table (migration path)
     await supabase
       .from('agents')
@@ -175,6 +192,7 @@ async function registerWebhooks(shop: string, token: string, agentId: string) {
     'orders/updated',
     'products/update',
     'inventory_levels/update',
+    'app/uninstalled', // Critical for billing_provider cleanup
   ];
 
   for (const topic of topics) {

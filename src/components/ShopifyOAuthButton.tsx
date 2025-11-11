@@ -33,7 +33,13 @@ export const ShopifyOAuthButton = ({ agentId, onSuccess }: ShopifyOAuthButtonPro
         body: { shop_domain: storeDomain, agent_id: agentId },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check for billing_provider conflicts
+        if (error.message?.includes('billing_provider')) {
+          throw new Error('You already have an active billing provider. Please disconnect it first before connecting Shopify.');
+        }
+        throw error;
+      }
 
       if (data?.install_url) {
         // Redirect to Shopify OAuth page
@@ -43,9 +49,21 @@ export const ShopifyOAuthButton = ({ agentId, onSuccess }: ShopifyOAuthButtonPro
       }
     } catch (error: any) {
       console.error('OAuth initiation error:', error);
+      
+      let errorMessage = error.message || 'Failed to initiate Shopify connection';
+      
+      // Provide user-friendly error messages
+      if (errorMessage.includes('Invalid shop domain')) {
+        errorMessage = 'Please enter a valid .myshopify.com domain';
+      } else if (errorMessage.includes('billing_provider')) {
+        errorMessage = 'You already have an active billing provider. Please disconnect it first.';
+      } else if (errorMessage.includes('unauthorized')) {
+        errorMessage = 'You do not have permission to connect this agent';
+      }
+      
       toast({
         title: 'Connection Failed',
-        description: error.message || 'Failed to initiate Shopify connection',
+        description: errorMessage,
         variant: 'destructive',
       });
       setLoading(false);
