@@ -851,6 +851,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          billing_provider: string | null
           created_at: string
           display_name: string | null
           email: string
@@ -863,6 +864,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          billing_provider?: string | null
           created_at?: string
           display_name?: string | null
           email: string
@@ -875,6 +877,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          billing_provider?: string | null
           created_at?: string
           display_name?: string | null
           email?: string
@@ -994,6 +997,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "shopify_oauth_states_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_subscriptions: {
+        Row: {
+          agent_id: string
+          amount: number | null
+          cancelled_at: string | null
+          created_at: string | null
+          current_period_end: string | null
+          id: string
+          plan_name: string
+          shop_domain: string
+          status: string
+          subscription_id: string
+          trial_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          amount?: number | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan_name: string
+          shop_domain: string
+          status: string
+          subscription_id: string
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          amount?: number | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan_name?: string
+          shop_domain?: string
+          status?: string
+          subscription_id?: string
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_subscriptions_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
