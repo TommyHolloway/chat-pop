@@ -56,6 +56,7 @@ serve(async (req) => {
       .from('shopify_connections')
       .select('agent_id')
       .eq('shop_domain', shop.toLowerCase())
+      .eq('deleted_at', null)
       .single();
 
     if (!connection) {
@@ -77,10 +78,13 @@ serve(async (req) => {
       return new Response('OK', { status: 200 });
     }
 
-    // Mark connection as revoked
+    // Soft delete connection and mark as revoked
     const { error: revokeError } = await supabase
       .from('shopify_connections')
-      .update({ revoked: true })
+      .update({ 
+        revoked: true,
+        deleted_at: new Date().toISOString()
+      })
       .eq('agent_id', connection.agent_id);
 
     if (revokeError) {
@@ -88,16 +92,51 @@ serve(async (req) => {
       throw revokeError;
     }
 
-    // Clear billing_provider from profiles
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ billing_provider: null })
-      .eq('user_id', agent.user_id);
+    // Cancel any active Shopify subscriptions
+    await supabase
+      .from('shopify_subscriptions')
+      .update({ 
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString()
+      })
+      .eq('agent_id', connection.agent_id)
+      .neq('status', 'cancelled');
 
-    if (profileError) {
-      console.error('Error clearing billing_provider:', profileError);
-      throw profileError;
+    // Check if user has other active shops
+    const { data: otherShops } = await supabase
+      .from('shopify_connections')
+      .select('id')
+      .eq('revoked', false)
+      .is('deleted_at', null)
+      .neq('agent_id', connection.agent_id);
+
+    // If no other shops, downgrade to free plan and switch to Stripe
+    if (!otherShops || otherShops.length === 0) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          billing_provider: 'stripe',
+          plan: 'free'
+        })
+        .eq('user_id', agent.user_id);
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
     }
+
+    // Log uninstall event
+    await supabase
+      .from('activity_logs')
+      .insert({
+        action: 'shopify_app_uninstalled',
+        user_id: agent.user_id,
+        details: {
+          shop_domain: shop,
+          agent_id: connection.agent_id,
+          had_other_shops: (otherShops?.length || 0) > 0
+        }
+      });
 
     console.log('Successfully handled app uninstall for user:', agent.user_id);
 

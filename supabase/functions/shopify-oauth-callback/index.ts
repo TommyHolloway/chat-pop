@@ -83,54 +83,54 @@ serve(async (req) => {
     }
 
     const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-    const scope = tokenData.scope;
+    const access_token = tokenData.access_token;
 
-    if (!accessToken) {
-      throw new Error('No access token received');
-    }
+    // Fetch shop info including owner details
+    const shopQuery = `
+      query {
+        shop {
+          id
+          name
+          email
+          contactEmail
+        }
+      }
+    `;
 
-    // Verify token by fetching shop info
-    const shopInfoResponse = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
+    const shopInfoResponse = await fetch(`https://${shop}/admin/api/2024-01/graphql.json`, {
       method: 'POST',
       headers: {
-        'X-Shopify-Access-Token': accessToken,
+        'X-Shopify-Access-Token': access_token,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        query: '{ shop { name myshopifyDomain } }',
-      }),
+      body: JSON.stringify({ query: shopQuery }),
     });
 
     const shopInfoData = await shopInfoResponse.json();
-    if (shopInfoData.errors) {
-      console.error('Token verification failed:', shopInfoData.errors);
-      throw new Error('Token verification failed');
-    }
-
-    console.log('Token verified for shop:', shopInfoData.data?.shop?.name);
+    const shopInfo = shopInfoData?.data?.shop;
+    const ownerEmail = shopInfo?.contactEmail || shopInfo?.email;
+    const ownerName = shopInfo?.name;
 
     // Encrypt token
-    const encryptedToken = await encryptToken(accessToken);
+    const encryptedToken = await encryptToken(access_token);
+    
+    const scopesArray = tokenData.scope?.split(',') || [];
 
-    // Store connection
-    const { error: upsertError } = await supabase
+    // Store connection with owner info
+    const { error: connectionError } = await supabase
       .from('shopify_connections')
-      .upsert({
+      .insert({
         agent_id: stateRecord.agent_id,
         shop_domain: shop.toLowerCase(),
         encrypted_access_token: encryptedToken,
-        granted_scopes: scope.split(','),
-        connected_at: new Date().toISOString(),
-        last_verified: new Date().toISOString(),
-        revoked: false,
-      }, {
-        onConflict: 'agent_id',
+        shop_owner_email: ownerEmail,
+        shop_owner_name: ownerName,
+        granted_scopes: scopesArray,
       });
 
-    if (upsertError) {
-      console.error('Database upsert error:', upsertError);
-      throw upsertError;
+    if (connectionError) {
+      console.error('Database connection error:', connectionError);
+      throw connectionError;
     }
 
     // Get user_id from agent to update billing_provider
@@ -163,7 +163,7 @@ serve(async (req) => {
       .eq('state', state);
 
     // Subscribe to webhooks (async, don't wait)
-    registerWebhooks(shop, accessToken, stateRecord.agent_id).catch(console.error);
+    registerWebhooks(shop, access_token, stateRecord.agent_id).catch(console.error);
 
     console.log('Shopify connection successful for agent:', stateRecord.agent_id);
 
@@ -185,20 +185,23 @@ function redirectToApp(params: string): Response {
 }
 
 async function registerWebhooks(shop: string, token: string, agentId: string) {
-  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/shopify-webhook`;
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1`;
   
-  const topics = [
-    'orders/create',
-    'orders/updated',
-    'products/update',
-    'inventory_levels/update',
-    'app/uninstalled', // Critical for billing_provider cleanup
-    'app_subscriptions/update', // For Shopify Billing API
+  const webhooks = [
+    { topic: 'orders/create', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'orders/updated', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'products/update', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'inventory_levels/update', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'app_subscriptions/update', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'app/uninstalled', address: `${webhookUrl}/shopify-webhook-uninstall` },
+    { topic: 'customers/data_request', address: `${webhookUrl}/shopify-webhook-gdpr` },
+    { topic: 'customers/redact', address: `${webhookUrl}/shopify-webhook-gdpr` },
+    { topic: 'shop/redact', address: `${webhookUrl}/shopify-webhook-gdpr` },
   ];
 
-  for (const topic of topics) {
+  for (const webhook of webhooks) {
     try {
-      const response = await fetch(`https://${shop}/admin/api/2025-01/webhooks.json`, {
+      const response = await fetch(`https://${shop}/admin/api/2024-01/webhooks.json`, {
         method: 'POST',
         headers: {
           'X-Shopify-Access-Token': token,
@@ -206,20 +209,20 @@ async function registerWebhooks(shop: string, token: string, agentId: string) {
         },
         body: JSON.stringify({
           webhook: {
-            topic,
-            address: `${webhookUrl}?agent_id=${agentId}`,
+            topic: webhook.topic,
+            address: webhook.address,
             format: 'json',
           },
         }),
       });
 
       if (response.ok) {
-        console.log(`Webhook registered: ${topic}`);
+        console.log(`Webhook registered: ${webhook.topic}`);
       } else {
-        console.error(`Failed to register webhook ${topic}:`, await response.text());
+        console.error(`Failed to register ${webhook.topic}:`, await response.text());
       }
     } catch (err) {
-      console.error(`Failed to register webhook ${topic}:`, err);
+      console.error(`Failed to register ${webhook.topic}:`, err);
     }
   }
 }

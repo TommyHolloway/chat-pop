@@ -550,6 +550,7 @@ export type Database = {
         Row: {
           agent_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           session_id: string
           visitor_session_id: string | null
@@ -557,6 +558,7 @@ export type Database = {
         Insert: {
           agent_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           session_id: string
           visitor_session_id?: string | null
@@ -564,6 +566,7 @@ export type Database = {
         Update: {
           agent_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           session_id?: string
           visitor_session_id?: string | null
@@ -640,6 +643,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gdpr_requests: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          id: string
+          processed: boolean
+          processed_at: string | null
+          request_payload: Json
+          request_type: string
+          shop_domain: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          id?: string
+          processed?: boolean
+          processed_at?: string | null
+          request_payload?: Json
+          request_type: string
+          shop_domain: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          id?: string
+          processed?: boolean
+          processed_at?: string | null
+          request_payload?: Json
+          request_type?: string
+          shop_domain?: string
+        }
+        Relationships: []
       }
       inventory_snapshot: {
         Row: {
@@ -725,6 +764,7 @@ export type Database = {
           agent_id: string
           conversation_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           lead_data_json: Json
         }
@@ -732,6 +772,7 @@ export type Database = {
           agent_id: string
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           lead_data_json?: Json
         }
@@ -739,6 +780,7 @@ export type Database = {
           agent_id?: string
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           lead_data_json?: Json
         }
@@ -764,6 +806,7 @@ export type Database = {
           content: string
           conversation_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           role: string
         }
@@ -771,6 +814,7 @@ export type Database = {
           content: string
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           role: string
         }
@@ -778,6 +822,7 @@ export type Database = {
           content?: string
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           role?: string
         }
@@ -932,32 +977,41 @@ export type Database = {
         Row: {
           agent_id: string
           connected_at: string | null
+          deleted_at: string | null
           encrypted_access_token: string
           granted_scopes: string[] | null
           id: string
           last_verified: string | null
           revoked: boolean | null
           shop_domain: string
+          shop_owner_email: string | null
+          shop_owner_name: string | null
         }
         Insert: {
           agent_id: string
           connected_at?: string | null
+          deleted_at?: string | null
           encrypted_access_token: string
           granted_scopes?: string[] | null
           id?: string
           last_verified?: string | null
           revoked?: boolean | null
           shop_domain: string
+          shop_owner_email?: string | null
+          shop_owner_name?: string | null
         }
         Update: {
           agent_id?: string
           connected_at?: string | null
+          deleted_at?: string | null
           encrypted_access_token?: string
           granted_scopes?: string[] | null
           id?: string
           last_verified?: string | null
           revoked?: boolean | null
           shop_domain?: string
+          shop_owner_email?: string | null
+          shop_owner_name?: string | null
         }
         Relationships: [
           {
@@ -1003,6 +1057,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shopify_pending_installs: {
+        Row: {
+          completed: boolean
+          created_at: string
+          expires_at: string
+          id: string
+          shop_domain: string
+          shop_owner_email: string | null
+          shop_owner_name: string | null
+          state: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          shop_domain: string
+          shop_owner_email?: string | null
+          shop_owner_name?: string | null
+          state: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          shop_domain?: string
+          shop_owner_email?: string | null
+          shop_owner_name?: string | null
+          state?: string
+        }
+        Relationships: []
       }
       shopify_subscriptions: {
         Row: {
@@ -1440,6 +1527,10 @@ export type Database = {
       }
       enhanced_security_scan: { Args: never; Returns: Json }
       enhanced_visitor_privacy_cleanup: { Args: never; Returns: undefined }
+      export_customer_data: {
+        Args: { p_customer_email: string; p_shop_domain: string }
+        Returns: Json
+      }
       generate_daily_security_audit: { Args: never; Returns: undefined }
       get_public_agent_data: {
         Args: { agent_uuid: string }
@@ -1529,6 +1620,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      redact_customer_data: {
+        Args: { p_customer_email: string; p_shop_domain: string }
+        Returns: undefined
+      }
+      redact_shop_data: { Args: { p_shop_domain: string }; Returns: undefined }
       sanitize_text_input: { Args: { input_text: string }; Returns: string }
       schedule_visitor_cleanup: { Args: never; Returns: undefined }
       security_health_check: { Args: never; Returns: Json }

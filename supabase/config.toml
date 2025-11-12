@@ -15,6 +15,15 @@ verify_jwt = false
 [functions.shopify-webhook-uninstall]
 verify_jwt = false
 
+[functions.shopify-oauth-install-anonymous]
+verify_jwt = false
+
+[functions.shopify-oauth-callback-anonymous]
+verify_jwt = false
+
+[functions.shopify-webhook-gdpr]
+verify_jwt = false
+
 [functions.shopify-connection-status]
 verify_jwt = true
 

@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const { toast } = useToast();
-  const [shopifyConnection, setShopifyConnection] = useState<any>(null);
+  const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
   const [loadingConnection, setLoadingConnection] = useState(true);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -17,34 +17,33 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionHealth, setConnectionHealth] = useState<any>(null);
   
-  // Fetch OAuth connection and verify health
+  // Fetch OAuth connections (now supporting multiple shops)
   useEffect(() => {
     const fetchConnectionStatus = async () => {
       try {
-        // First check if connection exists in DB
+        // Fetch all connections for this agent
         const { data } = await supabase
           .from('shopify_connections')
           .select('*')
           .eq('agent_id', agent.id)
           .eq('revoked', false)
-          .maybeSingle();
+          .is('deleted_at', null);
 
-        setShopifyConnection(data);
+        setShopifyConnections(data || []);
 
-        // If connection exists, verify it's still valid
-        if (data) {
+        // Verify health of connections
+        if (data && data.length > 0) {
           const { data: healthData } = await supabase.functions.invoke('shopify-connection-status', {
             body: { agent_id: agent.id }
           });
           
           setConnectionHealth(healthData);
           
-          // If connection is invalid, clear local state
+          // If connection is invalid, refresh list
           if (healthData && !healthData.connected) {
-            setShopifyConnection(null);
             toast({
-              title: 'Shopify Connection Lost',
-              description: 'Your Shopify connection is no longer valid. Please reconnect.',
+              title: 'Shopify Connection Issue',
+              description: 'Some Shopify connections may no longer be valid.',
               variant: 'destructive',
             });
           }
@@ -59,7 +58,7 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
     fetchConnectionStatus();
   }, [agent.id]);
 
-  const isShopifyConnected = !!shopifyConnection;
+  const isShopifyConnected = shopifyConnections.length > 0;
 
   const handleRefreshAgent = () => {
     // Trigger a page reload to fetch updated agent data
@@ -134,22 +133,22 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
     }
   };
 
-  const handleDisconnectShopify = async () => {
-    if (!confirm('Are you sure you want to disconnect Shopify? This will disable all e-commerce features.')) {
+  const handleDisconnectShopify = async (shopDomain: string) => {
+    if (!confirm(`Are you sure you want to disconnect ${shopDomain}?`)) {
       return;
     }
 
     setIsDisconnecting(true);
     try {
       const { error } = await supabase.functions.invoke('shopify-oauth-disconnect', {
-        body: { agent_id: agent.id }
+        body: { agent_id: agent.id, shop_domain: shopDomain }
       });
 
       if (error) throw error;
 
       toast({
         title: 'Shopify Disconnected',
-        description: 'Your Shopify store has been disconnected.',
+        description: `${shopDomain} has been disconnected.`,
       });
 
       handleRefreshAgent();
@@ -183,11 +182,15 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
               <div>
                 <CardTitle>Shopify Integration</CardTitle>
                 <CardDescription>
-                  Connect your existing Shopify store for product recommendations and cart recovery
+                  Connect your Shopify store(s) for product recommendations and cart recovery
                 </CardDescription>
               </div>
             </div>
-            {isShopifyConnected && <Badge variant="default">Connected</Badge>}
+            {isShopifyConnected && (
+              <Badge variant="default">
+                {shopifyConnections.length} {shopifyConnections.length === 1 ? 'Shop' : 'Shops'} Connected
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -199,44 +202,60 @@ export const AgentSettingsIntegrations = ({ agent }: { agent: any }) => {
             <ShopifyOAuthButton agentId={agent.id} onSuccess={handleRefreshAgent} />
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Store Domain</p>
-                  <p className="text-sm text-muted-foreground">{shopifyConnection.shop_domain}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Connected via OAuth on {new Date(shopifyConnection.connected_at).toLocaleDateString()}
-                  </p>
-                  {connectionHealth?.last_verified && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      ✓ Verified {new Date(connectionHealth.last_verified).toLocaleString()}
+              {shopifyConnections.map((connection) => (
+                <div key={connection.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Store Domain</p>
+                    <p className="text-sm text-muted-foreground">{connection.shop_domain}</p>
+                    {connection.shop_owner_email && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Owner: {connection.shop_owner_email}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Connected on {new Date(connection.connected_at).toLocaleDateString()}
                     </p>
-                  )}
+                    {connectionHealth?.last_verified && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                        ✓ Verified {new Date(connectionHealth.last_verified).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(`https://${connection.shop_domain}/admin`, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDisconnectShopify(connection.shop_domain)}
+                      disabled={isDisconnecting}
+                    >
+                      {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleDisconnectShopify}
-                    disabled={isDisconnecting}
-                  >
-                    {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
-                  </Button>
-                </div>
-              </div>
+              ))}
               <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <p className="text-sm font-medium text-green-700 dark:text-green-400">✓ Product Search Enabled</p>
-                <p className="text-xs text-muted-foreground mt-1">Your agent can now search and recommend products from your store</p>
+                <p className="text-xs text-muted-foreground mt-1">Your agent can search and recommend products from your stores</p>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <ExternalLink className="h-3 w-3" />
-                <a 
-                  href={`https://${shopifyConnection.shop_domain}/admin`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline"
+              <div className="pt-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    // Trigger the connect flow for another shop
+                    window.location.href = `/workspace/${agent.workspace_id}/agents/${agent.id}/integrations?connect_shop=true`;
+                  }}
                 >
-                  Open Shopify Admin
-                </a>
+                  <ShoppingBag className="h-4 w-4 mr-2" />
+                  Connect Another Shop
+                </Button>
               </div>
             </div>
           )}

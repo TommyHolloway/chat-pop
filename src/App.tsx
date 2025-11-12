@@ -39,6 +39,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { AgentLayout } from "./pages/agents/AgentLayout";
 import { PublicChat } from "./pages/agents/PublicChat";
 import { AgentOnboardingWizard } from "./components/onboarding/AgentOnboardingWizard";
+import { ShopifyOnboarding } from "./pages/ShopifyOnboarding";
 
 const queryClient = new QueryClient();
 
@@ -116,10 +117,15 @@ const App = () => (
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               
-              {/* Onboarding Route */}
+              {/* Onboarding Routes */}
               <Route path="/agents/onboarding" element={
                 <ProtectedRoute>
                   <AgentOnboardingWizard />
+                </ProtectedRoute>
+              } />
+              <Route path="/shopify-onboarding" element={
+                <ProtectedRoute>
+                  <ShopifyOnboarding />
                 </ProtectedRoute>
               } />
               
