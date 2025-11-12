@@ -14,7 +14,7 @@ export const StickyFeatureStack = () => {
         imageSrc="/lovable-uploads/ai-product-understanding.png"
         imageAlt="Product Recommendations"
         imagePosition="right"
-        gradient={true}
+        gradient={false}
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-10"
@@ -34,7 +34,7 @@ export const StickyFeatureStack = () => {
         imageSrc="/lovable-uploads/cart-recovery-bg.png"
         imageAlt="Cart Recovery Chat"
         imagePosition="left"
-        gradient={true}
+        gradient={false}
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-20"
@@ -54,7 +54,7 @@ export const StickyFeatureStack = () => {
         imageSrc="/lovable-uploads/real-time-shopping-bg.png"
         imageAlt="Real-time Chat"
         imagePosition="right"
-        gradient={true}
+        gradient={false}
         isSticky={true}
         stickyTop="top-[20vh]"
         zIndex="z-30"
