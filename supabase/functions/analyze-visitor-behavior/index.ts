@@ -68,17 +68,6 @@ serve(async (req) => {
       });
     }
 
-    // Check if proactive engagement is enabled for this agent
-    if (!agent.enable_proactive_engagement) {
-      console.log('Proactive engagement disabled for agent:', agentId);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        reason: 'Proactive engagement disabled for this agent' 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     const config = agent.proactive_config || {};
     console.log('Agent proactive config:', config);
 
@@ -108,8 +97,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         analysis: analysis,
-        messageDisplayDuration: config.message_display_duration || 15000,
-        timingDelay: config.timing_delay || 5000
+        messageDisplayDuration: config.message_display_duration || 15000
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -132,19 +120,12 @@ serve(async (req) => {
 
 async function analyzeAndTrigger(config: any, sessions: any, currentUrl: string, currentPath: string, currentHash: string, timeOnPage: number) {
   console.log('Starting analysis with:', { 
-    configEnabled: config.enabled,
     customTriggersCount: config.custom_triggers?.length || 0,
     sessionsCount: sessions?.length, 
     currentUrl, 
     currentPath, 
     timeOnPage 
   });
-
-  // Check if proactive engagement is enabled in config
-  if (!config.enabled) {
-    console.log('Proactive engagement disabled in config');
-    return { triggered: false, reason: 'Proactive engagement disabled' };
-  }
 
   // Check custom triggers first (highest priority) - includes Quick Triggers
   if (config.custom_triggers && config.custom_triggers.length > 0) {

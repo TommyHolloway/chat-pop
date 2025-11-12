@@ -21,9 +21,6 @@ export interface CustomTrigger extends ProactiveTrigger {
 }
 
 export interface ProactiveConfig {
-  enabled: boolean;
-  timing_delay: number;
-  frequency_limit: number;
   message_display_duration: number;
   allowed_pages?: string[];
   triggers: {
@@ -78,9 +75,6 @@ const quickTriggerTemplates: CustomTrigger[] = [
 ];
 
 const defaultConfig: ProactiveConfig = {
-  enabled: false,
-  timing_delay: 5000,
-  frequency_limit: 3,
   message_display_duration: 15000,
   allowed_pages: [],
   triggers: {
@@ -207,24 +201,7 @@ export const useProactiveConfig = (agent: any) => {
   }, [agent?.id, agent?.proactive_config, agent?.updated_at]);
 
   const updateConfig = (updates: Partial<ProactiveConfig>) => {
-    setConfig(prev => {
-      const newConfig = { ...prev, ...updates };
-      
-      // If disabling proactive engagement globally, disable all individual triggers
-      if ('enabled' in updates && !updates.enabled) {
-        newConfig.triggers = {
-          pricing_concern: { ...newConfig.triggers.pricing_concern, enabled: false },
-          high_engagement: { ...newConfig.triggers.high_engagement, enabled: false },
-          feature_exploration: { ...newConfig.triggers.feature_exploration, enabled: false }
-        };
-        newConfig.custom_triggers = (newConfig.custom_triggers || []).map(trigger => ({
-          ...trigger,
-          enabled: false
-        }));
-      }
-      
-      return newConfig;
-    });
+    setConfig(prev => ({ ...prev, ...updates }));
   };
 
   const updateTrigger = (triggerName: keyof ProactiveConfig['triggers'], updates: Partial<ProactiveTrigger>) => {
@@ -291,7 +268,6 @@ export const useProactiveConfig = (agent: any) => {
     try {
       console.log('Saving proactive config:', {
         agentId: id,
-        enabled: config.enabled,
         customTriggersCount: config.custom_triggers?.length || 0,
         quickTriggersEnabled: config.custom_triggers?.filter(t => t.isQuickTrigger && t.enabled).length || 0
       });
@@ -306,7 +282,7 @@ export const useProactiveConfig = (agent: any) => {
         name: agent.name,
         description: agent.description,
         instructions: agent.instructions,
-        enable_proactive_engagement: config.enabled,
+        enable_proactive_engagement: true,
         proactive_config: configToSave,
       };
 
