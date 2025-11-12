@@ -40,6 +40,38 @@ serve(async (req) => {
       timeOnPage 
     });
 
+    // Get client IP for security validation and rate limiting
+    const clientIPHeader = req.headers.get('x-forwarded-for') || 
+                           req.headers.get('x-real-ip') || 
+                           'unknown';
+
+    // Use the safe IP parsing function
+    const { data: parsedIP, error: ipError } = await supabase.rpc('parse_client_ip', {
+      ip_header: clientIPHeader
+    });
+
+    const clientIP = parsedIP || null;
+
+    // Validate the request using our enhanced security function (rate limiting)
+    const { error: validationError } = await supabase.rpc('validate_edge_function_request', {
+      function_name: 'analyze-visitor-behavior',
+      request_data: requestData,
+      client_ip: clientIP
+    });
+
+    if (validationError) {
+      console.error('Request validation failed (rate limit exceeded):', validationError);
+      return new Response(
+        JSON.stringify({ error: 'Request validation failed' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429
+        }
+      );
+    }
+
+    console.log('Rate limiting check passed');
+
     // Get agent's proactive configuration
     const { data: agent, error: agentError } = await supabase
       .from('agents')
