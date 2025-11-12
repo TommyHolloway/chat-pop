@@ -33,11 +33,14 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    // Map plan to Stripe product IDs
     let productId;
-    if (plan === 'hobby') {
+    if (plan === 'starter' || plan === 'hobby') {
       productId = 'prod_TMZ2r6gJsJwMq6';
-    } else if (plan === 'standard') {
+    } else if (plan === 'growth' || plan === 'standard') {
       productId = 'prod_TMZ2dGeLsNO31t';
+    } else if (plan === 'pro') {
+      productId = 'prod_NEWPRO123456'; // TODO: Replace with actual Pro product ID from Stripe
     } else {
       throw new Error("Invalid plan selected");
     }

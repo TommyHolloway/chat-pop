@@ -17,10 +17,11 @@ export const pricingPlans: PricingPlan[] = [
     description: "Test the power of AI for your store",
     features: [
       "1 AI shopping assistant",
-      "50 customer interactions/month",
+      "100 unique monthly visitors",
+      "Up to 100 products",
       "Basic product recommendations",
-      "10 products in catalog",
-      "Email support"
+      "Self-serve onboarding",
+      "Email support (48hr response)"
     ],
     buttonText: "Start Free",
     buttonVariant: "outline"
@@ -32,13 +33,14 @@ export const pricingPlans: PricingPlan[] = [
     description: "Recover up to $10K/mo in abandoned carts",
     features: [
       "Everything in Free +",
-      "2,000 customer interactions/month",
+      "Up to 10,000 unique monthly visitors",
+      "Up to 1,000 products",
       "2 AI shopping assistants",
-      "Unlimited products in catalog",
-      "Cart abandonment recovery (50/mo)",
-      "Revenue attribution analytics",
-      "Shopify integration",
-      "Priority email support"
+      "Cart abandonment recovery (100/mo)",
+      "Proactive engagement triggers",
+      "AI training & product recommendations",
+      "Priority email support (24hr response)",
+      "7-day free trial"
     ],
     highlighted: true,
     buttonText: "Start Recovering Revenue",
@@ -51,16 +53,39 @@ export const pricingPlans: PricingPlan[] = [
     description: "Scale to $50K+/mo in recovered revenue",
     features: [
       "Everything in Starter +",
-      "10,000 customer interactions/month",
+      "Up to 25,000 unique monthly visitors",
+      "Up to 3,000 products",
       "5 AI shopping assistants",
       "Cart abandonment recovery (500/mo)",
-      "Advanced revenue analytics",
-      "Custom product recommendation AI",
-      "Conversion tracking & attribution",
-      "Multi-store management",
-      "Priority email support"
+      "Proactive engagement triggers",
+      "Custom branding (remove ChatPop branding)",
+      "Revenue attribution analytics",
+      "Priority Slack + Email support",
+      "7-day free trial"
     ],
     buttonText: "Scale Revenue",
+    buttonVariant: "outline"
+  },
+  {
+    name: "Pro",
+    price: "$347",
+    period: "per month",
+    description: "Enterprise-level features and support",
+    features: [
+      "Everything in Growth +",
+      "Up to 50,000 unique monthly visitors",
+      "Up to 5,000 products",
+      "10 AI shopping assistants",
+      "Cart abandonment recovery (2,000/mo)",
+      "Proactive engagement triggers",
+      "Custom branding",
+      "Advanced revenue analytics",
+      "Priority Slack + Email support",
+      "Advanced A/B testing (Coming Soon)",
+      "Custom integrations (Coming Soon)",
+      "7-day free trial"
+    ],
+    buttonText: "Contact Sales",
     buttonVariant: "outline"
   }
 ];
@@ -87,12 +112,12 @@ export const faqItems = [
     answer: "Yes. The AI can answer size and fit questions, provide measurements, suggest sizing based on customer input, and even help with product comparisons. It learns from your product descriptions and specifications."
   },
   {
-    question: "What happens after my free trial?",
-    answer: "Your free plan includes 50 customer interactions. After that, choose a paid plan or stay on the free tier. We'll never charge you without permission, and you can cancel anytime. Plus, we offer a 30-day money-back guarantee on paid plans."
+    question: "What are unique monthly visitors?",
+    answer: "A unique monthly visitor is counted once per month when someone visits your website and interacts with your AI assistant. Even if the same person returns multiple times, they only count as one unique visitor for that month. This makes pricing predictable and fair."
   },
   {
-    question: "What are customer interactions?",
-    answer: "A customer interaction is counted each time a shopper engages with your AI assistant. One visitor session = one interaction, regardless of how many messages are exchanged. This makes pricing predictable and fair."
+    question: "What happens when I reach my visitor limit?",
+    answer: "When you approach your monthly visitor limit, we'll send you a notification. Once you reach the limit, new visitors will see a friendly message encouraging them to contact you directly. You can upgrade your plan anytime to continue serving customers without interruption."
   },
   {
     question: "Can I upgrade or downgrade anytime?",
@@ -100,6 +125,10 @@ export const faqItems = [
   },
   {
     question: "What kind of support do you provide?",
-    answer: "Free plans get email support with 48-hour response times. Starter plans get priority email support within 24 hours. Growth plans get priority phone support with same-day responses."
+    answer: "Free plans get email support with 48-hour response times. Starter plans get priority email support within 24 hours. Growth and Pro plans get priority Slack support with same-day responses plus email support."
+  },
+  {
+    question: "Do existing customers keep unlimited products?",
+    answer: "Yes! Existing customers are grandfathered with unlimited products on their current plan. New product limits only apply to customers who sign up after the pricing update."
   }
 ];

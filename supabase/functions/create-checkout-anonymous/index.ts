@@ -32,6 +32,7 @@ serve(async (req) => {
     const productIds: Record<string, string> = {
       'starter': 'prod_TMZ2r6gJsJwMq6',
       'growth': 'prod_TMZ2dGeLsNO31t',
+      'pro': 'prod_NEWPRO123456', // TODO: Replace with actual Pro product ID from Stripe
     };
 
     const productId = productIds[plan];

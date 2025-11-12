@@ -37,6 +37,79 @@ serve(async (req) => {
     
     const agent = agentData[0];
 
+    // Generate visitor fingerprint for tracking
+    const generateVisitorFingerprint = (req: Request): string => {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                 req.headers.get('x-real-ip') || 
+                 'unknown';
+      const userAgent = req.headers.get('user-agent') || 'unknown';
+      
+      // Create hash for privacy
+      const encoder = new TextEncoder();
+      const data = encoder.encode(`${ip}:${userAgent}`);
+      return Array.from(data).map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    const visitorFingerprint = generateVisitorFingerprint(req);
+
+    // Get agent's user_id to check visitor limit
+    const { data: agentOwner, error: ownerError } = await supabase
+      .from('agents')
+      .select('user_id')
+      .eq('id', agentId)
+      .single();
+
+    if (!ownerError && agentOwner) {
+      // Check visitor limit
+      const { data: limitCheck } = await supabase
+        .rpc('check_visitor_limit', { p_user_id: agentOwner.user_id });
+
+      if (limitCheck && limitCheck.length > 0 && !limitCheck[0].can_accept_visitor) {
+        // Return limit reached HTML
+        const limitHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Unavailable</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .container { background: white; border-radius: 16px; padding: 48px 32px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+    .icon { font-size: 64px; margin-bottom: 24px; }
+    h1 { font-size: 24px; color: #1a202c; margin-bottom: 16px; font-weight: 600; }
+    p { color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 24px; }
+    .plan-info { background: #f7fafc; border-radius: 8px; padding: 16px; margin-top: 24px; font-size: 14px; color: #2d3748; }
+    .contact-link { display: inline-block; margin-top: 16px; color: #667eea; font-weight: 500; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">💬</div>
+    <h1>Chat Temporarily Unavailable</h1>
+    <p>This store has reached their monthly visitor limit for their current plan. Please check back next month or contact them directly for assistance.</p>
+    <div class="plan-info">
+      <strong>Current Plan:</strong> ${limitCheck[0].plan || 'Free'}<br>
+      <strong>Monthly Visitors:</strong> ${limitCheck[0].current_visitors} / ${limitCheck[0].visitor_limit}
+    </div>
+  </div>
+</body>
+</html>
+        `;
+        return new Response(limitHtml, { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' } 
+        });
+      }
+
+      // Track the visitor
+      await supabase.rpc('track_unique_monthly_visitor', {
+        p_agent_id: agentId,
+        p_visitor_fingerprint: visitorFingerprint
+      });
+    }
+
     // SECURITY: Proper HTML escaping to prevent XSS attacks
     function escapeHtml(unsafe: string): string {
       return unsafe

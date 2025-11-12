@@ -12,6 +12,8 @@ interface PlanLimitResponse {
 }
 
 interface PlanLimits {
+  monthlyVisitors: number;
+  products: number;
   messageCredits: number;
   agents: number;
   links: number;
@@ -48,7 +50,7 @@ export const usePlanEnforcement = () => {
   const { plan: userPlan, isLoading: planLoading } = useUserPlan();
   const { usage } = useUsageData();
   const [enforcement, setEnforcement] = useState<PlanEnforcement>({
-    limits: { messageCredits: 100, agents: 1, links: 5, storageGB: 1, cartRecovery: 0 },
+    limits: { monthlyVisitors: 100, products: 100, messageCredits: -1, agents: 1, links: 5, storageGB: 1, cartRecovery: 0 },
     usage: { currentAgents: 0, currentMessageCredits: 0, currentLinks: 0, currentStorageBytes: 0, currentCartRecovery: 0 },
     canCreateAgent: true,
     canSendMessage: true,
@@ -76,26 +78,42 @@ export const usePlanEnforcement = () => {
   const getPlanLimits = (plan: string): PlanLimits => {
     switch (plan) {
       case 'hobby':
-      case 'starter': // Starter plan (renamed from hobby)
+      case 'starter':
         return {
-          messageCredits: 2000,
+          monthlyVisitors: 10000,
+          products: 1000,
+          messageCredits: -1,
           agents: 2,
-          links: -1, // unlimited
+          links: -1,
           storageGB: 5,
-          cartRecovery: 50
+          cartRecovery: 100
         };
       case 'standard':
-      case 'growth': // Growth plan (renamed from standard/pro)
+      case 'growth':
         return {
-          messageCredits: 10000,
+          monthlyVisitors: 25000,
+          products: 3000,
+          messageCredits: -1,
           agents: 5,
-          links: -1, // unlimited
+          links: -1,
           storageGB: 50,
           cartRecovery: 500
         };
+      case 'pro':
+        return {
+          monthlyVisitors: 50000,
+          products: 5000,
+          messageCredits: -1,
+          agents: 10,
+          links: -1,
+          storageGB: 100,
+          cartRecovery: 2000
+        };
       default: // free
         return {
-          messageCredits: 50,
+          monthlyVisitors: 100,
+          products: 100,
+          messageCredits: -1,
           agents: 1,
           links: 5,
           storageGB: 1,

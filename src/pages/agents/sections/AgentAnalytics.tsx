@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useVisitorBehavior } from '@/hooks/useVisitorBehavior';
+import { useVisitorTracking } from '@/hooks/useVisitorTracking';
 import { Users, MessageCircle, Clock, TrendingUp, Eye, AlertCircle } from 'lucide-react';
 import { subDays, format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
@@ -33,7 +34,9 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
   const { analytics } = useAnalytics(id!, memoizedDateRange);
   
-  const { 
+  const visitorStats = useVisitorTracking();
+  
+  const {
     visitorSessions, 
     behaviorEvents, 
     proactiveSuggestions, 
@@ -135,6 +138,37 @@ export const AgentAnalytics = ({ agent }: { agent: any }) => {
 
       {/* Essential Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Monthly Visitors Card */}
+        <Card className={visitorStats.currentMonthVisitors >= visitorStats.limit * 0.8 ? 'border-warning' : ''}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Monthly Visitors
+              <Badge variant={visitorStats.currentMonthVisitors >= visitorStats.limit ? 'destructive' : 'secondary'} className="text-xs font-normal">
+                {visitorStats.plan}
+              </Badge>
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {visitorStats.isLoading ? '...' : `${visitorStats.currentMonthVisitors.toLocaleString()} / ${visitorStats.limit.toLocaleString()}`}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Unique visitors this month
+            </p>
+            {visitorStats.currentMonthVisitors >= visitorStats.limit * 0.8 && (
+              <Alert variant={visitorStats.currentMonthVisitors >= visitorStats.limit ? 'destructive' : 'default'} className="mt-3">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {visitorStats.currentMonthVisitors >= visitorStats.limit
+                    ? "You've reached your visitor limit. Upgrade to continue serving customers."
+                    : "You're approaching your visitor limit. Consider upgrading soon."}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">

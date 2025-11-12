@@ -379,6 +379,88 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_monthly_visitors: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          first_seen_at: string | null
+          id: string
+          last_seen_at: string | null
+          month: string
+          session_count: number | null
+          visitor_fingerprint: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          first_seen_at?: string | null
+          id?: string
+          last_seen_at?: string | null
+          month: string
+          session_count?: number | null
+          visitor_fingerprint: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          first_seen_at?: string | null
+          id?: string
+          last_seen_at?: string | null
+          month?: string
+          session_count?: number | null
+          visitor_fingerprint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_monthly_visitors_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_product_catalog: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          product_id: string
+          product_name: string | null
+          product_sku: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id: string
+          product_name?: string | null
+          product_sku?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id?: string
+          product_name?: string | null
+          product_sku?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_product_catalog_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_qna_knowledge: {
         Row: {
           agent_id: string
@@ -897,12 +979,15 @@ export type Database = {
         Row: {
           avatar_url: string | null
           billing_provider: string | null
+          cart_recovery_limit: number | null
           created_at: string
           display_name: string | null
           email: string
           id: string
+          monthly_visitors_limit: number | null
           phone: string | null
           plan: string | null
+          products_limit: number | null
           stripe_customer_id: string | null
           updated_at: string
           user_id: string
@@ -910,12 +995,15 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           billing_provider?: string | null
+          cart_recovery_limit?: number | null
           created_at?: string
           display_name?: string | null
           email: string
           id?: string
+          monthly_visitors_limit?: number | null
           phone?: string | null
           plan?: string | null
+          products_limit?: number | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
@@ -923,12 +1011,15 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           billing_provider?: string | null
+          cart_recovery_limit?: number | null
           created_at?: string
           display_name?: string | null
           email?: string
           id?: string
+          monthly_visitors_limit?: number | null
           phone?: string | null
           plan?: string | null
+          products_limit?: number | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
@@ -1483,6 +1574,15 @@ export type Database = {
         Returns: undefined
       }
       automated_security_maintenance_v2: { Args: never; Returns: undefined }
+      check_product_limit: {
+        Args: { p_agent_id: string }
+        Returns: {
+          can_add_product: boolean
+          current_products: number
+          plan: string
+          product_limit: number
+        }[]
+      }
       check_user_plan_limits: {
         Args: {
           p_agent_id?: string
@@ -1492,10 +1592,20 @@ export type Database = {
         }
         Returns: Json
       }
+      check_visitor_limit: {
+        Args: { p_user_id: string }
+        Returns: {
+          can_accept_visitor: boolean
+          current_visitors: number
+          plan: string
+          visitor_limit: number
+        }[]
+      }
       cleanup_empty_conversations: { Args: never; Returns: undefined }
       cleanup_expired_cache: { Args: never; Returns: undefined }
       cleanup_expired_oauth_states: { Args: never; Returns: undefined }
       cleanup_old_visitor_data: { Args: never; Returns: undefined }
+      cleanup_old_visitor_data_extended: { Args: never; Returns: undefined }
       cleanup_visitor_privacy_data: { Args: never; Returns: undefined }
       comprehensive_security_maintenance: { Args: never; Returns: undefined }
       comprehensive_security_scan: { Args: never; Returns: Json }
@@ -1532,6 +1642,15 @@ export type Database = {
         Returns: Json
       }
       generate_daily_security_audit: { Args: never; Returns: undefined }
+      get_agent_visitor_stats: {
+        Args: { p_agent_id: string }
+        Returns: {
+          can_accept_visitors: boolean
+          current_month_visitors: number
+          plan: string
+          visitor_limit: number
+        }[]
+      }
       get_public_agent_data: {
         Args: { agent_uuid: string }
         Returns: {
@@ -1636,6 +1755,10 @@ export type Database = {
           id: string
           plan: string
         }[]
+      }
+      track_unique_monthly_visitor: {
+        Args: { p_agent_id: string; p_visitor_fingerprint: string }
+        Returns: boolean
       }
       update_storage_usage: {
         Args: { p_size_change: number; p_user_id: string }
