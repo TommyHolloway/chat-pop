@@ -94,14 +94,7 @@ export const shopifyConfigSchema = z.object({
     .min(32, 'Admin API token must be at least 32 characters')
     .max(256, 'Admin API token is too long')
     .regex(/^shp[a-z]{2}_[a-zA-Z0-9_]+$/, 'Invalid Admin API token format. Should start with "shp" followed by a valid Shopify prefix (e.g., shpat_, shpss_, shpca_)')
-    .trim(),
-  storefront_api_token: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || val.length >= 32,
-      'Storefront API token must be at least 32 characters if provided'
-    )
+    .trim()
 });
 
 // XSS sanitization utility

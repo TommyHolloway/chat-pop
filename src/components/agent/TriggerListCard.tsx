@@ -14,36 +14,15 @@ interface TriggerListCardProps {
 }
 
 const getTriggerIcon = (type: string) => {
-  switch (type) {
-    case 'time_based':
-      return <Clock className="h-4 w-4" />;
-    case 'scroll_based':
-      return <MousePointer className="h-4 w-4" />;
-    default:
-      return <Clock className="h-4 w-4" />;
-  }
+  return <Clock className="h-4 w-4" />;
 };
 
 const getTriggerTypeLabel = (type: string) => {
-  switch (type) {
-    case 'time_based':
-      return 'Time Based';
-    case 'scroll_based':
-      return 'Scroll Based';
-    default:
-      return 'Unknown';
-  }
+  return 'Time Based';
 };
 
 const getTriggerDescription = (trigger: CustomTrigger) => {
-  switch (trigger.trigger_type) {
-    case 'time_based':
-      return `Shows after ${trigger.time_threshold || 30} seconds`;
-    case 'scroll_based':
-      return `Shows at ${trigger.scroll_depth || 50}% scroll`;
-    default:
-      return 'Custom trigger';
-  }
+  return `Shows after ${trigger.time_threshold || 30} seconds`;
 };
 
 export const TriggerListCard = ({ trigger, onToggle, onEdit, onDelete }: TriggerListCardProps) => {

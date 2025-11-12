@@ -15,8 +15,7 @@ export interface ProactiveTrigger {
 export interface CustomTrigger extends ProactiveTrigger {
   id: string;
   name: string;
-  trigger_type: 'time_based' | 'scroll_based';
-  scroll_depth?: number;
+  trigger_type: 'time_based';
   isQuickTrigger?: boolean;
 }
 

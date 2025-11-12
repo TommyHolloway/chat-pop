@@ -20,14 +20,7 @@ interface CustomTriggerManagerProps {
 
 export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: CustomTriggerManagerProps) => {
   const getTriggerIcon = (type: string) => {
-    switch (type) {
-      case 'time_based':
-        return <Globe className="h-4 w-4 text-muted-foreground" />;
-      case 'scroll_based':
-        return <ArrowUp className="h-4 w-4 text-muted-foreground" />;
-      default:
-        return <Globe className="h-4 w-4 text-muted-foreground" />;
-    }
+    return <Globe className="h-4 w-4 text-muted-foreground" />;
   };
 
   const handleAdd = () => {
@@ -109,39 +102,22 @@ export const CustomTriggerManager = ({ triggers, onAdd, onRemove, onUpdate }: Cu
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="time_based">Time Based</SelectItem>
-                          <SelectItem value="scroll_based">Scroll Based</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  {trigger.trigger_type === 'time_based' && (
-                    <div className="space-y-2">
-                      <Label>Time Threshold: {trigger.time_threshold} seconds</Label>
-                      <Slider
-                        value={[trigger.time_threshold || 30]}
-                        onValueChange={([value]) => handleUpdate(trigger.id, { time_threshold: value })}
-                        min={5}
-                        max={300}
-                        step={5}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
-
-                  {trigger.trigger_type === 'scroll_based' && (
-                    <div className="space-y-2">
-                      <Label>Scroll Depth: {trigger.scroll_depth}%</Label>
-                      <Slider
-                        value={[trigger.scroll_depth || 50]}
-                        onValueChange={([value]) => handleUpdate(trigger.id, { scroll_depth: value })}
-                        min={10}
-                        max={100}
-                        step={5}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <Label>Time Threshold: {trigger.time_threshold} seconds</Label>
+                    <Slider
+                      value={[trigger.time_threshold || 30]}
+                      onValueChange={([value]) => handleUpdate(trigger.id, { time_threshold: value })}
+                      min={5}
+                      max={300}
+                      step={5}
+                      className="w-full"
+                    />
+                  </div>
 
                   <div className="space-y-2">
                     <Label>URL Patterns (comma-separated)</Label>

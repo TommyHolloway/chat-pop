@@ -18,7 +18,7 @@ interface TriggerCreationWizardProps {
   onUpdateTrigger?: (triggerId: string, updates: Partial<CustomTrigger>) => void;
 }
 
-type TriggerType = 'time_based' | 'scroll_based';
+type TriggerType = 'time_based';
 
 interface TriggerTypeOption {
   value: TriggerType;
@@ -33,12 +33,6 @@ const triggerTypes: TriggerTypeOption[] = [
     label: 'Time Based',
     description: 'Show message after visitor spends time on page',
     icon: <Clock className="h-6 w-6" />
-  },
-  {
-    value: 'scroll_based',
-    label: 'Scroll Based',
-    description: 'Show message when visitor scrolls down the page',
-    icon: <MousePointer className="h-6 w-6" />
   }
 ];
 
@@ -60,7 +54,6 @@ export const TriggerCreationWizard = ({
     trigger_type: 'time_based',
     enabled: true,
     time_threshold: 30,
-    scroll_depth: 50,
     url_patterns: [],
     message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
   });
@@ -73,7 +66,6 @@ export const TriggerCreationWizard = ({
         trigger_type: editingTrigger.trigger_type,
         enabled: editingTrigger.enabled,
         time_threshold: editingTrigger.time_threshold || 30,
-        scroll_depth: editingTrigger.scroll_depth || 50,
         url_patterns: editingTrigger.url_patterns || [],
         message: editingTrigger.message
       });
@@ -88,7 +80,6 @@ export const TriggerCreationWizard = ({
         trigger_type: 'time_based',
         enabled: true,
         time_threshold: 30,
-        scroll_depth: 50,
         url_patterns: [],
         message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
       });
@@ -141,7 +132,6 @@ export const TriggerCreationWizard = ({
         name: triggerData.name,
         trigger_type: triggerData.trigger_type!,
         time_threshold: triggerData.time_threshold || 30,
-        scroll_depth: triggerData.scroll_depth || 50,
         url_patterns: finalUrlPatterns,
         message: triggerData.message
       });
@@ -152,7 +142,6 @@ export const TriggerCreationWizard = ({
         trigger_type: triggerData.trigger_type!,
         enabled: true,
         time_threshold: triggerData.time_threshold || 30,
-        scroll_depth: triggerData.scroll_depth || 50,
         url_patterns: finalUrlPatterns,
         message: triggerData.message
       });
@@ -164,7 +153,6 @@ export const TriggerCreationWizard = ({
       trigger_type: 'time_based',
       enabled: true,
       time_threshold: 30,
-      scroll_depth: 50,
       url_patterns: [],
       message: 'Hi! I noticed you\'ve been browsing for a while. Can I help you find what you\'re looking for?'
     });
@@ -318,41 +306,21 @@ export const TriggerCreationWizard = ({
               </p>
             </div>
 
-            {triggerData.trigger_type === 'time_based' && (
-              <div className="space-y-4">
-                <Label>Show message after {triggerData.time_threshold} seconds</Label>
-                <Slider
-                  value={[triggerData.time_threshold || 30]}
-                  onValueChange={([value]) => setTriggerData({ ...triggerData, time_threshold: value })}
-                  min={5}
-                  max={120}
-                  step={5}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>5 seconds</span>
-                  <span>2 minutes</span>
-                </div>
+            <div className="space-y-4">
+              <Label>Show message after {triggerData.time_threshold} seconds</Label>
+              <Slider
+                value={[triggerData.time_threshold || 30]}
+                onValueChange={([value]) => setTriggerData({ ...triggerData, time_threshold: value })}
+                min={5}
+                max={120}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>5 seconds</span>
+                <span>2 minutes</span>
               </div>
-            )}
-
-            {triggerData.trigger_type === 'scroll_based' && (
-              <div className="space-y-4">
-                <Label>Show message when visitor scrolls {triggerData.scroll_depth}% down the page</Label>
-                <Slider
-                  value={[triggerData.scroll_depth || 50]}
-                  onValueChange={([value]) => setTriggerData({ ...triggerData, scroll_depth: value })}
-                  min={10}
-                  max={90}
-                  step={5}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>10%</span>
-                  <span>90%</span>
-                </div>
-              </div>
-            )}
+            </div>
 
           </div>
         );
