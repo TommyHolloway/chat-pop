@@ -22,23 +22,44 @@ export const Billing = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [agentId, setAgentId] = useState<string | undefined>();
+  const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
+  const [loadingConnections, setLoadingConnections] = useState(false);
 
   useEffect(() => {
-    const fetchAgentId = async () => {
+    const fetchAgentAndConnections = async () => {
       if (!user) return;
       
-      const { data: agents } = await supabase
-        .from('agents')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-      
-      if (agents && agents.length > 0) {
-        setAgentId(agents[0].id);
+      setLoadingConnections(true);
+      try {
+        // Fetch all user's agents
+        const { data: agents } = await supabase
+          .from('agents')
+          .select('id, name')
+          .eq('user_id', user.id);
+        
+        if (agents && agents.length > 0) {
+          setAgentId(agents[0].id);
+          
+          // Fetch all Shopify connections for these agents
+          const agentIds = agents.map(a => a.id);
+          const { data: connections } = await supabase
+            .from('shopify_connections')
+            .select('*, agents(name)')
+            .in('agent_id', agentIds)
+            .eq('revoked', false)
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false });
+          
+          if (connections) {
+            setShopifyConnections(connections);
+          }
+        }
+      } finally {
+        setLoadingConnections(false);
       }
     };
     
-    fetchAgentId();
+    fetchAgentAndConnections();
   }, [user]);
 
   useEffect(() => {
@@ -178,6 +199,83 @@ export const Billing = () => {
           agentId={agentId}
           onRefresh={refetchPlan}
         />
+      )}
+
+      {/* Connected Shopify Shops */}
+      {shopifyConnections.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Connected Shopify Shops</CardTitle>
+            <CardDescription>
+              Manage your connected Shopify stores and their integration status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingConnections ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {shopifyConnections.map((connection) => (
+                  <div 
+                    key={connection.id} 
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="space-y-1">
+                      <div className="font-medium">{connection.shop_domain}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Connected to: {connection.agents?.name || 'Unknown Agent'}
+                      </div>
+                      {connection.shop_owner_email && (
+                        <div className="text-xs text-muted-foreground">
+                          Owner: {connection.shop_owner_email}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={connection.revoked ? 'secondary' : 'default'}>
+                        {connection.revoked ? 'Disconnected' : 'Active'}
+                      </Badge>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const { error } = await supabase.functions.invoke('shopify-oauth-disconnect', {
+                              body: { agent_id: connection.agent_id }
+                            });
+                            
+                            if (error) throw error;
+                            
+                            toast({
+                              title: "Shop disconnected",
+                              description: `${connection.shop_domain} has been disconnected.`,
+                            });
+                            
+                            // Refresh connections
+                            setShopifyConnections(prev => 
+                              prev.filter(c => c.id !== connection.id)
+                            );
+                            refetchPlan();
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to disconnect shop. Please try again.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        Disconnect
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Current Plan Section */}

@@ -313,7 +313,7 @@ serve(async (req) => {
 });
 
 function redirectToApp(params: string): Response {
-  const appUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://yourapp.lovable.app';
+  const appUrl = Deno.env.get('APP_BASE_URL') || 'https://yourapp.lovable.app';
   return new Response(null, {
     status: 302,
     headers: {
