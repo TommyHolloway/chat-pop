@@ -38,14 +38,21 @@ const PricingCard = ({ plan, onSelect, isLoading }: PricingCardProps & { isLoadi
       </div>
       <p className="text-muted-foreground text-lg">{plan.description}</p>
     </div>
-    <ul className="flex-1 space-y-4 mb-8">
-      {plan.features.map((feature, index) => (
-        <li key={index} className="flex items-start gap-3 text-foreground">
-          <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-          <span className="text-base">{feature}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="flex-1 mb-8">
+      {plan.includesPreviousPlan && (
+        <div className="text-sm font-medium text-muted-foreground mb-4">
+          Everything in <span className="text-foreground">{plan.includesPreviousPlan}</span>, plus:
+        </div>
+      )}
+      <ul className="space-y-4">
+        {plan.features.map((feature, index) => (
+          <li key={index} className="flex items-start gap-3 text-foreground">
+            <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <span className="text-base">{feature}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
     <Button 
       variant={plan.buttonVariant}
       size="lg"

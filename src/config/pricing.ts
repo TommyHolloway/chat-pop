@@ -7,6 +7,7 @@ export interface PricingPlan {
   highlighted?: boolean;
   buttonText: string;
   buttonVariant: "default" | "outline";
+  includesPreviousPlan?: string;
 }
 
 export const pricingPlans: PricingPlan[] = [
@@ -31,17 +32,16 @@ export const pricingPlans: PricingPlan[] = [
     period: "month",
     description: "For growing online stores",
     features: [
-      "2 AI shopping assistants",
-      "1,000 unique monthly visitors",
-      "100 products",
-      "50 cart recovery/month",
+      "Upgrade to 2 AI assistants & 1,000 visitors",
+      "100 products & 50 cart recovery/month",
       "Revenue analytics",
       "Shopify integration",
       "Priority email support"
     ],
     highlighted: true,
     buttonText: "Start 7-Day Free Trial",
-    buttonVariant: "default"
+    buttonVariant: "default",
+    includesPreviousPlan: "Free"
   },
   {
     name: "Growth",
@@ -49,17 +49,15 @@ export const pricingPlans: PricingPlan[] = [
     period: "month",
     description: "For scaling businesses",
     features: [
-      "5 AI shopping assistants",
-      "10,000 unique monthly visitors",
-      "1,000 products",
-      "500 cart recovery/month",
+      "Upgrade to 5 AI assistants & 10,000 visitors",
+      "1,000 products & 500 cart recovery/month",
       "Advanced analytics",
       "Custom AI recommendations",
-      "Priority email support",
       "Dedicated account manager"
     ],
     buttonText: "Start 7-Day Free Trial",
-    buttonVariant: "outline"
+    buttonVariant: "outline",
+    includesPreviousPlan: "Starter"
   },
   {
     name: "Pro",
@@ -67,18 +65,15 @@ export const pricingPlans: PricingPlan[] = [
     period: "month",
     description: "For enterprise-level stores",
     features: [
-      "10 AI shopping assistants",
-      "50,000 unique monthly visitors",
-      "5,000 products",
-      "2,000 cart recovery/month",
+      "Upgrade to 10 AI assistants & 50,000 visitors",
+      "5,000 products & 2,000 cart recovery/month",
       "Advanced analytics & reporting",
-      "Custom AI recommendations",
       "Priority Slack + Email support",
-      "Dedicated account manager",
       "Custom integrations"
     ],
     buttonText: "Start 7-Day Free Trial",
-    buttonVariant: "outline"
+    buttonVariant: "outline",
+    includesPreviousPlan: "Growth"
   }
 ];
 
