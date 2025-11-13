@@ -29,10 +29,11 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
     // Map plan to Stripe product IDs
+    // NOTE: Pro plan product ID must be created manually in Stripe dashboard first
     const productIds: Record<string, string> = {
       'starter': 'prod_TMZ2r6gJsJwMq6',
       'growth': 'prod_TMZ2dGeLsNO31t',
-      'pro': 'prod_NEWPRO123456', // TODO: Replace with actual Pro product ID from Stripe
+      'pro': 'prod_NEWPRO123456', // TODO: Replace with actual Pro product ID from Stripe dashboard
     };
 
     const productId = productIds[plan];

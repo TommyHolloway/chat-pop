@@ -38,9 +38,8 @@ export const pricingPlans: PricingPlan[] = [
       "Shopify integration",
       "Priority email support"
     ],
-    highlighted: true,
     buttonText: "Start 7-Day Free Trial",
-    buttonVariant: "default",
+    buttonVariant: "outline",
     includesPreviousPlan: "Free"
   },
   {
@@ -55,8 +54,9 @@ export const pricingPlans: PricingPlan[] = [
       "Custom AI recommendations",
       "Dedicated account manager"
     ],
+    highlighted: true,
     buttonText: "Start 7-Day Free Trial",
-    buttonVariant: "outline",
+    buttonVariant: "default",
     includesPreviousPlan: "Starter"
   },
   {

@@ -33,9 +33,9 @@ serve(async (req) => {
     // Update user's plan in profiles table with new limits
     const planName = session.metadata?.plan || 'free';
     const planLimits = {
-      free: { monthlyVisitors: 100, products: 100, cartRecovery: 0 },
-      starter: { monthlyVisitors: 10000, products: 1000, cartRecovery: 100 },
-      growth: { monthlyVisitors: 25000, products: 3000, cartRecovery: 500 },
+      free: { monthlyVisitors: 50, products: 10, cartRecovery: 0 },
+      starter: { monthlyVisitors: 1000, products: 100, cartRecovery: 50 },
+      growth: { monthlyVisitors: 10000, products: 1000, cartRecovery: 500 },
       pro: { monthlyVisitors: 50000, products: 5000, cartRecovery: 2000 }
     };
 

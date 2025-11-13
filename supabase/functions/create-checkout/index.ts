@@ -34,13 +34,14 @@ serve(async (req) => {
     }
 
     // Map plan to Stripe product IDs
+    // NOTE: Pro plan product ID must be created manually in Stripe dashboard first
     let productId;
     if (plan === 'starter' || plan === 'hobby') {
       productId = 'prod_TMZ2r6gJsJwMq6';
     } else if (plan === 'growth' || plan === 'standard') {
       productId = 'prod_TMZ2dGeLsNO31t';
     } else if (plan === 'pro') {
-      productId = 'prod_NEWPRO123456'; // TODO: Replace with actual Pro product ID from Stripe
+      productId = 'prod_NEWPRO123456'; // TODO: Replace with actual Pro product ID from Stripe dashboard
     } else {
       throw new Error("Invalid plan selected");
     }
