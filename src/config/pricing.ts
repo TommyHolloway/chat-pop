@@ -14,78 +14,70 @@ export const pricingPlans: PricingPlan[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Test the power of AI for your store",
+    description: "Perfect for testing the waters",
     features: [
       "1 AI shopping assistant",
-      "100 unique monthly visitors",
-      "Up to 100 products",
-      "Basic product recommendations",
-      "Self-serve onboarding",
-      "Email support (48hr response)"
+      "50 unique monthly visitors",
+      "10 products",
+      "Basic analytics",
+      "Email support"
     ],
-    buttonText: "Start Free",
+    buttonText: "Start 7-Day Free Trial",
     buttonVariant: "outline"
   },
   {
     name: "Starter",
     price: "$47",
-    period: "per month",
-    description: "Recover up to $10K/mo in abandoned carts",
+    period: "month",
+    description: "For growing online stores",
     features: [
-      "Everything in Free +",
-      "Up to 10,000 unique monthly visitors",
-      "Up to 1,000 products",
       "2 AI shopping assistants",
-      "Cart abandonment recovery (100/mo)",
-      "Proactive engagement triggers",
-      "AI training & product recommendations",
-      "Priority email support (24hr response)",
-      "7-day free trial"
+      "1,000 unique monthly visitors",
+      "100 products",
+      "50 cart recovery/month",
+      "Revenue analytics",
+      "Shopify integration",
+      "Priority email support"
     ],
     highlighted: true,
-    buttonText: "Start Recovering Revenue",
+    buttonText: "Start 7-Day Free Trial",
     buttonVariant: "default"
   },
   {
     name: "Growth",
     price: "$197",
-    period: "per month",
-    description: "Scale to $50K+/mo in recovered revenue",
+    period: "month",
+    description: "For scaling businesses",
     features: [
-      "Everything in Starter +",
-      "Up to 25,000 unique monthly visitors",
-      "Up to 3,000 products",
       "5 AI shopping assistants",
-      "Cart abandonment recovery (500/mo)",
-      "Proactive engagement triggers",
-      "Custom branding (remove ChatPop branding)",
-      "Revenue attribution analytics",
-      "Priority Slack + Email support",
-      "7-day free trial"
+      "10,000 unique monthly visitors",
+      "1,000 products",
+      "500 cart recovery/month",
+      "Advanced analytics",
+      "Custom AI recommendations",
+      "Priority email support",
+      "Dedicated account manager"
     ],
-    buttonText: "Scale Revenue",
+    buttonText: "Start 7-Day Free Trial",
     buttonVariant: "outline"
   },
   {
     name: "Pro",
     price: "$347",
-    period: "per month",
-    description: "Enterprise-level features and support",
+    period: "month",
+    description: "For enterprise-level stores",
     features: [
-      "Everything in Growth +",
-      "Up to 50,000 unique monthly visitors",
-      "Up to 5,000 products",
       "10 AI shopping assistants",
-      "Cart abandonment recovery (2,000/mo)",
-      "Proactive engagement triggers",
-      "Custom branding",
-      "Advanced revenue analytics",
+      "50,000 unique monthly visitors",
+      "5,000 products",
+      "2,000 cart recovery/month",
+      "Advanced analytics & reporting",
+      "Custom AI recommendations",
       "Priority Slack + Email support",
-      "Advanced A/B testing (Coming Soon)",
-      "Custom integrations (Coming Soon)",
-      "7-day free trial"
+      "Dedicated account manager",
+      "Custom integrations"
     ],
-    buttonText: "Contact Sales",
+    buttonText: "Start 7-Day Free Trial",
     buttonVariant: "outline"
   }
 ];

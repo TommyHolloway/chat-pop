@@ -85,7 +85,8 @@ export const PricingSection = ({ title = "Pricing Plans", description, className
     try {
       const planKeyMap: Record<string, string> = {
         "Starter": "starter",
-        "Growth": "growth"
+        "Growth": "growth",
+        "Pro": "pro"
       };
       
       const planKey = planKeyMap[planName];
@@ -137,14 +138,14 @@ export const PricingSection = ({ title = "Pricing Plans", description, className
             <p className="text-xl text-muted-foreground">{description}</p>
           )}
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {pricingPlans.map((plan) => (
             <PricingCard key={plan.name} plan={plan} onSelect={handleButtonClick} isLoading={isLoading} />
           ))}
         </div>
         <div className="mt-16 text-center">
           <p className="text-muted-foreground text-lg mb-4">
-            Need more than 5 assistants or custom features?
+            Need more than 10 assistants or custom features?
           </p>
           <Button variant="outline" size="lg" onClick={() => navigate('/contact')}>
             Contact Sales
