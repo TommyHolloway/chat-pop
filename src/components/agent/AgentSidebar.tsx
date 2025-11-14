@@ -6,7 +6,7 @@ import {
   Activity,
   BarChart3,
   FileText,
-  Zap,
+  Puzzle,
   Globe,
   Settings,
   ChevronRight,
@@ -14,8 +14,6 @@ import {
   Type,
   Globe2,
   HelpCircle,
-  Calendar,
-  MousePointer,
   Code,
   Share,
   Link2,
@@ -85,7 +83,7 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
     activity: false,
     analytics: false,
     sources: false,
-    actions: false,
+    integrations: false,
     deploy: false,
     settings: false,
   });
@@ -102,7 +100,7 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
       activity: isInSection('activity'),
       analytics: isInSection('analytics'),
       sources: isInSection('sources'),
-      actions: isInSection('actions'),
+      integrations: isInSection('integrations'),
       deploy: isInSection('deploy'),
       settings: isInSection('settings'),
     });
@@ -372,34 +370,26 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                 </SidebarMenuItem>
               </Collapsible>
 
-              {/* Actions */}
+              {/* Integrations */}
               <Collapsible 
-                open={openSections.actions}
-                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, actions: open }))}
+                open={openSections.integrations}
+                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, integrations: open }))}
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
-                      <Zap className="h-4 w-4" />
-                      <span>Actions</span>
+                      <Puzzle className="h-4 w-4" />
+                      <span>Integrations</span>
                       <ChevronRight className="ml-auto h-4 w-4" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/actions/calendar`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/actions/calendar`}>
-                            <Calendar className="h-4 w-4" />
-                            <span>Calendar Booking</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/actions/buttons`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/actions/buttons`}>
-                            <MousePointer className="h-4 w-4" />
-                            <span>Custom Buttons</span>
+                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/integrations/shopify`)}>
+                          <Link to={`/workspace/${workspaceId}/agents/${id}/integrations/shopify`}>
+                            <ShoppingBag className="h-4 w-4" />
+                            <span>Shopify</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -481,15 +471,6 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                           <Link to={`/workspace/${workspaceId}/agents/${id}/settings/leads`}>
                             <UserPlus className="h-4 w-4" />
                             <span>Lead Capture</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/settings/integrations`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/settings/integrations`}>
-                            <Link2 className="h-4 w-4" />
-                            <span>Integrations</span>
-                            <Badge variant="outline" className="ml-auto text-xs">Soon</Badge>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

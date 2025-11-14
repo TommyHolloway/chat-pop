@@ -15,7 +15,7 @@ import { AgentDeployEmbed } from './sections/AgentDeployEmbed';
 import { AgentDeployShare } from './sections/AgentDeployShare';
 import { AgentSettingsGeneral } from './sections/AgentSettingsGeneral';
 import { AgentSettingsChat } from './sections/AgentSettingsChat';
-import { AgentSettingsIntegrations } from './sections/AgentSettingsIntegrations';
+import { AgentIntegrationsShopify } from './sections/AgentIntegrationsShopify';
 import { AgentSettingsLeads } from './sections/AgentSettingsLeads';
 import { AgentSettingsProactive } from './sections/AgentSettingsProactive';
 import { AgentEcommerceAnalytics } from './sections/AgentEcommerceAnalytics';
@@ -80,8 +80,8 @@ export const AgentLayout = () => {
           <Route path="sources/website" element={<AgentSourcesWebsite agent={agent} />} />
           <Route path="sources/qa" element={<AgentSourcesQnA agent={agent} />} />
           
-          {/* Actions */}
-          <Route path="actions/buttons" element={<AgentActionsCustom agent={agent} />} />
+          {/* Integrations */}
+          <Route path="integrations/shopify" element={<AgentIntegrationsShopify agent={agent} />} />
           
           {/* Deploy */}
           <Route path="deploy/embed" element={<AgentDeployEmbed agent={agent} />} />
@@ -92,7 +92,6 @@ export const AgentLayout = () => {
           <Route path="settings/chat" element={<AgentSettingsChat agent={agent} />} />
           <Route path="settings/leads" element={<AgentSettingsLeads agent={agent} />} />
           <Route path="settings/proactive" element={<AgentSettingsProactive agent={agent} />} />
-          <Route path="settings/integrations" element={<AgentSettingsIntegrations agent={agent} />} />
           
           {/* Default */}
           <Route index element={<AgentPlayground agent={agent} />} />
