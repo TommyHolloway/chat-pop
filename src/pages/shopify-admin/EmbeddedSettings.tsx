@@ -12,14 +12,15 @@ import {
 } from '@shopify/polaris';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useShopifySession } from '@/hooks/useShopifySession';
 
 export const EmbeddedSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { session, isLoading: sessionLoading } = useShopifySession();
   const [settings, setSettings] = useState({
     companyName: '',
     supportEmail: user?.email || '',
-    shopDomain: '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -43,6 +44,20 @@ export const EmbeddedSettings = () => {
     }
   };
 
+  if (sessionLoading) {
+    return (
+      <Page title="Settings">
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <Text as="p">Loading session...</Text>
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Page>
+    );
+  }
+
   return (
     <Page
       title="Settings"
@@ -50,9 +65,24 @@ export const EmbeddedSettings = () => {
     >
       <Layout>
         <Layout.Section>
-          <Banner title="Shopify Integration Active" tone="success">
-            <p>Your ChatPop app is successfully connected to your Shopify store.</p>
-          </Banner>
+          {session?.shop_domain ? (
+            <Banner title="Shopify Integration Active" tone="success">
+              <BlockStack gap="200">
+                <Text as="p" fontWeight="semibold">
+                  Connected to: {session.shop_name || session.shop_domain}
+                </Text>
+                <Text as="p">
+                  Your ChatPop app is successfully connected to your Shopify store.
+                </Text>
+              </BlockStack>
+            </Banner>
+          ) : (
+            <Banner tone="warning">
+              <Text as="p">
+                This app must be accessed from within Shopify Admin to function properly.
+              </Text>
+            </Banner>
+          )}
         </Layout.Section>
 
         <Layout.Section>
@@ -77,10 +107,11 @@ export const EmbeddedSettings = () => {
                 />
                 <TextField
                   label="Shop Domain"
-                  value={settings.shopDomain}
-                  onChange={(value) => setSettings({ ...settings, shopDomain: value })}
-                  helpText="Your Shopify store domain (e.g., mystore.myshopify.com)"
+                  value={session?.shop_domain || 'Not connected'}
+                  onChange={() => {}}
+                  helpText="Your Shopify store domain (automatically detected)"
                   autoComplete="off"
+                  disabled
                 />
                 <Button
                   variant="primary"
