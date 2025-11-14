@@ -85,7 +85,9 @@ serve(async (req) => {
       { topic: 'app_subscriptions/update', address: `${webhookUrl}/shopify-subscription-webhook` },
       { topic: 'orders/create', address: `${webhookUrl}/shopify-webhook` },
       { topic: 'orders/updated', address: `${webhookUrl}/shopify-webhook` },
+      { topic: 'products/create', address: `${webhookUrl}/shopify-webhook` },
       { topic: 'products/update', address: `${webhookUrl}/shopify-webhook` },
+      { topic: 'products/delete', address: `${webhookUrl}/shopify-webhook` },
       { topic: 'inventory_levels/update', address: `${webhookUrl}/shopify-webhook` },
     ];
 
