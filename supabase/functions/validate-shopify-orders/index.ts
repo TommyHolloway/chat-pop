@@ -96,18 +96,38 @@ serve(async (req) => {
       (o: any) => !trackedOrderIds.has(o.id)
     );
 
+    // Calculate attribution confidence distribution
+    const confidenceDistribution = {
+      high: conversions?.filter(c => c.attribution_confidence >= 0.8).length || 0,
+      medium: conversions?.filter(c => c.attribution_confidence >= 0.5 && c.attribution_confidence < 0.8).length || 0,
+      low: conversions?.filter(c => c.attribution_confidence < 0.5).length || 0,
+    };
+
+    // Group by attribution type
+    const attributionTypes = conversions?.reduce((acc: any, conv) => {
+      const type = conv.attribution_type || 'unknown';
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
     const report = {
       shopifyOrderCount: ordersData.length,
       trackedConversions: conversions?.length || 0,
       missingFromTracking: missingFromTracking.length,
-      matchRate: conversions?.length 
-        ? ((conversions.length / ordersData.length) * 100).toFixed(1) 
-        : 0,
+      attributionRate: ordersData.length > 0
+        ? ((conversions?.length || 0) / ordersData.length * 100).toFixed(1) 
+        : '0',
+      confidenceDistribution,
+      attributionTypes,
+      averageConfidence: conversions?.length 
+        ? (conversions.reduce((sum, c) => sum + (c.attribution_confidence || 0), 0) / conversions.length).toFixed(2)
+        : '0',
       discrepancies: missingFromTracking.map((o: any) => ({
         orderId: o.id,
         orderNumber: o.order_number,
         total: o.total_price,
         createdAt: o.created_at,
+        hasEmail: !!o.customer?.email,
       })),
     };
 
