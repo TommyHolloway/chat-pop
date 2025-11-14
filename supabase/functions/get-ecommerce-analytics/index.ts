@@ -64,6 +64,44 @@ serve(async (req) => {
       ? totals.totalRevenue / totals.totalOrders 
       : 0;
 
+    // Get attribution metrics
+    const { data: attributedOrders, error: attrError } = await supabase
+      .from('shopify_orders')
+      .select('attribution_confidence, attribution_type, total_price')
+      .eq('agent_id', agentId)
+      .not('attribution_confidence', 'is', null)
+      .gte('order_created_at', startDate)
+      .lte('order_created_at', endDate);
+
+    const attributedRevenue = attributedOrders?.reduce((sum, order) => sum + Number(order.total_price || 0), 0) || 0;
+    const attributedOrderCount = attributedOrders?.length || 0;
+    const attributionRate = totals.totalOrders > 0 ? (attributedOrderCount / totals.totalOrders) * 100 : 0;
+    const avgConfidence = attributedOrderCount > 0 
+      ? attributedOrders.reduce((sum, o) => sum + Number(o.attribution_confidence || 0), 0) / attributedOrderCount 
+      : 0;
+
+    // Attribution breakdown by type
+    const attributionBreakdown: Record<string, number> = {};
+    attributedOrders?.forEach(order => {
+      const type = order.attribution_type || 'unknown';
+      attributionBreakdown[type] = (attributionBreakdown[type] || 0) + 1;
+    });
+
+    // Confidence distribution
+    const confidenceDistribution = {
+      high: attributedOrders?.filter(o => Number(o.attribution_confidence) >= 0.8).length || 0,
+      medium: attributedOrders?.filter(o => Number(o.attribution_confidence) >= 0.5 && Number(o.attribution_confidence) < 0.8).length || 0,
+      low: attributedOrders?.filter(o => Number(o.attribution_confidence) < 0.5).length || 0
+    };
+
+    // Get top revenue conversations
+    const { data: topConversations } = await supabase.rpc('get_top_revenue_conversations', {
+      p_agent_id: agentId,
+      p_start_date: startDate,
+      p_end_date: endDate,
+      p_limit: 10
+    });
+
     return new Response(JSON.stringify({
       success: true,
       totals: {
@@ -71,6 +109,15 @@ serve(async (req) => {
         avgOrderValue,
         recoveryRate: recoveryRate.toFixed(1),
         totalAbandoned,
+      },
+      attribution: {
+        attributedRevenue,
+        attributedOrderCount,
+        attributionRate: attributionRate.toFixed(1),
+        avgConfidence: avgConfidence.toFixed(2),
+        attributionBreakdown,
+        confidenceDistribution,
+        topConversations: topConversations || []
       },
       chartData: metrics || [],
     }), {
