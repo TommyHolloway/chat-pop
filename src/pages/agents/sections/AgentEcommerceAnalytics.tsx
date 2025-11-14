@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useEcommerceAnalytics } from '@/hooks/useEcommerceAnalytics';
 import { startOfMonth } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { DollarSign, ShoppingCart, TrendingUp, Package, Calendar, ShoppingBag, Download, Loader2, Users, Repeat } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Package, Calendar, ShoppingBag, Download, Loader2, Users, Repeat, Target } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -11,6 +11,8 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { MultiTouchAttributionChart } from '@/components/agent/MultiTouchAttributionChart';
+import { Badge } from '@/components/ui/badge';
 
 export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
   const [dateRange, setDateRange] = useState({
@@ -290,6 +292,108 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Attribution Metrics */}
+      {metrics?.attributionMetrics && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Attributed Revenue</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${metrics.attributionMetrics.attributedRevenue?.toFixed(2) || '0.00'}</div>
+              <p className="text-xs text-muted-foreground">
+                {metrics.attributionMetrics.attributionRate?.toFixed(1) || '0'}% attribution rate
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Attributed Orders</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.attributionMetrics.attributedOrderCount || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                of {metrics.attributionMetrics.orderCount || 0} total orders
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Confidence</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {(metrics.attributionMetrics.avgConfidence * 100)?.toFixed(0) || 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Attribution confidence
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Confidence Distribution</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant="default">High: {metrics.attributionMetrics.confidenceDistribution?.high || 0}</Badge>
+                <Badge variant="secondary">Med: {metrics.attributionMetrics.confidenceDistribution?.medium || 0}</Badge>
+                <Badge variant="outline">Low: {metrics.attributionMetrics.confidenceDistribution?.low || 0}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Multi-Touch Attribution Chart */}
+      {metrics?.attributionMetrics?.attributionBreakdown && (
+        <MultiTouchAttributionChart
+          data={Object.entries(metrics.attributionMetrics.attributionBreakdown).map(([name, value]) => ({
+            name: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            value: value as number,
+            color: name === 'direct' ? 'hsl(var(--primary))' 
+                 : name === 'multi_touch' ? 'hsl(var(--chart-2))'
+                 : name === 'email_match' ? 'hsl(var(--chart-3))'
+                 : name === 'temporal_proximity' ? 'hsl(var(--chart-4))'
+                 : 'hsl(var(--muted))'
+          }))}
+        />
+      )}
+
+      {/* Top Revenue Conversations */}
+      {metrics?.topRevenueConversations && metrics.topRevenueConversations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Revenue Conversations</CardTitle>
+            <CardDescription>Conversations that drove the most revenue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {metrics.topRevenueConversations.map((conv: any) => (
+                <div key={conv.conversation_id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Session: {conv.session_id}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {conv.order_count} order{conv.order_count > 1 ? 's' : ''} • {(conv.avg_confidence * 100).toFixed(0)}% confidence
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold">${Number(conv.total_revenue).toFixed(2)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
       
       <Card>

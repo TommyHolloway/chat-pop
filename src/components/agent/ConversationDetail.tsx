@@ -18,6 +18,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { ConversationRevenuePanel } from './ConversationRevenuePanel';
 
 interface Message {
   id: string;
@@ -334,6 +335,12 @@ export const ConversationDetail = ({ conversationId, onBack, agentId }: Conversa
               </Button>
             </CardContent>
           </Card>
+
+          {/* Revenue Attribution */}
+          <ConversationRevenuePanel 
+            conversationId={conversationId} 
+            agentId={agentId} 
+          />
         </div>
       </div>
     </div>
