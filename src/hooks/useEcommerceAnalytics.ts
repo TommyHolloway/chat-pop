@@ -17,6 +17,27 @@ interface EcommerceMetrics {
     revenue: number;
     orders: number;
   }>;
+  attributionMetrics?: {
+    totalRevenue: number;
+    attributedRevenue: number;
+    attributionRate: number;
+    avgConfidence: number;
+    orderCount: number;
+    attributedOrderCount: number;
+    attributionBreakdown: Record<string, number>;
+    confidenceDistribution: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+  };
+  topRevenueConversations?: Array<{
+    conversation_id: string;
+    session_id: string;
+    order_count: number;
+    total_revenue: number;
+    avg_confidence: number;
+  }>;
 }
 
 export const useEcommerceAnalytics = (agentId: string, dateRange: DateRange) => {
