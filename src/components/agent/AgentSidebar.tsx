@@ -284,68 +284,41 @@ export const AgentSidebar = ({ agent, loading }: AgentSidebarProps) => {
                 </SidebarMenuItem>
               </Collapsible>
 
-              {/* Analytics */}
-              <Collapsible 
-                open={openSections.analytics}
-                onOpenChange={(open) => setOpenSections(prev => ({ ...prev, analytics: open }))}
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Analytics</span>
-                      <ChevronRight className="ml-auto h-4 w-4" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics`}>
-                            <BarChart3 className="h-4 w-4" />
-                            <span>Performance</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics/visitor`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/visitor`}>
-                            <Eye className="h-4 w-4" />
-                            <span>Visitor Intelligence</span>
-                            <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics/ecommerce`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/ecommerce`}>
-                            <ShoppingCart className="h-4 w-4" />
-                            <span>E-commerce</span>
-                            {isShopifyConnected ? (
-                              <Badge variant="default" className="ml-auto text-xs bg-green-600">Shopify</Badge>
-                            ) : (
-                              <Badge variant="secondary" className="ml-auto text-xs bg-amber-600 text-white">Connect</Badge>
-                            )}
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics/abandoned-carts`)}>
-                          <Link to={`/workspace/${workspaceId}/agents/${id}/analytics/abandoned-carts`}>
-                            <ShoppingBag className="h-4 w-4" />
-                            <span>Abandoned Carts</span>
-                            {isShopifyConnected ? (
-                              <Badge variant="default" className="ml-auto text-xs bg-green-600">Shopify</Badge>
-                            ) : (
-                              <Badge variant="secondary" className="ml-auto text-xs bg-amber-600 text-white">Connect</Badge>
-                            )}
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {/* Analytics - Direct Link to E-commerce */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive(`/workspace/${workspaceId}/agents/${id}/analytics`)}>
+                  <Link to={`/workspace/${workspaceId}/agents/${id}/analytics`}>
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Analytics</span>
+                    {isShopifyConnected && (
+                      <Badge variant="default" className="ml-auto text-xs bg-green-600">Shopify</Badge>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Visitor Intelligence - Separate Pro Item */}
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild={canViewVisitorAnalytics} 
+                  isActive={isActive(`/workspace/${workspaceId}/agents/${id}/visitor-analytics`)}
+                  onClick={handleProactiveEngagementClick}
+                >
+                  {canViewVisitorAnalytics ? (
+                    <Link to={`/workspace/${workspaceId}/agents/${id}/visitor-analytics`}>
+                      <Eye className="h-4 w-4" />
+                      <span>Visitor Intelligence</span>
+                      <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                    </Link>
+                  ) : (
+                    <button className="w-full">
+                      <Eye className="h-4 w-4" />
+                      <span>Visitor Intelligence</span>
+                      <Badge variant="secondary" className="ml-auto text-xs">Pro</Badge>
+                    </button>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               {/* Sources */}
               <Collapsible 

@@ -67,9 +67,8 @@ export const AgentLayout = () => {
         <Routes>
           {/* Main sections */}
           <Route path="playground" element={<AgentPlayground agent={agent} />} />
-          <Route path="analytics" element={<AgentAnalytics agent={agent} />} />
-          <Route path="analytics/ecommerce" element={<AgentEcommerceAnalytics agent={agent} />} />
-          <Route path="analytics/abandoned-carts" element={<AgentAbandonedCarts agent={agent} />} />
+          <Route path="analytics" element={<AgentEcommerceAnalytics agent={agent} />} />
+          <Route path="visitor-analytics" element={<AgentAnalytics agent={agent} />} />
           
           {/* Activity */}
           <Route path="activity/conversations" element={<AgentConversations agent={agent} />} />

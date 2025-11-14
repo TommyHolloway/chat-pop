@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MultiTouchAttributionChart } from '@/components/agent/MultiTouchAttributionChart';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AgentAbandonedCarts } from './AgentAbandonedCarts';
 
 export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
   const [dateRange, setDateRange] = useState({
@@ -184,7 +186,14 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
         </div>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="abandoned-carts">Abandoned Carts</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -438,6 +447,12 @@ export const AgentEcommerceAnalytics = ({ agent }: { agent: any }) => {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+        
+        <TabsContent value="abandoned-carts">
+          <AgentAbandonedCarts agent={agent} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
