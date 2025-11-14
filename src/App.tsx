@@ -40,6 +40,7 @@ import { AgentLayout } from "./pages/agents/AgentLayout";
 import { PublicChat } from "./pages/agents/PublicChat";
 import { AgentOnboardingWizard } from "./components/onboarding/AgentOnboardingWizard";
 import { ShopifyOnboarding } from "./pages/ShopifyOnboarding";
+import { ShopifyAdminLayout } from "./pages/shopify-admin/ShopifyAdminLayout";
 
 const queryClient = new QueryClient();
 
@@ -172,6 +173,13 @@ const App = () => (
                     <AdminPortal />
                   </WorkspaceLayout>
                 </AdminRoute>
+              } />
+              
+              {/* Shopify Embedded App Routes */}
+              <Route path="/shopify-admin/*" element={
+                <ProtectedRoute>
+                  <ShopifyAdminLayout />
+                </ProtectedRoute>
               } />
               
               {/* Catch-all */}

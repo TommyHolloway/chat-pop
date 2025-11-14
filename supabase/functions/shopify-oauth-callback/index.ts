@@ -43,7 +43,7 @@ serve(async (req) => {
     const state = url.searchParams.get('state');
 
     if (!code || !shop || !state) {
-      return redirectToApp('?error=missing_params');
+      return redirectToApp('/workspace/integrations?error=missing_params');
     }
 
     const supabase = createClient(
@@ -61,7 +61,7 @@ serve(async (req) => {
 
     if (!stateRecord) {
       console.error('Invalid or expired state:', state);
-      return redirectToApp('?error=invalid_state');
+      return redirectToApp('/workspace/integrations?error=invalid_state');
     }
 
     console.log('OAuth callback received for shop:', shop);
@@ -167,17 +167,21 @@ serve(async (req) => {
 
     console.log('Shopify connection successful for agent:', stateRecord.agent_id);
 
-    // Redirect back to app
-    return redirectToApp(`?shopify_connected=true&agent_id=${stateRecord.agent_id}`);
+    // Redirect back to app - check if this was initiated from embedded app
+    const redirectPath = stateRecord.embedded 
+      ? `/shopify-admin/settings?shopify_connected=true&agent_id=${stateRecord.agent_id}`
+      : `/workspace/integrations?shopify_connected=true&agent_id=${stateRecord.agent_id}`;
+    
+    return redirectToApp(redirectPath);
 
   } catch (error: any) {
     console.error('OAuth callback error:', error);
-    return redirectToApp(`?error=${encodeURIComponent(error.message)}`);
+    return redirectToApp(`/workspace/integrations?error=${encodeURIComponent(error.message)}`);
   }
 });
 
-function redirectToApp(params: string): Response {
-  const appUrl = `${Deno.env.get('APP_BASE_URL')}/workspace/integrations${params}`;
+function redirectToApp(path: string): Response {
+  const appUrl = `${Deno.env.get('APP_BASE_URL')}${path}`;
   return new Response(null, {
     status: 302,
     headers: { Location: appUrl },
