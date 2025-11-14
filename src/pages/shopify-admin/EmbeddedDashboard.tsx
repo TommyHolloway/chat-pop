@@ -9,15 +9,18 @@ import {
   Box,
   Banner,
   Button,
+  SkeletonBodyText,
 } from '@shopify/polaris';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { useShopifySession } from '@/hooks/useShopifySession';
 
 export const EmbeddedDashboard = () => {
   const { user } = useAuth();
   const { agents, loading: agentsLoading } = useAgents();
   const { currentWorkspace } = useWorkspaces();
+  const { session, isLoading: sessionLoading } = useShopifySession();
   const [stats, setStats] = useState({
     totalAgents: 0,
     activeAgents: 0,
@@ -36,15 +39,29 @@ export const EmbeddedDashboard = () => {
     }
   }, [agents]);
 
+  if (sessionLoading) {
+    return (
+      <Page title="Dashboard">
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <SkeletonBodyText lines={3} />
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Page>
+    );
+  }
+
   return (
     <Page
       title="ChatPop Dashboard"
-      subtitle={currentWorkspace?.name || 'Overview'}
+      subtitle={session?.shop_name || currentWorkspace?.name || 'Overview'}
     >
       <Layout>
         <Layout.Section>
           <Banner
-            title="Welcome to ChatPop"
+            title={`Welcome to ChatPop${session?.shop_name ? ` - ${session.shop_name}` : ''}`}
             tone="info"
           >
             <p>Manage your AI shopping assistants and track performance from your Shopify admin.</p>

@@ -7,11 +7,14 @@ import {
   BlockStack,
   InlineGrid,
   Select,
+  SkeletonBodyText,
 } from '@shopify/polaris';
 import { useAuth } from '@/contexts/AuthContext';
+import { useShopifySession } from '@/hooks/useShopifySession';
 
 export const EmbeddedAnalytics = () => {
   const { user } = useAuth();
+  const { session, isLoading: sessionLoading } = useShopifySession();
   const [timeRange, setTimeRange] = useState('7days');
   const [analytics, setAnalytics] = useState({
     totalVisitors: 0,
@@ -47,10 +50,24 @@ export const EmbeddedAnalytics = () => {
     { label: 'This year', value: 'year' },
   ];
 
+  if (sessionLoading) {
+    return (
+      <Page title="Analytics">
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <SkeletonBodyText lines={3} />
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Page>
+    );
+  }
+
   return (
     <Page
       title="Analytics"
-      subtitle="Track your ChatPop performance"
+      subtitle={`Track your ChatPop performance${session?.shop_name ? ` - ${session.shop_name}` : ''}`}
     >
       <Layout>
         <Layout.Section>

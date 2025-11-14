@@ -168,7 +168,9 @@ serve(async (req) => {
     console.log('Shopify connection successful for agent:', stateRecord.agent_id);
 
     // Redirect back to app - check if this was initiated from embedded app
-    const redirectPath = stateRecord.embedded 
+    // Parse state to check for embedded flag
+    const isEmbedded = state.includes(':embedded');
+    const redirectPath = isEmbedded 
       ? `/shopify-admin/settings?shopify_connected=true&agent_id=${stateRecord.agent_id}`
       : `/workspace/integrations?shopify_connected=true&agent_id=${stateRecord.agent_id}`;
     

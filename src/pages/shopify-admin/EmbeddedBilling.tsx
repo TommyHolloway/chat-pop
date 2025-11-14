@@ -10,14 +10,17 @@ import {
   Badge,
   Divider,
   List,
+  SkeletonBodyText,
 } from '@shopify/polaris';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { pricingPlans } from '@/config/pricing';
+import { useShopifySession } from '@/hooks/useShopifySession';
 
 export const EmbeddedBilling = () => {
   const { user } = useAuth();
   const { subscription } = useSubscription();
+  const { session, isLoading: sessionLoading } = useShopifySession();
   const [currentPlan, setCurrentPlan] = useState('free');
 
   useEffect(() => {
@@ -31,10 +34,24 @@ export const EmbeddedBilling = () => {
     console.log('Upgrading to:', planId);
   };
 
+  if (sessionLoading) {
+    return (
+      <Page title="Billing & Subscription">
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <SkeletonBodyText lines={3} />
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Page>
+    );
+  }
+
   return (
     <Page
       title="Billing & Subscription"
-      subtitle="Manage your ChatPop subscription"
+      subtitle={`Manage your ChatPop subscription${session?.shop_name ? ` - ${session.shop_name}` : ''}`}
     >
       <Layout>
         <Layout.Section>

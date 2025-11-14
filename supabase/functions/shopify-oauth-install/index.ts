@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { shop_domain, agent_id } = await req.json();
+    const { shop_domain, agent_id, embedded } = await req.json();
 
     if (!shop_domain || !agent_id) {
       throw new Error('shop_domain and agent_id are required');
@@ -58,8 +58,9 @@ serve(async (req) => {
       throw new Error('Agent not found or unauthorized');
     }
 
-    // Generate random state (CSRF token)
+    // Generate random state (CSRF token) with embedded context
     const state = crypto.randomUUID();
+    const stateData = embedded ? `${state}:embedded` : state;
 
     // Save state in database
     const { error: stateError } = await supabase
@@ -80,7 +81,7 @@ serve(async (req) => {
     installUrl.searchParams.set('client_id', Deno.env.get('SHOPIFY_CLIENT_ID')!);
     installUrl.searchParams.set('scope', scopes);
     installUrl.searchParams.set('redirect_uri', redirectUri);
-    installUrl.searchParams.set('state', state);
+    installUrl.searchParams.set('state', stateData);
 
     console.log('OAuth install initiated for shop:', normalizedShop);
 
