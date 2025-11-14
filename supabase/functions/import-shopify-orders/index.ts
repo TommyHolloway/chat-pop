@@ -32,7 +32,7 @@ serve(async (req) => {
     const { store_domain, admin_api_token } = agent.shopify_config;
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-    // Fetch orders using GraphQL with pagination
+    // Fetch orders using GraphQL with pagination (enhanced with line items)
     let hasNextPage = true;
     let cursor = null;
     let allOrders = [];
@@ -44,13 +44,42 @@ serve(async (req) => {
             edges {
               node {
                 id
+                name
                 createdAt
+                customer {
+                  email
+                  firstName
+                  lastName
+                  id
+                }
+                lineItems(first: 50) {
+                  edges {
+                    node {
+                      id
+                      title
+                      quantity
+                      variant {
+                        id
+                        title
+                        sku
+                        price
+                        product {
+                          id
+                          title
+                          handle
+                        }
+                      }
+                    }
+                  }
+                }
                 totalPriceSet {
                   shopMoney {
                     amount
                     currencyCode
                   }
                 }
+                tags
+                note
               }
             }
             pageInfo {
@@ -93,6 +122,69 @@ serve(async (req) => {
 
     console.log(`Fetched ${allOrders.length} orders from Shopify GraphQL`);
 
+    // Store complete order records in shopify_orders table
+    const ordersToStore = allOrders.map((orderEdge: any) => {
+      const order = orderEdge.node;
+      const orderId = order.id.split('/').pop();
+      
+      return {
+        agent_id: agentId,
+        order_id: orderId,
+        order_number: order.name,
+        customer_email: order.customer?.email,
+        customer_shopify_id: order.customer?.id?.split('/').pop(),
+        customer_name: order.customer ? 
+          `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() : null,
+        line_items: order.lineItems.edges.map((edge: any) => ({
+          id: edge.node.id.split('/').pop(),
+          title: edge.node.title,
+          quantity: edge.node.quantity,
+          sku: edge.node.variant.sku,
+          price: edge.node.variant.price,
+          variant_id: edge.node.variant.id.split('/').pop(),
+          variant_title: edge.node.variant.title,
+          product_id: edge.node.variant.product.id.split('/').pop(),
+          product_title: edge.node.variant.product.title,
+          product_handle: edge.node.variant.product.handle,
+        })),
+        total_price: parseFloat(order.totalPriceSet.shopMoney.amount),
+        currency: order.totalPriceSet.shopMoney.currencyCode,
+        tags: order.tags || [],
+        note: order.note,
+        order_created_at: order.createdAt,
+      };
+    });
+
+    if (ordersToStore.length > 0) {
+      const { error: storeError } = await supabase
+        .from('shopify_orders')
+        .upsert(ordersToStore, {
+          onConflict: 'agent_id,order_id',
+          ignoreDuplicates: false,
+        });
+
+      if (storeError) {
+        console.error('Error storing orders:', storeError);
+        throw storeError;
+      }
+      console.log(`Stored ${ordersToStore.length} orders in shopify_orders table`);
+    }
+
+    // Run attribution on all orders
+    console.log('Running attribution on orders...');
+    for (const orderEdge of allOrders) {
+      try {
+        await supabase.functions.invoke('attribute-order-to-conversation', {
+          body: {
+            agentId,
+            order: orderEdge.node,
+          },
+        });
+      } catch (attrError) {
+        console.error('Attribution error for order:', orderEdge.node.id, attrError);
+      }
+    }
+
     // Transform GraphQL data to metrics format
     const metricsByDate = new Map();
 
@@ -109,18 +201,12 @@ serve(async (req) => {
           agent_id: agentId,
           total_revenue: 0,
           total_orders: 0,
-          revenue_data: [],
         });
       }
 
       const metrics = metricsByDate.get(date);
       metrics.total_revenue += amount;
       metrics.total_orders += 1;
-      metrics.revenue_data.push({
-        order_id: orderId,
-        amount,
-        currency,
-      });
     });
 
     const metricsToInsert = Array.from(metricsByDate.values()).map(m => ({

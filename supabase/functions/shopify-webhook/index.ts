@@ -69,10 +69,92 @@ serve(async (req) => {
     // Process specific events
     switch (topic) {
       case 'orders/create':
+        console.log('Processing new order webhook with real-time attribution');
+        
+        // Store order immediately
+        const orderId = payload.id?.toString();
+        const orderNumber = payload.name || payload.order_number;
+        const orderData = {
+          agent_id: connection.agent_id,
+          order_id: orderId,
+          order_number: orderNumber,
+          customer_email: payload.customer?.email,
+          customer_shopify_id: payload.customer?.id?.toString(),
+          customer_name: payload.customer ? 
+            `${payload.customer.first_name || ''} ${payload.customer.last_name || ''}`.trim() : null,
+          line_items: payload.line_items?.map((item: any) => ({
+            id: item.id?.toString(),
+            title: item.title,
+            quantity: item.quantity,
+            sku: item.sku,
+            price: item.price,
+            variant_id: item.variant_id?.toString(),
+            variant_title: item.variant_title,
+            product_id: item.product_id?.toString(),
+          })) || [],
+          total_price: parseFloat(payload.total_price || '0'),
+          currency: payload.currency || 'USD',
+          tags: payload.tags?.split(',').map((t: string) => t.trim()) || [],
+          note: payload.note,
+          order_created_at: payload.created_at,
+        };
+
+        await supabase.from('shopify_orders').upsert(orderData, {
+          onConflict: 'agent_id,order_id',
+        });
+
+        // Run attribution immediately
+        await supabase.functions.invoke('attribute-order-to-conversation', {
+          body: {
+            agentId: connection.agent_id,
+            order: {
+              id: `gid://shopify/Order/${orderId}`,
+              createdAt: payload.created_at,
+              customer: payload.customer,
+              lineItems: {
+                edges: payload.line_items?.map((item: any) => ({
+                  node: {
+                    id: `gid://shopify/LineItem/${item.id}`,
+                    title: item.title,
+                    quantity: item.quantity,
+                    variant: {
+                      id: `gid://shopify/ProductVariant/${item.variant_id}`,
+                      product: {
+                        id: `gid://shopify/Product/${item.product_id}`,
+                        title: item.product_id,
+                      },
+                    },
+                  },
+                })) || [],
+              },
+              totalPriceSet: {
+                shopMoney: {
+                  amount: payload.total_price,
+                  currencyCode: payload.currency || 'USD',
+                },
+              },
+            },
+            immediate: true,
+          },
+        });
+
+        // Update metrics using atomic function
+        const orderDate = new Date(payload.created_at).toISOString().split('T')[0];
+        await supabase.rpc('increment_daily_metrics', {
+          p_agent_id: connection.agent_id,
+          p_date: orderDate,
+          p_revenue: parseFloat(payload.total_price || '0'),
+          p_orders: 1,
+        });
+
+        console.log(`Order ${orderId} processed with real-time attribution`);
+        break;
+
       case 'orders/updated':
-        console.log('Processing order webhook');
+        console.log('Processing order update webhook');
+        // For updates, just refresh the order data
         await supabase.functions.invoke('import-shopify-orders', {
-          body: { agent_id: connection.agent_id },
+          body: { agentId: connection.agent_id, days: 7 },
         });
         break;
 
