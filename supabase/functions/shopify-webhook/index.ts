@@ -54,38 +54,60 @@ serve(async (req) => {
       payload,
     });
 
+    // Get agent_id from shop connection
+    const { data: connection } = await supabase
+      .from('shopify_connections')
+      .select('agent_id')
+      .eq('shop_domain', shop.toLowerCase())
+      .single();
+
+    if (!connection?.agent_id) {
+      console.error('No agent found for shop:', shop);
+      return new Response('OK', { status: 200 });
+    }
+
     // Process specific events
     switch (topic) {
       case 'orders/create':
       case 'orders/updated':
         console.log('Processing order webhook');
-        // Trigger order import - find agent_id from connection
-        const { data: connection } = await supabase
-          .from('shopify_connections')
-          .select('agent_id')
-          .eq('shop_domain', shop.toLowerCase())
-          .single();
-
-        if (connection?.agent_id) {
-          await supabase.functions.invoke('import-shopify-orders', {
-            body: { agent_id: connection.agent_id },
-          });
-        }
+        await supabase.functions.invoke('import-shopify-orders', {
+          body: { agent_id: connection.agent_id },
+        });
         break;
 
       case 'inventory_levels/update':
         console.log('Processing inventory webhook');
-        // Trigger inventory sync
-        const { data: invConnection } = await supabase
-          .from('shopify_connections')
-          .select('agent_id')
-          .eq('shop_domain', shop.toLowerCase())
-          .single();
+        await supabase.functions.invoke('sync-inventory-levels', {
+          body: { agent_id: connection.agent_id },
+        });
+        break;
 
-        if (invConnection?.agent_id) {
-          await supabase.functions.invoke('sync-inventory-levels', {
-            body: { agent_id: invConnection.agent_id },
-          });
+      case 'products/create':
+      case 'products/update':
+        console.log('Processing product webhook:', topic);
+        // Trigger incremental product sync
+        await supabase.functions.invoke('sync-shopify-products', {
+          body: { 
+            agent_id: connection.agent_id,
+            incremental: true 
+          },
+        });
+        break;
+
+      case 'products/delete':
+        console.log('Processing product deletion webhook');
+        // Mark product as inactive instead of deleting
+        const productId = payload.id?.toString();
+        if (productId) {
+          await supabase
+            .from('agent_product_catalog')
+            .update({ 
+              is_active: false,
+              updated_at: new Date().toISOString()
+            })
+            .eq('agent_id', connection.agent_id)
+            .eq('product_id', productId);
         }
         break;
     }

@@ -165,6 +165,23 @@ serve(async (req) => {
     // Subscribe to webhooks (async, don't wait)
     registerWebhooks(shop, access_token, stateRecord.agent_id).catch(console.error);
 
+    // Trigger initial product sync (async, don't wait)
+    const supabaseForSync = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    
+    supabaseForSync.functions.invoke('sync-shopify-products', {
+      body: { 
+        agent_id: stateRecord.agent_id,
+        incremental: false // Full sync on initial connection
+      }
+    }).then(result => {
+      console.log('Initial product sync triggered:', result);
+    }).catch(error => {
+      console.error('Failed to trigger initial product sync:', error);
+    });
+
     console.log('Shopify connection successful for agent:', stateRecord.agent_id);
 
     // Redirect back to app - check if this was initiated from embedded app
@@ -196,7 +213,9 @@ async function registerWebhooks(shop: string, token: string, agentId: string) {
   const webhooks = [
     { topic: 'orders/create', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'orders/updated', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'products/create', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'products/update', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'products/delete', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'inventory_levels/update', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'app_subscriptions/update', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'app/uninstalled', address: `${webhookUrl}/shopify-webhook-uninstall` },
