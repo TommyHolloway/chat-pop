@@ -23,9 +23,10 @@ import {
   Calendar,
   Share2,
   Code,
-  Zap,
   Palette,
-  Target
+  Target,
+  Puzzle,
+  ShoppingBag
 } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
 import {
@@ -255,28 +256,22 @@ export const WorkspaceSidebar = () => {
                     </SidebarMenuItem>
                   </Collapsible>
 
-                  <Collapsible defaultOpen={isInSection('actions')}>
+                  <Collapsible defaultOpen={isInSection('integrations')}>
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton>
-                          <Zap className="h-4 w-4" />
-                          <span>Actions</span>
+                          <Puzzle className="h-4 w-4" />
+                          <span>Integrations</span>
                           <ChevronRight className="ml-auto h-4 w-4" />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
                           <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/calendar`)}>
-                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/calendar`}>
-                                <span>Calendar Booking</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/buttons`)}>
-                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/actions/buttons`}>
-                                <span>Custom Buttons</span>
+                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/integrations/shopify`)}>
+                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/integrations/shopify`}>
+                                <ShoppingBag className="h-4 w-4" />
+                                <span>Shopify</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -344,13 +339,6 @@ export const WorkspaceSidebar = () => {
                             <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/leads`)}>
                               <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/leads`}>
                                 <span>Lead Capture</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild isActive={isActive(`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/integrations`)}>
-                              <Link to={`/workspace/${currentWorkspace?.id}/agents/${currentAgentId}/settings/integrations`}>
-                                <span>Integrations</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>

@@ -19,42 +19,51 @@ export type Database = {
           agent_id: string
           cart_items: Json
           cart_total: number
+          conversation_id: string | null
           created_at: string | null
           currency: string | null
           id: string
+          products_mentioned_in_chat: Json | null
           recovered: boolean | null
           recovered_at: string | null
           recovery_attempted: boolean | null
           recovery_message_sent_at: string | null
           session_id: string
+          shopify_checkout_url: string | null
           updated_at: string | null
         }
         Insert: {
           agent_id: string
           cart_items: Json
           cart_total: number
+          conversation_id?: string | null
           created_at?: string | null
           currency?: string | null
           id?: string
+          products_mentioned_in_chat?: Json | null
           recovered?: boolean | null
           recovered_at?: string | null
           recovery_attempted?: boolean | null
           recovery_message_sent_at?: string | null
           session_id: string
+          shopify_checkout_url?: string | null
           updated_at?: string | null
         }
         Update: {
           agent_id?: string
           cart_items?: Json
           cart_total?: number
+          conversation_id?: string | null
           created_at?: string | null
           currency?: string | null
           id?: string
+          products_mentioned_in_chat?: Json | null
           recovered?: boolean | null
           recovered_at?: string | null
           recovery_attempted?: boolean | null
           recovery_message_sent_at?: string | null
           session_id?: string
+          shopify_checkout_url?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -63,6 +72,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abandoned_carts_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -139,7 +155,10 @@ export type Database = {
         Row: {
           agent_id: string
           attributed_revenue: number | null
+          attribution_confidence: number | null
+          attribution_type: string | null
           conversation_id: string | null
+          conversation_ids: string[] | null
           conversion_type: string
           created_at: string | null
           currency: string | null
@@ -147,12 +166,16 @@ export type Database = {
           order_id: string | null
           order_total: number | null
           products_purchased: Json | null
+          products_recommended: Json | null
           session_id: string
         }
         Insert: {
           agent_id: string
           attributed_revenue?: number | null
+          attribution_confidence?: number | null
+          attribution_type?: string | null
           conversation_id?: string | null
+          conversation_ids?: string[] | null
           conversion_type: string
           created_at?: string | null
           currency?: string | null
@@ -160,12 +183,16 @@ export type Database = {
           order_id?: string | null
           order_total?: number | null
           products_purchased?: Json | null
+          products_recommended?: Json | null
           session_id: string
         }
         Update: {
           agent_id?: string
           attributed_revenue?: number | null
+          attribution_confidence?: number | null
+          attribution_type?: string | null
           conversation_id?: string | null
+          conversation_ids?: string[] | null
           conversion_type?: string
           created_at?: string | null
           currency?: string | null
@@ -173,6 +200,7 @@ export type Database = {
           order_id?: string | null
           order_total?: number | null
           products_purchased?: Json | null
+          products_recommended?: Json | null
           session_id?: string
         }
         Relationships: [
@@ -250,6 +278,9 @@ export type Database = {
           id: string
           product_recommendations_shown: number | null
           products_clicked: number | null
+          recovery_attempts_sent: number | null
+          recovery_clicks: number | null
+          recovery_conversions: number | null
           recovery_revenue: number | null
           total_orders: number | null
           total_revenue: number | null
@@ -264,6 +295,9 @@ export type Database = {
           id?: string
           product_recommendations_shown?: number | null
           products_clicked?: number | null
+          recovery_attempts_sent?: number | null
+          recovery_clicks?: number | null
+          recovery_conversions?: number | null
           recovery_revenue?: number | null
           total_orders?: number | null
           total_revenue?: number | null
@@ -278,6 +312,9 @@ export type Database = {
           id?: string
           product_recommendations_shown?: number | null
           products_clicked?: number | null
+          recovery_attempts_sent?: number | null
+          recovery_clicks?: number | null
+          recovery_conversions?: number | null
           recovery_revenue?: number | null
           total_orders?: number | null
           total_revenue?: number | null
@@ -423,33 +460,84 @@ export type Database = {
       agent_product_catalog: {
         Row: {
           agent_id: string
+          available_for_sale: boolean | null
+          compare_at_price: number | null
           created_at: string | null
+          currency: string | null
+          description: string | null
+          handle: string | null
           id: string
+          image_url: string | null
+          inventory_quantity: number | null
+          inventory_tracked: boolean | null
           is_active: boolean | null
+          last_synced_at: string | null
+          price: number | null
+          product_data: Json | null
           product_id: string
           product_name: string | null
           product_sku: string | null
+          product_type: string | null
+          product_url: string | null
+          tags: string[] | null
+          title: string | null
           updated_at: string | null
+          variants: Json | null
+          vendor: string | null
         }
         Insert: {
           agent_id: string
+          available_for_sale?: boolean | null
+          compare_at_price?: number | null
           created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          handle?: string | null
           id?: string
+          image_url?: string | null
+          inventory_quantity?: number | null
+          inventory_tracked?: boolean | null
           is_active?: boolean | null
+          last_synced_at?: string | null
+          price?: number | null
+          product_data?: Json | null
           product_id: string
           product_name?: string | null
           product_sku?: string | null
+          product_type?: string | null
+          product_url?: string | null
+          tags?: string[] | null
+          title?: string | null
           updated_at?: string | null
+          variants?: Json | null
+          vendor?: string | null
         }
         Update: {
           agent_id?: string
+          available_for_sale?: boolean | null
+          compare_at_price?: number | null
           created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          handle?: string | null
           id?: string
+          image_url?: string | null
+          inventory_quantity?: number | null
+          inventory_tracked?: boolean | null
           is_active?: boolean | null
+          last_synced_at?: string | null
+          price?: number | null
+          product_data?: Json | null
           product_id?: string
           product_name?: string | null
           product_sku?: string | null
+          product_type?: string | null
+          product_url?: string | null
+          tags?: string[] | null
+          title?: string | null
           updated_at?: string | null
+          variants?: Json | null
+          vendor?: string | null
         }
         Relationships: [
           {
@@ -975,6 +1063,66 @@ export type Database = {
           },
         ]
       }
+      product_recommendations: {
+        Row: {
+          added_to_cart: boolean | null
+          agent_id: string | null
+          clicked: boolean | null
+          clicked_at: string | null
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          product_id: string
+          purchased: boolean | null
+          recommendation_context: string | null
+          recommended_at: string | null
+          revenue_attributed: number | null
+        }
+        Insert: {
+          added_to_cart?: boolean | null
+          agent_id?: string | null
+          clicked?: boolean | null
+          clicked_at?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          product_id: string
+          purchased?: boolean | null
+          recommendation_context?: string | null
+          recommended_at?: string | null
+          revenue_attributed?: number | null
+        }
+        Update: {
+          added_to_cart?: boolean | null
+          agent_id?: string | null
+          clicked?: boolean | null
+          clicked_at?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          purchased?: boolean | null
+          recommendation_context?: string | null
+          recommended_at?: string | null
+          revenue_attributed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_recommendations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recommendations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1145,6 +1293,84 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_orders: {
+        Row: {
+          agent_id: string
+          attributed_conversation_id: string | null
+          attribution_confidence: number | null
+          attribution_type: string | null
+          created_at: string | null
+          currency: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_shopify_id: string | null
+          id: string
+          line_items: Json
+          note: string | null
+          order_created_at: string
+          order_id: string
+          order_number: string | null
+          tags: string[] | null
+          total_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          attributed_conversation_id?: string | null
+          attribution_confidence?: number | null
+          attribution_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_shopify_id?: string | null
+          id?: string
+          line_items?: Json
+          note?: string | null
+          order_created_at: string
+          order_id: string
+          order_number?: string | null
+          tags?: string[] | null
+          total_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          attributed_conversation_id?: string | null
+          attribution_confidence?: number | null
+          attribution_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_shopify_id?: string | null
+          id?: string
+          line_items?: Json
+          note?: string | null
+          order_created_at?: string
+          order_id?: string
+          order_number?: string | null
+          tags?: string[] | null
+          total_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_orders_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopify_orders_attributed_conversation_id_fkey"
+            columns: ["attributed_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -1675,6 +1901,21 @@ export type Database = {
           visitor_operations: number
         }[]
       }
+      get_top_revenue_conversations: {
+        Args: {
+          p_agent_id: string
+          p_end_date: string
+          p_limit?: number
+          p_start_date: string
+        }
+        Returns: {
+          avg_confidence: number
+          conversation_id: string
+          order_count: number
+          session_id: string
+          total_revenue: number
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1692,6 +1933,15 @@ export type Database = {
       }
       increment_cart_recovery_attempts: {
         Args: { p_user_id: string }
+        Returns: undefined
+      }
+      increment_daily_metrics: {
+        Args: {
+          p_agent_id: string
+          p_date: string
+          p_orders: number
+          p_revenue: number
+        }
         Returns: undefined
       }
       log_pii_access: {
