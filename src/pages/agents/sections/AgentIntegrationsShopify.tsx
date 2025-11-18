@@ -31,6 +31,18 @@ export const AgentIntegrationsShopify = ({ agent }: { agent: any }) => {
 
         setShopifyConnections(data || []);
 
+        // Check for App Embed success message
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('embed_ready') === 'true' && data && data.length > 0) {
+          toast({
+            title: "🎉 Shopify Connected!",
+            description: "Your widget is ready as an App Embed. Enable it in Theme Settings → App Embeds.",
+            duration: 8000,
+          });
+          // Clean up URL
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+
         // Verify health of connections
         if (data && data.length > 0) {
           const { data: healthData } = await supabase.functions.invoke('shopify-connection-status', {
