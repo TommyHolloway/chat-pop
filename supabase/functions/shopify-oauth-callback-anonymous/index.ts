@@ -127,6 +127,7 @@ serve(async (req) => {
     const shopQuery = `
       query {
         shop {
+          id
           name
           email
           contactEmail
@@ -289,6 +290,67 @@ serve(async (req) => {
       granted_scopes: ['read_products', 'read_orders', 'read_customers', 'read_inventory', 'read_discounts'],
     });
 
+    console.log('Shopify connection stored successfully');
+
+    // Set agent_id in shop metafields for App Embed
+    const metafieldMutation = `
+      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            id
+            namespace
+            key
+            value
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    try {
+      const metafieldsResponse = await fetch(`https://${shop}/admin/api/2024-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': access_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: metafieldMutation,
+          variables: {
+            metafields: [
+              {
+                ownerId: shopInfo.id,
+                namespace: "chatpop",
+                key: "agent_id",
+                value: agentId,
+                type: "single_line_text_field"
+              },
+              {
+                ownerId: shopInfo.id,
+                namespace: "chatpop",
+                key: "widget_url",
+                value: Deno.env.get('APP_BASE_URL') || 'https://chatpop.lovable.app',
+                type: "single_line_text_field"
+              }
+            ]
+          }
+        }),
+      });
+
+      const metafieldData = await metafieldsResponse.json();
+      if (metafieldData.data?.metafieldsSet?.userErrors?.length > 0) {
+        console.error('Metafield errors:', metafieldData.data.metafieldsSet.userErrors);
+      } else {
+        console.log('Metafields set successfully for App Embed');
+      }
+    } catch (metafieldError) {
+      console.error('Error setting metafields:', metafieldError);
+      // Don't fail the whole flow if metafields fail
+    }
+
     // Mark pending install as completed
     await supabase
       .from('shopify_pending_installs')
@@ -301,9 +363,9 @@ serve(async (req) => {
     console.log('Anonymous OAuth completed successfully for:', shop);
 
     if (isNewUser) {
-      return redirectToApp(`shopify_install=success&new_user=true&agent_id=${agentId}`);
+      return redirectToApp(`shopify_install=success&new_user=true&embed_ready=true&agent_id=${agentId}`);
     } else {
-      return redirectToApp(`shopify_install=success&linked=true&agent_id=${agentId}`);
+      return redirectToApp(`shopify_install=success&linked=true&embed_ready=true&agent_id=${agentId}`);
     }
 
   } catch (error) {

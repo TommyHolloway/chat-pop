@@ -133,6 +133,67 @@ serve(async (req) => {
       throw connectionError;
     }
 
+    console.log('Shopify connection stored successfully');
+
+    // Set agent_id in shop metafields for App Embed
+    const metafieldMutation = `
+      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            id
+            namespace
+            key
+            value
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    try {
+      const metafieldsResponse = await fetch(`https://${shop}/admin/api/2024-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': access_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: metafieldMutation,
+          variables: {
+            metafields: [
+              {
+                ownerId: shopInfo.id,
+                namespace: "chatpop",
+                key: "agent_id",
+                value: stateRecord.agent_id,
+                type: "single_line_text_field"
+              },
+              {
+                ownerId: shopInfo.id,
+                namespace: "chatpop",
+                key: "widget_url",
+                value: Deno.env.get('APP_BASE_URL') || 'https://chatpop.lovable.app',
+                type: "single_line_text_field"
+              }
+            ]
+          }
+        }),
+      });
+
+      const metafieldData = await metafieldsResponse.json();
+      if (metafieldData.data?.metafieldsSet?.userErrors?.length > 0) {
+        console.error('Metafield errors:', metafieldData.data.metafieldsSet.userErrors);
+      } else {
+        console.log('Metafields set successfully for App Embed');
+      }
+    } catch (metafieldError) {
+      console.error('Error setting metafields:', metafieldError);
+      // Don't fail the whole flow if metafields fail
+    }
+
     // Get user_id from agent to update billing_provider
     const { data: agent } = await supabase
       .from('agents')
@@ -184,12 +245,11 @@ serve(async (req) => {
 
     console.log('Shopify connection successful for agent:', stateRecord.agent_id);
 
-    // Redirect back to app - check if this was initiated from embedded app
-    // Parse state to check for embedded flag
+    // Redirect back to app with success message
     const isEmbedded = state.includes(':embedded');
     const redirectPath = isEmbedded 
-      ? `/shopify-admin/settings?shopify_connected=true&agent_id=${stateRecord.agent_id}`
-      : `/workspace/integrations?shopify_connected=true&agent_id=${stateRecord.agent_id}`;
+      ? `/shopify-admin/settings?shopify_connected=true&embed_ready=true&agent_id=${stateRecord.agent_id}`
+      : `/workspace/integrations?shopify_connected=true&embed_ready=true&agent_id=${stateRecord.agent_id}`;
     
     return redirectToApp(redirectPath);
 
