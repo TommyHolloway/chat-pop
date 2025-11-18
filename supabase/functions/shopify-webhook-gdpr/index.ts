@@ -77,9 +77,27 @@ serve(async (req) => {
           console.error('Error exporting customer data:', exportError);
         }
 
-        // TODO: Send customerData to Shopify's data_request callback URL
-        // The callback URL should be in payload.data_request?.url
-        console.log('Customer data exported, should send to:', payload.data_request?.url);
+        // Send customer data to Shopify's data_request callback URL
+        const callbackUrl = payload.data_request?.url;
+        if (callbackUrl && customerData) {
+          try {
+            const callbackResponse = await fetch(callbackUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(customerData),
+            });
+
+            if (!callbackResponse.ok) {
+              console.error('Failed to send data to Shopify callback:', await callbackResponse.text());
+            } else {
+              console.log('Customer data successfully sent to Shopify callback');
+            }
+          } catch (callbackError) {
+            console.error('Error sending data to Shopify callback:', callbackError);
+          }
+        }
         
         return new Response('Customer data request processed', { status: 200 });
 
