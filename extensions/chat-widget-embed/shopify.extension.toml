@@ -14,9 +14,3 @@ type = "boolean"
 id = "enabled"
 label = "Enable ChatPop Widget"
 default = true
-
-[[extensions.settings.fields]]
-type = "text"
-id = "agent_id"
-label = "Agent ID"
-info = "Automatically configured during installation"
