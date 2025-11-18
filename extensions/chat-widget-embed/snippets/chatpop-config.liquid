@@ -1,0 +1,16 @@
+{% comment %}
+  ChatPop Widget Configuration
+  This snippet injects the widget configuration into the page
+{% endcomment %}
+
+{% if shop.metafields.chatpop.agent_id %}
+<script>
+  window.ChatPopConfig = {
+    agentId: {{ shop.metafields.chatpop.agent_id | json }},
+    shopDomain: {{ shop.domain | json }},
+    enabled: {{ block.settings.enabled | default: true }},
+    baseUrl: {{ shop.metafields.chatpop.widget_url | default: 'https://chatpop.lovable.app' | json }}
+  };
+</script>
+{{ 'widget-loader.js' | asset_url | script_tag }}
+{% endif %}

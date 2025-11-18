@@ -1,0 +1,26 @@
+{% comment %}
+  ChatPop Widget App Embed Block
+  This block renders the ChatPop widget configuration
+{% endcomment %}
+
+{% schema %}
+{
+  "name": "ChatPop Widget",
+  "target": "body",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Enable the ChatPop AI assistant widget on your store. The widget will appear on all pages."
+    },
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable Widget",
+      "default": true,
+      "info": "Toggle to show or hide the ChatPop widget"
+    }
+  ]
+}
+{% endschema %}
+
+{% render 'chatpop-config' %}
