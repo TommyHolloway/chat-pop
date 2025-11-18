@@ -33,18 +33,7 @@
 
     // Success handling
     script.onload = function() {
-      console.log('ChatPop: Widget loaded successfully');
-      
-      // Initialize widget with Shopify-specific data
-      if (window.ChatPopWidget && typeof window.ChatPopWidget.init === 'function') {
-        window.ChatPopWidget.init({
-          agentId: config.agentId,
-          shopDomain: config.shopDomain,
-          platform: 'shopify',
-          // Pass cart data if available
-          cartData: window.Shopify?.cart || null
-        });
-      }
+      console.log('ChatPop: Widget loaded successfully for agent:', config.agentId);
     };
 
     // Append to document
@@ -58,12 +47,4 @@
     loadChatPopWidget();
   }
 
-  // Listen for Shopify cart updates
-  if (window.Shopify && window.Shopify.theme) {
-    document.addEventListener('cart:updated', function() {
-      if (window.ChatPopWidget && typeof window.ChatPopWidget.updateCart === 'function') {
-        window.ChatPopWidget.updateCart(window.Shopify.cart);
-      }
-    });
-  }
 })();
