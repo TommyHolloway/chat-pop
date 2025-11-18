@@ -22,9 +22,9 @@
     script.type = 'module';
     script.crossOrigin = 'anonymous';
     
-    // Use the production widget URL or fall back to staging
-    const baseUrl = config.baseUrl || 'https://chatpop.lovable.app';
-    script.src = `${baseUrl}/chat-widget/${config.agentId}.js`;
+    // Use the Supabase edge function endpoint directly
+    const supabaseUrl = 'https://etwjtxqjcwyxdamlcorf.supabase.co';
+    script.src = `${supabaseUrl}/functions/v1/chat-widget?agentId=${config.agentId}`;
 
     // Error handling
     script.onerror = function() {
