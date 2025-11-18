@@ -1,0 +1,30 @@
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "chatpop"
+client_id = "{{ SHOPIFY_CLIENT_ID }}"
+application_url = "{{ APPLICATION_URL }}"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "{{ DEV_STORE_URL }}"
+
+[access_scopes]
+# Product access
+scopes = "read_products,write_products"
+
+[auth]
+redirect_urls = [
+  "{{ REDIRECT_URL }}/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[pos]
+embedded = false
+
+[app_proxy]
+url = "{{ PROXY_URL }}"
+subpath = "chatpop"
+prefix = "apps"

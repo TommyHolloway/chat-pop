@@ -1,0 +1,22 @@
+# Learn more about configuring your extension at
+# https://shopify.dev/docs/apps/build/app-extensions
+
+api_version = "2024-10"
+
+[[extensions]]
+type = "theme_app_extension"
+name = "ChatPop Widget"
+handle = "chatpop-widget"
+
+[extensions.settings]
+[[extensions.settings.fields]]
+type = "boolean"
+id = "enabled"
+label = "Enable ChatPop Widget"
+default = true
+
+[[extensions.settings.fields]]
+type = "text"
+id = "agent_id"
+label = "Agent ID"
+info = "Automatically configured during installation"

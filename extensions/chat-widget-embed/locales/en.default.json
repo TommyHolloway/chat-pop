@@ -1,0 +1,9 @@
+{
+  "name": "ChatPop Widget",
+  "settings": {
+    "enabled": {
+      "label": "Enable Widget",
+      "info": "Toggle to show or hide the ChatPop widget"
+    }
+  }
+}
