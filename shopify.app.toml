@@ -11,7 +11,7 @@ dev_store_url = "{{ DEV_STORE_URL }}"
 
 [access_scopes]
 # Product access
-scopes = "read_products,write_products"
+scopes = "read_products,read_orders,read_customers,read_inventory,read_discounts"
 
 [auth]
 redirect_urls = [
