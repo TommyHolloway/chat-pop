@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   ArrowLeft, 
   Copy, 
@@ -21,7 +23,9 @@ import {
   Settings,
   Palette,
   ShoppingBag,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -231,6 +235,33 @@ export const Deploy = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Shopify App Embed Recommendation Banner - Only show if Shopify connected */}
+              {agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token && (
+                <Alert className="border-green-500 bg-gradient-to-br from-green-50 to-white dark:from-green-950 dark:to-background">
+                  <Sparkles className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="ml-2">
+                    <div className="space-y-2">
+                      <p className="font-semibold text-green-900 dark:text-green-100">
+                        ✨ Recommended: Use Shopify App Embed (No Code Required)
+                      </p>
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        Since you've connected Shopify, your widget is automatically available as an App Embed. 
+                        Simply enable it in your theme editor - scroll up to see instructions!
+                      </p>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="mt-2 border-green-600 text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                      >
+                        <Sparkles className="mr-2 h-3 w-3" />
+                        View App Embed Instructions
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Widget Customization */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -276,49 +307,107 @@ export const Deploy = () => {
                 </p>
               </div>
 
-              {/* Embed Script Code */}
-              <div className="space-y-2">
-                <Label>Embed Script</Label>
-                <div className="relative">
-                  <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto font-mono border">
-                    <code>{scriptCode}</code>
-                  </pre>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute top-2 right-2"
-                    onClick={() => copyToClipboard(scriptCode, 'script')}
-                  >
-                    {copiedCode === 'script' ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+              {/* Conditional: Collapsible for Shopify-connected, normal section for others */}
+              {agent?.shopify_config?.store_domain && agent?.shopify_config?.admin_api_token ? (
+                // Shopify Connected: Show as collapsible advanced option
+                <Collapsible className="space-y-2">
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <Label className="text-base">Manual Installation (Advanced)</Label>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <ChevronDown className="h-4 w-4" />
+                        <span className="sr-only">Toggle</span>
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Use this method only if you need to embed on non-Shopify pages or have special requirements.
+                    </p>
+                    
+                    {/* Embed Script Code */}
+                    <div className="space-y-2">
+                      <Label>Embed Script</Label>
+                      <div className="relative">
+                        <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto font-mono border">
+                          <code>{scriptCode}</code>
+                        </pre>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="absolute top-2 right-2"
+                          onClick={() => copyToClipboard(scriptCode, 'script')}
+                        >
+                          {copiedCode === 'script' ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
 
-              {/* Shopify Setup Instructions */}
-              <div className="space-y-4 pt-4 border-t">
-                <Label>How to Add to Your Shopify Store</Label>
-                <div className="bg-muted p-4 rounded-lg space-y-3">
-                  <p className="text-sm font-semibold">Setup Steps:</p>
-                  <ol className="text-sm space-y-2 list-decimal list-inside text-muted-foreground">
-                    <li>Copy the script code above</li>
-                    <li>Go to <strong>Shopify Admin → Online Store → Themes</strong></li>
-                    <li>Click <strong>Actions → Edit code</strong></li>
-                    <li>Find and open the <code className="bg-background px-1 py-0.5 rounded">theme.liquid</code> file in the Layout folder</li>
-                    <li>Scroll to the bottom and paste the script right before the <code className="bg-background px-1 py-0.5 rounded">&lt;/body&gt;</code> closing tag</li>
-                    <li>Click <strong>Save</strong> and your widget will be live!</li>
-                  </ol>
-                </div>
-                
-                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <p className="text-sm text-blue-900 dark:text-blue-100">
-                    <strong>⚡ Setup time:</strong> Less than 2 minutes • <strong>No coding required</strong>
-                  </p>
-                </div>
-              </div>
+                    {/* Manual Setup Instructions */}
+                    <div className="space-y-4">
+                      <div className="bg-muted p-4 rounded-lg space-y-3">
+                        <p className="text-sm font-semibold">Manual Setup Steps:</p>
+                        <ol className="text-sm space-y-2 list-decimal list-inside text-muted-foreground">
+                          <li>Copy the script code above</li>
+                          <li>Go to <strong>Shopify Admin → Online Store → Themes</strong></li>
+                          <li>Click <strong>Actions → Edit code</strong></li>
+                          <li>Find and open the <code className="bg-background px-1 py-0.5 rounded">theme.liquid</code> file in the Layout folder</li>
+                          <li>Scroll to the bottom and paste the script right before the <code className="bg-background px-1 py-0.5 rounded">&lt;/body&gt;</code> closing tag</li>
+                          <li>Click <strong>Save</strong> and your widget will be live!</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                // Not Shopify Connected: Show normal section
+                <>
+                  {/* Embed Script Code */}
+                  <div className="space-y-2">
+                    <Label>Embed Script</Label>
+                    <div className="relative">
+                      <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto font-mono border">
+                        <code>{scriptCode}</code>
+                      </pre>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="absolute top-2 right-2"
+                        onClick={() => copyToClipboard(scriptCode, 'script')}
+                      >
+                        {copiedCode === 'script' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Setup Instructions */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <Label>How to Add to Your Website</Label>
+                    <div className="bg-muted p-4 rounded-lg space-y-3">
+                      <p className="text-sm font-semibold">Setup Steps:</p>
+                      <ol className="text-sm space-y-2 list-decimal list-inside text-muted-foreground">
+                        <li>Copy the script code above</li>
+                        <li>Paste it in your website's HTML, right before the <code className="bg-background px-1 py-0.5 rounded">&lt;/body&gt;</code> closing tag</li>
+                        <li>Save and publish - your widget will appear instantly!</li>
+                      </ol>
+                    </div>
+                    
+                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <p className="text-sm text-blue-900 dark:text-blue-100">
+                        <strong>⚡ Setup time:</strong> Less than 2 minutes • <strong>No coding required</strong>
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Widget Benefits */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-6 border-t">
