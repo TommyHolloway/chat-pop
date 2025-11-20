@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserPlan } from '@/hooks/useUserPlan';
 import { Moon, Sun, Settings, LogOut, User } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Logo } from './Logo';
@@ -11,10 +12,21 @@ import { Logo } from './Logo';
 export const AuthenticatedNavbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { plan, isLoading: planLoading } = useUserPlan();
   const navigate = useNavigate();
 
   const getInitials = (email: string) => {
     return email ? email.slice(0, 2).toUpperCase() : 'U';
+  };
+
+  const getPlanDisplayName = (planName: string) => {
+    const planMap: Record<string, string> = {
+      'free': 'Free Plan',
+      'starter': 'Starter Plan',
+      'growth': 'Growth Plan',
+      'pro': 'Pro Plan'
+    };
+    return planMap[planName] || 'Free Plan';
   };
 
   const handleSignOut = async () => {
@@ -61,7 +73,7 @@ export const AuthenticatedNavbar = () => {
               <div className="flex flex-col space-y-1 p-2">
                 <p className="text-sm font-medium leading-none">{user?.email}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  Free Plan
+                  {planLoading ? 'Loading...' : getPlanDisplayName(plan)}
                 </p>
               </div>
               <DropdownMenuSeparator />
