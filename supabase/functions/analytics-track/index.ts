@@ -1,14 +1,11 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { validateAuthAndAgent, getRestrictedCorsHeaders } from '../_shared/auth-helpers.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const corsHeaders = getRestrictedCorsHeaders();
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -23,9 +20,13 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // Validate authentication and agent ownership
+    const authHeader = req.headers.get('Authorization');
+    await validateAuthAndAgent(authHeader, agentId, supabaseUrl, supabaseServiceKey);
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get agent owner
@@ -59,9 +60,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in analytics-track function:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: error.message || 'Internal server error' }),
       { 
-        status: 500,
+        status: error.message?.includes('authorization') || error.message?.includes('Unauthorized') ? 401 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
@@ -70,7 +71,7 @@ serve(async (req) => {
 
 async function trackConversation(supabase: any, userId: string) {
   const currentMonth = new Date();
-  currentMonth.setDate(1); // First day of current month
+  currentMonth.setDate(1);
   
   const { error } = await supabase
     .from('usage_tracking')
@@ -89,6 +90,5 @@ async function trackConversation(supabase: any, userId: string) {
 }
 
 async function trackMessage(supabase: any, agentId: string, data: any) {
-  // Could be used for response time tracking, satisfaction scores, etc.
   console.log('Message tracked for agent:', agentId, data);
 }

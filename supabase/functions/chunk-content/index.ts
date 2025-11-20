@@ -1,11 +1,9 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { validateAuthAndAgent, getRestrictedCorsHeaders } from '../_shared/auth-helpers.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const corsHeaders = getRestrictedCorsHeaders();
 
 // Simple token estimation (roughly 4 characters per token)
 function estimateTokens(text: string): number {
@@ -93,10 +91,15 @@ serve(async (req) => {
       throw new Error('Agent ID, source ID, source type, and content are required');
     }
 
-    console.log(`Chunking content for agent ${agentId}, source: ${sourceType}/${sourceId}`);
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Validate authentication and agent ownership
+    const authHeader = req.headers.get('Authorization');
+    await validateAuthAndAgent(authHeader, agentId, supabaseUrl, supabaseKey);
+
+    console.log(`Chunking content for agent ${agentId}, source: ${sourceType}/${sourceId}`);
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Clear existing chunks for this source
@@ -122,11 +125,11 @@ serve(async (req) => {
       source_type: sourceType,
       chunk_text: chunk.text,
       chunk_index: chunk.index,
+      token_count: chunk.metadata.token_count,
       metadata_json: {
         ...globalMetadata,
         ...chunk.metadata
-      },
-      token_count: estimateTokens(chunk.text)
+      }
     }));
 
     const { error: insertError } = await supabase
@@ -135,26 +138,30 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Error inserting chunks:', insertError);
-      throw new Error(`Failed to insert chunks: ${insertError.message}`);
+      throw insertError;
     }
 
-    console.log(`✅ Successfully inserted ${chunks.length} chunks for agent ${agentId}, source: ${sourceType}/${sourceId}`);
+    console.log(`Successfully stored ${chunks.length} chunks`);
 
-    return new Response(JSON.stringify({
-      success: true,
-      chunks_created: chunks.length,
-      total_tokens: chunks.reduce((sum, chunk) => sum + estimateTokens(chunk.text), 0)
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
+    return new Response(
+      JSON.stringify({
+        success: true,
+        chunksCreated: chunks.length,
+        totalTokens: chunks.reduce((sum, c) => sum + c.metadata.token_count, 0)
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Error in chunk-content function:', error);
-    return new Response(JSON.stringify({
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        status: error.message.includes('authorization') || error.message.includes('Unauthorized') ? 401 : 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });
