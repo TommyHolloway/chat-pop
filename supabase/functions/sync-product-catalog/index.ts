@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { validateAuthAndAgent, getRestrictedCorsHeaders } from '../_shared/auth-helpers.ts';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = getRestrictedCorsHeaders();
 
 interface Product {
   id: string;
@@ -20,21 +18,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Verify authentication
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Missing authorization header");
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace("Bearer ", "")
-    );
-
-    if (authError || !user) {
-      throw new Error("Unauthorized");
-    }
 
     const { agentId, products } = await req.json() as {
       agentId: string;
@@ -45,16 +28,11 @@ serve(async (req) => {
       throw new Error("Invalid request: agentId and products array required");
     }
 
-    // Verify agent ownership
-    const { data: agent, error: agentError } = await supabase
-      .from("agents")
-      .select("user_id")
-      .eq("id", agentId)
-      .single();
+    // Validate authentication and ownership
+    const authHeader = req.headers.get("Authorization");
+    await validateAuthAndAgent(authHeader, agentId, supabaseUrl, supabaseKey, 'sync-product-catalog');
 
-    if (agentError || agent.user_id !== user.id) {
-      throw new Error("Unauthorized: Agent not found or not owned by user");
-    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Check product limit
     const { data: limitCheck, error: limitError } = await supabase

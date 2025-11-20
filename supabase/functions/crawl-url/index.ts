@@ -3,6 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import FirecrawlApp from 'https://esm.sh/@mendable/firecrawl-js@1.29.2';
 import { validateAuthAndAgent, getRestrictedCorsHeaders } from '../_shared/auth-helpers.ts';
+import { checkRateLimit } from '../_shared/rate-limiter.ts';
+import { logSecurityEvent } from '../_shared/security-logger.ts';
 
 const corsHeaders = getRestrictedCorsHeaders();
 
@@ -30,7 +32,32 @@ serve(async (req) => {
     if (linkError || !linkData) throw new Error('Link not found');
 
     const authHeader = req.headers.get('Authorization');
-    await validateAuthAndAgent(authHeader, linkData.agent_id, supabaseUrl, supabaseKey);
+    const { userId } = await validateAuthAndAgent(authHeader, linkData.agent_id, supabaseUrl, supabaseKey, 'crawl-url');
+
+    // Rate limit: 10 requests per 10 minutes
+    const rateLimitResult = await checkRateLimit({
+      maxRequests: 10,
+      windowMinutes: 10,
+      identifier: `crawl-${linkData.agent_id}`
+    }, supabaseUrl, supabaseKey);
+
+    if (!rateLimitResult.allowed) {
+      await logSecurityEvent({
+        event_type: 'RATE_LIMIT_EXCEEDED',
+        function_name: 'crawl-url',
+        agent_id: linkData.agent_id,
+        user_id: userId,
+        severity: 'medium'
+      }, supabaseUrl, supabaseKey);
+
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded',
+        resetAt: rateLimitResult.resetAt
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     if (!firecrawlApiKey) {
       return new Response(JSON.stringify({
