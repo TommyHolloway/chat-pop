@@ -48,7 +48,8 @@ serve(async (req) => {
         .from('shopify_connections')
         .select('agent_id, shop_domain, shop_owner_email, shop_name')
         .eq('shop_domain', shopDomain)
-        .eq('status', 'active')
+        .eq('revoked', false)
+        .is('deleted_at', null)
         .maybeSingle();
 
       return new Response(JSON.stringify({
