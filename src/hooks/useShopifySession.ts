@@ -9,6 +9,7 @@ interface ShopifySessionData {
   shop_name?: string;
   shop_owner_email?: string;
   valid: boolean;
+  hasConnection?: boolean;
 }
 
 interface UseShopifySessionReturn {
@@ -40,6 +41,7 @@ export const useShopifySession = (): UseShopifySessionReturn => {
           shop_name: data.shop_name,
           shop_owner_email: data.shop_owner_email,
           valid: true,
+          hasConnection: !!data.agent_id, // If agent_id exists, connection exists
         });
         setError(null);
       } else {
