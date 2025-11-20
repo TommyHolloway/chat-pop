@@ -87,8 +87,9 @@ export const Settings = () => {
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground">
                     {currentPlan === 'free' ? 'Free Plan' : 
-                     currentPlan === 'hobby' ? 'Hobby Plan' : 
-                     currentPlan === 'standard' ? 'Pro Plan' : 'Free Plan'}
+                     currentPlan === 'starter' ? 'Starter Plan' : 
+                     currentPlan === 'growth' ? 'Growth Plan' :
+                     currentPlan === 'pro' ? 'Pro Plan' : 'Free Plan'}
                   </p>
                   {isAdminOverride && (
                     <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
