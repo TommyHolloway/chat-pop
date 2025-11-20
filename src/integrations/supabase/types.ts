@@ -1212,6 +1212,63 @@ export type Database = {
           },
         ]
       }
+      rate_limit_tracking: {
+        Row: {
+          created_at: string
+          id: string
+          identifier: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifier: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifier?: string
+        }
+        Relationships: []
+      }
+      security_logs: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          function_name: string
+          id: string
+          ip_address: string | null
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          function_name: string
+          id?: string
+          ip_address?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          function_name?: string
+          id?: string
+          ip_address?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shopify_connections: {
         Row: {
           agent_id: string
@@ -1830,6 +1887,7 @@ export type Database = {
       cleanup_empty_conversations: { Args: never; Returns: undefined }
       cleanup_expired_cache: { Args: never; Returns: undefined }
       cleanup_expired_oauth_states: { Args: never; Returns: undefined }
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_visitor_data: { Args: never; Returns: undefined }
       cleanup_old_visitor_data_extended: { Args: never; Returns: undefined }
       cleanup_visitor_privacy_data: { Args: never; Returns: undefined }
