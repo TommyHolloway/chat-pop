@@ -67,6 +67,22 @@ export const useWorkspaces = () => {
 
       if (error) throw error;
 
+      // Auto-create default agent for the workspace
+      const { error: agentError } = await supabase
+        .from('agents')
+        .insert({
+          user_id: user.id,
+          workspace_id: data.id,
+          name: `${data.name} Assistant`,
+          description: 'Your AI shopping assistant',
+          instructions: 'You are a helpful AI shopping assistant that helps customers find products and recover abandoned carts.'
+        });
+
+      if (agentError) {
+        console.error('Error creating default agent:', agentError);
+        // Don't throw - workspace creation succeeded, agent creation is supplementary
+      }
+
       // Update local state immediately
       const newWorkspaces = [...workspaces, data];
       setWorkspaces(newWorkspaces);
@@ -78,7 +94,7 @@ export const useWorkspaces = () => {
       
       toast({
         title: "Success",
-        description: "Workspace created successfully",
+        description: "Workspace and assistant created successfully",
       });
 
       return data;

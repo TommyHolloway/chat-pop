@@ -103,7 +103,7 @@ export const Contact = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto animate-fade-in">
-              Have questions about ChatPop? Want a custom demo? Our team is here to help you succeed with AI chatbots.
+              Have questions about ChatPop? Want a custom demo? Our team is here to help you succeed with your AI shopping assistant.
             </p>
           </div>
         </div>
