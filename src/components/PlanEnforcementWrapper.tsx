@@ -2,7 +2,8 @@ import React, { ReactNode, useState } from 'react';
 import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
 import { PlanUpgradeDialog } from './PlanUpgradeDialog';
 import { Button } from './ui/button';
-import { Lock, Crown } from 'lucide-react';
+import { Lock, Crown, Store } from 'lucide-react';
+import { useUserPlan } from '@/hooks/useUserPlan';
 
 interface PlanEnforcementWrapperProps {
   children: ReactNode;
@@ -20,7 +21,9 @@ export const PlanEnforcementWrapper = ({
   fallbackContent 
 }: PlanEnforcementWrapperProps) => {
   const enforcement = usePlanEnforcement();
+  const { billingProvider } = useUserPlan();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const isShopifyBilling = billingProvider === 'shopify';
   
   const canPerformAction = async () => {
     // Debug logging
@@ -114,8 +117,20 @@ export const PlanEnforcementWrapper = ({
     return <>{children}</>;
   }
 
-  // Show upgrade prompt
-  const defaultFallback = (
+  // Show upgrade prompt or Shopify-specific message
+  const defaultFallback = isShopifyBilling && feature === 'agent' ? (
+    <div className="flex flex-col items-center gap-4 p-8 border border-dashed rounded-lg bg-blue-500/10 border-blue-500/50">
+      <Store className="h-12 w-12 text-blue-500" />
+      <div className="text-center space-y-2">
+        <h3 className="text-lg font-semibold">
+          Shopify Store Limit
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Shopify stores are limited to 1 agent per workspace to ensure optimal performance and seamless integration with your storefront.
+        </p>
+      </div>
+    </div>
+  ) : (
     <div className="flex flex-col items-center gap-4 p-8 border border-dashed rounded-lg bg-muted/50">
       <Crown className="h-12 w-12 text-yellow-500" />
       <div className="text-center space-y-2">
