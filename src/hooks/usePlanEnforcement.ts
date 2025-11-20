@@ -47,7 +47,7 @@ interface PlanEnforcement {
 
 export const usePlanEnforcement = () => {
   const { user } = useAuth();
-  const { plan: userPlan, isLoading: planLoading } = useUserPlan();
+  const { plan: userPlan, isLoading: planLoading, billingProvider } = useUserPlan();
   const { usage } = useUsageData();
   const [enforcement, setEnforcement] = useState<PlanEnforcement>({
     limits: { monthlyVisitors: 100, products: 100, messageCredits: -1, agents: 1, links: 5, storageGB: 1, cartRecovery: 0 },
@@ -75,7 +75,20 @@ export const usePlanEnforcement = () => {
   });
 
   // Define plan limits based on current billing plans
-  const getPlanLimits = (plan: string): PlanLimits => {
+  const getPlanLimits = (plan: string, isShopifyBilling: boolean): PlanLimits => {
+    // Shopify apps ALWAYS have 1 agent limit regardless of plan
+    if (isShopifyBilling) {
+      return {
+        monthlyVisitors: 25000,
+        products: 3000,
+        messageCredits: -1,
+        agents: 1,  // STRICT 1-agent limit for Shopify
+        links: -1,
+        storageGB: 50,
+        cartRecovery: 500
+      };
+    }
+
     switch (plan) {
       case 'hobby':
       case 'starter':
@@ -132,11 +145,14 @@ export const usePlanEnforcement = () => {
       setEnforcement(prev => ({ ...prev, isLoading: true }));
 
       const currentPlan = userPlan;
-      const limits = getPlanLimits(currentPlan);
+      const isShopifyBilling = billingProvider === 'shopify';
+      const limits = getPlanLimits(currentPlan, isShopifyBilling);
       
       console.log('Plan Enforcement Check:', {
         userId: user.id,
         currentPlan,
+        billingProvider,
+        isShopifyBilling,
         limits,
         planLoading
       });

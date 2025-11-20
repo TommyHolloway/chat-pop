@@ -14,12 +14,19 @@ import { useToast } from '@/hooks/use-toast';
 import { AgentCard } from '@/components/shared/AgentCard';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { CreateAgentDialog } from '@/components/CreateAgentDialog';
+import { useUserPlan } from '@/hooks/useUserPlan';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Store } from 'lucide-react';
 
 export const Agents = () => {
   const { agents, loading, deleteAgent, refetchAgents } = useAgents();
   const { currentWorkspace } = useWorkspaces();
+  const { billingProvider } = useUserPlan();
   const { toast } = useToast();
   const [showCreateAgent, setShowCreateAgent] = useState(false);
+  
+  const isShopifyBilling = billingProvider === 'shopify';
+  const hasReachedShopifyLimit = isShopifyBilling && agents.length >= 1;
 
   const handleDeleteAgent = async (agentId: string, agentName: string) => {
     try {
@@ -78,6 +85,16 @@ export const Agents = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
+          {/* Shopify 1-Agent Info Banner */}
+          {isShopifyBilling && agents.length > 0 && (
+            <Alert className="mb-6 border-blue-500/50 bg-blue-500/10">
+              <Store className="h-4 w-4" />
+              <AlertDescription>
+                Shopify stores are limited to 1 agent per workspace. This ensures optimal performance and integration with your Shopify storefront.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {agents.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
