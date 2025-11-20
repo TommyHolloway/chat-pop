@@ -87,7 +87,7 @@ export const Login = () => {
           </div>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>
-            Sign in to your ChatPop account to continue building amazing chatbots.
+            Sign in to your ChatPop account to continue building your AI shopping assistant.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

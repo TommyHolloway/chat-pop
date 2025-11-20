@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Plus, Users, Calendar, BarChart3, Settings, Edit2 } from 'lucide-react';
+import { Plus, Users, Calendar, BarChart3, Settings, Edit2, ExternalLink } from 'lucide-react';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useAgents } from '@/hooks/useAgents';
 import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
@@ -10,26 +10,29 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlanEnforcementWrapper } from '@/components/PlanEnforcementWrapper';
 import { CreateWorkspaceDialog } from '@/components/CreateWorkspaceDialog';
-import { CreateAgentDialog } from '@/components/CreateAgentDialog';
 import { EditWorkspaceDialog } from '@/components/EditWorkspaceDialog';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const WorkspaceOverview = () => {
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
-  const [showCreateAgent, setShowCreateAgent] = useState(false);
   const [showEditWorkspace, setShowEditWorkspace] = useState(false);
   const { currentWorkspace, workspaces } = useWorkspaces();
   const { agents, loading: agentsLoading } = useAgents();
   const { leads } = useLeads();
   const planEnforcement = usePlanEnforcement();
+  const navigate = useNavigate();
 
-  const workspaceAgents = agents.filter(agent => agent.workspace_id === currentWorkspace?.id);
-  const totalLeads = leads.filter(lead => 
-    workspaceAgents.some(agent => agent.id === lead.agent_id)
-  ).length;
+  const workspaceAgent = agents.find(agent => agent.workspace_id === currentWorkspace?.id);
+  const totalLeads = leads.filter(lead => lead.agent_id === workspaceAgent?.id).length;
 
   const canCreateWorkspace = true; // TODO: Implement workspace limits
-  const canCreateAgent = planEnforcement?.canCreateAgent;
+
+  // Redirect to agent settings when agent is loaded
+  useEffect(() => {
+    if (workspaceAgent && !agentsLoading) {
+      navigate(`/agents/${workspaceAgent.id}/settings/general`, { replace: true });
+    }
+  }, [workspaceAgent, agentsLoading, navigate]);
 
   if (!currentWorkspace) {
     return (
@@ -86,38 +89,29 @@ export const WorkspaceOverview = () => {
             <Edit2 className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex gap-2">
-          <PlanEnforcementWrapper
-            feature="agent" 
-            fallbackContent={
-              <Button disabled>
-                <Plus className="mr-2 h-4 w-4" />
-                New Agent (Upgrade Required)
-              </Button>
-            }
-          >
-            <Button onClick={() => setShowCreateAgent(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Agent
+        {workspaceAgent && (
+          <Link to={`/agents/${workspaceAgent.id}/settings/general`}>
+            <Button>
+              <Settings className="mr-2 h-4 w-4" />
+              Assistant Settings
             </Button>
-          </PlanEnforcementWrapper>
-        </div>
+          </Link>
+        )}
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
+            <CardTitle className="text-sm font-medium">AI Assistant Status</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{workspaceAgents.length}</div>
+            <div className="text-2xl font-bold">
+              {agentsLoading ? "..." : workspaceAgent ? "Active" : "Setting up..."}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {planEnforcement?.remainingAgents !== undefined 
-                ? `${planEnforcement.remainingAgents} remaining`
-                : 'Unlimited'
-              }
+              {workspaceAgent?.name || "Your shopping assistant"}
             </p>
           </CardContent>
         </Card>
@@ -130,7 +124,7 @@ export const WorkspaceOverview = () => {
           <CardContent>
             <div className="text-2xl font-bold">{totalLeads}</div>
             <p className="text-xs text-muted-foreground">
-              Across all agents
+              Captured by your assistant
             </p>
           </CardContent>
         </Card>
@@ -154,94 +148,45 @@ export const WorkspaceOverview = () => {
         </Card>
       </div>
 
-      {/* Agents Grid */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Your Agents</h2>
-          {workspaceAgents.length > 0 && (
-            <Link to="/agents">
-              <Button variant="outline" size="sm">View All</Button>
+      {/* Quick Actions */}
+      {workspaceAgent && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Manage your AI shopping assistant</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link to={`/agents/${workspaceAgent.id}/settings/general`}>
+              <Button variant="outline" className="w-full">
+                <Settings className="mr-2 h-4 w-4" />
+                General Settings
+              </Button>
             </Link>
-          )}
-        </div>
+            <Link to={`/agents/${workspaceAgent.id}/sources`}>
+              <Button variant="outline" className="w-full">
+                <Users className="mr-2 h-4 w-4" />
+                Knowledge Base
+              </Button>
+            </Link>
+            <Link to={`/agents/${workspaceAgent.id}/integrations/shopify`}>
+              <Button variant="outline" className="w-full">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Shopify Integration
+              </Button>
+            </Link>
+            <Link to={`/agents/${workspaceAgent.id}/deploy`}>
+              <Button variant="outline" className="w-full">
+                <Plus className="mr-2 h-4 w-4" />
+                Deploy Assistant
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
-        {agentsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-3 bg-muted rounded w-full mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : workspaceAgents.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No agents yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first AI agent to get started
-              </p>
-              <PlanEnforcementWrapper 
-                feature="agent" 
-                fallbackContent={
-                  <Button disabled>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Agent (Upgrade Required)
-                  </Button>
-                }
-              >
-                <Button onClick={() => setShowCreateAgent(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Agent
-                </Button>
-              </PlanEnforcementWrapper>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {workspaceAgents.map((agent) => (
-              <Link key={agent.id} to={`/workspace/${currentWorkspace.id}/agents/${agent.id}/playground`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">{agent.name}</CardTitle>
-                      <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
-                        {agent.status}
-                      </Badge>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {agent.description || 'No description'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>Last updated</span>
-                      <span>{new Date(agent.updated_at).toLocaleDateString()}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Dialogs */}
       <CreateWorkspaceDialog 
         open={showCreateWorkspace} 
         onOpenChange={setShowCreateWorkspace} 
-      />
-      <CreateAgentDialog 
-        open={showCreateAgent} 
-        onOpenChange={setShowCreateAgent}
-        workspaceId={currentWorkspace.id}
       />
       <EditWorkspaceDialog
         open={showEditWorkspace}

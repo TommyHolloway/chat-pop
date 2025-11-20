@@ -14,10 +14,10 @@ export const Pricing = () => {
   return (
     <>
       <SEO 
-        title="Pricing Plans | ChatPop - AI Chatbot for E-commerce"
-        description="Simple, transparent pricing for ChatPop AI chatbots. Free plan available. Starter at $47/mo, Growth at $197/mo, Pro at $347/mo. 7-day free trial, no credit card required."
+        title="Pricing Plans | ChatPop - AI Shopping Assistant for Shopify"
+        description="Simple, transparent pricing for ChatPop AI shopping assistant. Free plan available. Starter at $47/mo, Growth at $197/mo, Pro at $347/mo. 7-day free trial."
         canonical="https://chatpop.ai/pricing"
-        keywords="chatbot pricing, AI pricing plans, free trial, subscription pricing, e-commerce AI cost, chatbot subscription"
+        keywords="shopping assistant pricing, AI shopping assistant plans, Shopify AI pricing, cart recovery pricing, e-commerce automation cost"
       />
       <StructuredData 
         type="BreadcrumbList"

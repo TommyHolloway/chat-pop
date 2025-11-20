@@ -157,7 +157,7 @@ export const SecureSignup = () => {
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>
-            Start building intelligent chatbots for your business today.
+            Join ChatPop and start building your AI shopping assistant for your Shopify store.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

@@ -13,10 +13,10 @@ export default function Landing() {
   return (
     <>
       <SEO 
-        title="ChatPop - AI Chatbots for Business | Automate Customer Support 24/7"
-        description="Create intelligent AI chatbots in minutes. Upload your knowledge, train your bot, and deploy anywhere. Perfect for customer support, lead generation, and more."
+        title="ChatPop - AI Shopping Assistant for Shopify | 24/7 Cart Recovery & Product Discovery"
+        description="AI shopping assistant for Shopify stores that works 24/7. Recover abandoned carts, recommend products, and boost sales with intelligent automation. Purpose-built for e-commerce."
         canonical="https://chatpop.ai"
-        keywords="AI chatbot, customer support automation, chatbot builder, AI assistant, business automation, lead generation bot"
+        keywords="AI shopping assistant, Shopify AI assistant, cart recovery, product recommendations, e-commerce AI, Shopify automation, shopping assistant"
       />
       <StructuredData 
         type="Organization"

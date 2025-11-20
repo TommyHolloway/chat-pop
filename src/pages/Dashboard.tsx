@@ -61,7 +61,7 @@ export const Dashboard = () => {
             <div>
               <h1 className="text-3xl font-bold">Store Dashboard</h1>
               <p className="text-muted-foreground">
-                Welcome back, {user?.email?.split('@')[0]}! Here's what's happening with your AI shopping assistants.
+                Welcome back! Manage your AI shopping assistant.
               </p>
             </div>
             <PlanEnforcementWrapper feature="agent">
@@ -136,9 +136,9 @@ export const Dashboard = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-semibold">Your AI Shopping Assistants</h2>
+              <h2 className="text-2xl font-semibold">Your AI Shopping Assistant</h2>
               <p className="text-muted-foreground">
-                Manage and monitor your deployed shopping assistants
+                Configure and deploy your AI shopping assistant
               </p>
             </div>
           </div>
@@ -149,7 +149,7 @@ export const Dashboard = () => {
                 <div className="h-16 w-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
                   <Bot className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold">Create your first AI shopping assistant</h3>
+                <h3 className="text-2xl font-bold">Create your AI shopping assistant</h3>
                 <p className="text-muted-foreground text-lg">
                   From website link to trained AI agent in under 60 seconds
                 </p>
@@ -164,38 +164,16 @@ export const Dashboard = () => {
               </div>
             </Card>
           ) : (
-            <>
-              <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-2">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">Create another assistant</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Set up a new agent in 60 seconds with our guided wizard
-                      </p>
-                    </div>
-                    <PlanEnforcementWrapper feature="agent">
-                      <Link to="/agents/onboarding">
-                        <Button>
-                          <Plus className="mr-2 h-4 w-4" />
-                          New Assistant
-                        </Button>
-                      </Link>
-                    </PlanEnforcementWrapper>
-                  </div>
-                </CardContent>
-              </Card>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {agents.map((agent) => (
-                  <AgentCard
-                    key={agent.id}
-                    agent={agent}
-                    onDelete={handleDeleteAgent}
-                    variant="dashboard"
-                  />
-                ))}
-              </div>
-            </>
+            <div className="grid grid-cols-1 gap-6">
+              {agents.map((agent) => (
+                <AgentCard
+                  key={agent.id}
+                  agent={agent}
+                  onDelete={handleDeleteAgent}
+                  variant="dashboard"
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
