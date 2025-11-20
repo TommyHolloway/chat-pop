@@ -5,10 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ShopifyOAuthButton } from '@/components/ShopifyOAuthButton';
+import { EmbeddedOAuthButton } from '@/components/shopify/EmbeddedOAuthButton';
+import { useShopifySession } from '@/hooks/useShopifySession';
 import { supabase } from '@/integrations/supabase/client';
 
 export const AgentIntegrationsShopify = ({ agent }: { agent: any }) => {
   const { toast } = useToast();
+  const { session, isEmbedded } = useShopifySession();
   const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
   const [loadingConnection, setLoadingConnection] = useState(true);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
@@ -211,7 +214,11 @@ export const AgentIntegrationsShopify = ({ agent }: { agent: any }) => {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : !isShopifyConnected ? (
-            <ShopifyOAuthButton agentId={agent.id} onSuccess={handleRefreshAgent} />
+            isEmbedded ? (
+              <EmbeddedOAuthButton agentId={agent.id} onSuccess={handleRefreshAgent} />
+            ) : (
+              <ShopifyOAuthButton agentId={agent.id} onSuccess={handleRefreshAgent} />
+            )
           ) : (
             <div className="space-y-4">
               {shopifyConnections.map((connection) => (

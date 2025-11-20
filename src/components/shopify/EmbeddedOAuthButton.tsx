@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Loader2, ShoppingBag } from 'lucide-react';
 import { useShopifySession } from '@/hooks/useShopifySession';
+import { createApp } from '@shopify/app-bridge';
+import { getSessionToken } from '@shopify/app-bridge/utilities';
 
 interface EmbeddedOAuthButtonProps {
   agentId: string;
@@ -28,28 +30,57 @@ export const EmbeddedOAuthButton = ({ agentId, onSuccess }: EmbeddedOAuthButtonP
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('shopify-oauth-install', {
+      // Get session token from App Bridge
+      const params = new URLSearchParams(window.location.search);
+      const host = params.get('host');
+      
+      if (!host) {
+        throw new Error('Missing Shopify host parameter');
+      }
+
+      const apiKey = import.meta.env.VITE_SHOPIFY_CLIENT_ID;
+      if (!apiKey) {
+        throw new Error('VITE_SHOPIFY_CLIENT_ID not configured');
+      }
+
+      const app = createApp({
+        apiKey,
+        host,
+      });
+
+      const sessionToken = await getSessionToken(app);
+
+      // Call embedded connect function
+      const { data, error } = await supabase.functions.invoke('shopify-embedded-connect', {
         body: { 
-          shop_domain: session.shop_domain, 
+          session_token: sessionToken,
           agent_id: agentId,
-          embedded: true // Flag that this is from embedded app
         },
       });
 
       if (error) throw error;
 
-      if (data?.install_url) {
-        // Use App Bridge Redirect for seamless OAuth in embedded context
-        window.open(data.install_url, '_parent');
+      if (data?.success) {
+        toast({
+          title: 'Connected Successfully!',
+          description: `Your store ${data.connection?.shop_domain} is now connected.`,
+        });
+        
+        // Refresh the page to show updated connection status
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          window.location.reload();
+        }
       } else {
-        throw new Error('No install URL returned');
+        throw new Error(data?.error || 'Connection failed');
       }
     } catch (error: any) {
-      console.error('OAuth initiation error:', error);
+      console.error('Connection error:', error);
       
       toast({
         title: 'Connection Failed',
-        description: error.message || 'Failed to initiate Shopify connection',
+        description: error.message || 'Failed to connect to Shopify',
         variant: 'destructive',
       });
       setLoading(false);
