@@ -16,7 +16,32 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
     const authHeader = req.headers.get('Authorization');
-    await validateAuthAndAgent(authHeader, agent_id, supabaseUrl, supabaseKey);
+    const { userId } = await validateAuthAndAgent(authHeader, agent_id, supabaseUrl, supabaseKey, 'sync-shopify-products');
+
+    // Rate limit: 10 requests per 10 minutes
+    const rateLimitResult = await checkRateLimit({
+      maxRequests: 10,
+      windowMinutes: 10,
+      identifier: `sync-shopify-${agent_id}`
+    }, supabaseUrl, supabaseKey);
+
+    if (!rateLimitResult.allowed) {
+      await logSecurityEvent({
+        event_type: 'RATE_LIMIT_EXCEEDED',
+        function_name: 'sync-shopify-products',
+        agent_id,
+        user_id: userId,
+        severity: 'medium'
+      }, supabaseUrl, supabaseKey);
+
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded',
+        resetAt: rateLimitResult.resetAt
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { data: connection } = await supabase.from('shopify_connections').select('*').eq('agent_id', agent_id).single();

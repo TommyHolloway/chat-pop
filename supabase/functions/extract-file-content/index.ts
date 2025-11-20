@@ -2,11 +2,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import pdfParse from 'https://esm.sh/pdf-parse@1.1.1';
+import { validateAuthAndAgent, getRestrictedCorsHeaders } from '../_shared/auth-helpers.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const corsHeaders = getRestrictedCorsHeaders();
 
 // Extract PDF text using pdf-parse library
 async function extractPDFTextWithLibrary(buffer: ArrayBuffer): Promise<string> {
@@ -121,7 +119,6 @@ function validateExtractedContent(content: string): { isValid: boolean; reason: 
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -133,23 +130,8 @@ serve(async (req) => {
       throw new Error('File path is required');
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Validate authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Authorization required');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      throw new Error('Invalid authentication');
-    }
 
     // Extract agent ID from file path (format: agentId/filename)
     const pathParts = filePath.split('/');
@@ -158,20 +140,11 @@ serve(async (req) => {
     }
     const agentId = pathParts[0];
 
-    // Validate agent ownership
-    const { data: agent, error: agentError } = await supabase
-      .from('agents')
-      .select('user_id')
-      .eq('id', agentId)
-      .single();
+    // Validate authentication and ownership
+    const authHeader = req.headers.get('Authorization');
+    await validateAuthAndAgent(authHeader, agentId, supabaseUrl, supabaseKey, 'extract-file-content');
 
-    if (agentError || !agent) {
-      throw new Error('Agent not found');
-    }
-
-    if (agent.user_id !== user.id) {
-      throw new Error('Unauthorized: You do not own this agent');
-    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Starting content extraction for file:', filePath);
 

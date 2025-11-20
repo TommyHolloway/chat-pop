@@ -1,14 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { validateAuthAndAgent, getRestrictedCorsHeaders } from '../_shared/auth-helpers.ts';
+import { checkRateLimit } from '../_shared/rate-limiter.ts';
+import { logSecurityEvent } from '../_shared/security-logger.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const corsHeaders = getRestrictedCorsHeaders();
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,38 +19,39 @@ serve(async (req) => {
       throw new Error('Agent ID is required');
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Validate authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Authorization required');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !user) {
-      throw new Error('Invalid authentication');
+    // Validate authentication and ownership
+    const authHeader = req.headers.get('Authorization');
+    const { userId } = await validateAuthAndAgent(authHeader, agentId, supabaseUrl, supabaseKey, 'train-agent');
+    
+    // Rate limit: 5 requests per 10 minutes
+    const rateLimitResult = await checkRateLimit({
+      maxRequests: 5,
+      windowMinutes: 10,
+      identifier: `train-${agentId}`
+    }, supabaseUrl, supabaseKey);
+
+    if (!rateLimitResult.allowed) {
+      await logSecurityEvent({
+        event_type: 'RATE_LIMIT_EXCEEDED',
+        function_name: 'train-agent',
+        agent_id: agentId,
+        user_id: userId,
+        severity: 'medium'
+      }, supabaseUrl, supabaseKey);
+
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded',
+        resetAt: rateLimitResult.resetAt
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    // Validate agent ownership
-    const { data: agent, error: agentError } = await supabase
-      .from('agents')
-      .select('user_id')
-      .eq('id', agentId)
-      .single();
-
-    if (agentError || !agent) {
-      throw new Error('Agent not found');
-    }
-
-    if (agent.user_id !== user.id) {
-      throw new Error('Unauthorized: You do not own this agent');
-    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log(`Starting intelligent training for agent: ${agentId}`);
 
