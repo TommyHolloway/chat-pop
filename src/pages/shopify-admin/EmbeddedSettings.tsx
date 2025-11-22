@@ -24,6 +24,19 @@ export const EmbeddedSettings = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // Check for OAuth success redirect
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('shopify_connected') === 'true') {
+      toast({
+        title: "Connected Successfully!",
+        description: "Your Shopify store is now connected to ChatPop.",
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [toast]);
+
   const handleSave = async () => {
     setLoading(true);
     try {
