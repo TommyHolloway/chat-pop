@@ -51,11 +51,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // Extract base state (handle embedded format: uuid:embedded:agent_id)
+    const baseState = state.split(':')[0];
+    const isEmbedded = state.includes(':embedded');
+
     // Validate state (CSRF protection)
     const { data: stateRecord } = await supabase
       .from('shopify_oauth_states')
       .select('*')
-      .eq('state', state)
+      .eq('state', baseState)
       .gt('expires_at', new Date().toISOString())
       .single();
 
@@ -221,7 +225,7 @@ serve(async (req) => {
     await supabase
       .from('shopify_oauth_states')
       .delete()
-      .eq('state', state);
+      .eq('state', baseState);
 
     // Subscribe to webhooks (async, don't wait)
     registerWebhooks(shop, access_token, stateRecord.agent_id).catch(console.error);
@@ -245,8 +249,7 @@ serve(async (req) => {
 
     console.log('Shopify connection successful for agent:', stateRecord.agent_id);
 
-    // Redirect back to app with success message
-    const isEmbedded = state.includes(':embedded');
+    // Redirect back to app - use embedded route if in embedded context
     const redirectPath = isEmbedded 
       ? `/shopify-admin/settings?shopify_connected=true&embed_ready=true&agent_id=${stateRecord.agent_id}`
       : `/workspace/integrations?shopify_connected=true&embed_ready=true&agent_id=${stateRecord.agent_id}`;
