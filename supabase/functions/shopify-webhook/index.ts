@@ -31,8 +31,9 @@ serve(async (req) => {
     const hmac = req.headers.get('X-Shopify-Hmac-Sha256') || '';
     const topic = req.headers.get('X-Shopify-Topic') || '';
     const shop = req.headers.get('X-Shopify-Shop-Domain') || '';
+    const webhookId = req.headers.get('X-Shopify-Webhook-Id') || '';
 
-    console.log('Webhook received:', { topic, shop });
+    console.log('Webhook received:', { topic, shop, webhookId });
 
     // Verify HMAC
     if (!await verifyHmac(body, hmac)) {
@@ -47,8 +48,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Store webhook event
+    // Check for duplicate webhook (idempotency)
+    if (webhookId) {
+      const { data: existing } = await supabase
+        .from('shopify_webhook_events')
+        .select('id')
+        .eq('webhook_id', webhookId)
+        .maybeSingle();
+      
+      if (existing) {
+        console.log('Duplicate webhook detected, skipping:', webhookId);
+        return new Response('OK', { status: 200 });
+      }
+    }
+
+    // Store webhook event with webhook_id for deduplication
     await supabase.from('shopify_webhook_events').insert({
+      webhook_id: webhookId || null,
       shop_domain: shop,
       topic,
       payload,

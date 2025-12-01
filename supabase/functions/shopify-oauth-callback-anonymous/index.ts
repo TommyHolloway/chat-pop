@@ -31,12 +31,17 @@ async function encryptToken(plaintext: string): Promise<string> {
 }
 
 async function registerWebhooks(shop: string, token: string, agentId: string) {
+  // Import shared GraphQL helper
+  const { registerWebhooks: registerWebhooksGraphQL } = await import('../_shared/shopify-graphql.ts');
+  
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1`;
   
   const webhooks = [
     { topic: 'orders/create', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'orders/updated', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'products/create', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'products/update', address: `${webhookUrl}/shopify-webhook` },
+    { topic: 'products/delete', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'inventory_levels/update', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'app_subscriptions/update', address: `${webhookUrl}/shopify-webhook` },
     { topic: 'app/uninstalled', address: `${webhookUrl}/shopify-webhook-uninstall` },
@@ -45,32 +50,14 @@ async function registerWebhooks(shop: string, token: string, agentId: string) {
     { topic: 'shop/redact', address: `${webhookUrl}/shopify-webhook-gdpr` },
   ];
 
-  for (const webhook of webhooks) {
-    try {
-      const response = await fetch(`https://${shop}/admin/api/2024-01/webhooks.json`, {
-        method: 'POST',
-        headers: {
-          'X-Shopify-Access-Token': token,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          webhook: {
-            topic: webhook.topic,
-            address: webhook.address,
-            format: 'json',
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        console.error(`Failed to register ${webhook.topic}:`, await response.text());
-      } else {
-        console.log(`Registered webhook: ${webhook.topic}`);
-      }
-    } catch (error) {
-      console.error(`Error registering ${webhook.topic}:`, error);
-    }
-  }
+  const results = await registerWebhooksGraphQL(shop, token, webhooks);
+  
+  console.log('Webhook registration summary:', {
+    total: results.length,
+    registered: results.filter(r => r.status === 'registered').length,
+    already_exists: results.filter(r => r.status === 'already_exists').length,
+    failed: results.filter(r => r.status === 'failed').length,
+  });
 }
 
 serve(async (req) => {

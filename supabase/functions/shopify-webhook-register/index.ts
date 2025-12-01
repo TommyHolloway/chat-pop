@@ -75,9 +75,12 @@ serve(async (req) => {
     // Decrypt access token
     const accessToken = await decryptToken(connection.encrypted_access_token);
 
+    // Import shared GraphQL helper
+    const { registerWebhooks } = await import('../_shared/shopify-graphql.ts');
+    
     // Define webhooks
     const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1`;
-    const webhooks = [
+    const webhooksToRegister = [
       { topic: 'app/uninstalled', address: `${webhookUrl}/shopify-webhook-uninstall` },
       { topic: 'customers/data_request', address: `${webhookUrl}/shopify-webhook-gdpr` },
       { topic: 'customers/redact', address: `${webhookUrl}/shopify-webhook-gdpr` },
@@ -91,64 +94,8 @@ serve(async (req) => {
       { topic: 'inventory_levels/update', address: `${webhookUrl}/shopify-webhook` },
     ];
 
-    const results = [];
-
-    // Register each webhook
-    for (const webhook of webhooks) {
-      try {
-        const response = await fetch(
-          `https://${connection.shop_domain}/admin/api/2024-01/webhooks.json`,
-          {
-            method: 'POST',
-            headers: {
-              'X-Shopify-Access-Token': accessToken,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              webhook: {
-                topic: webhook.topic,
-                address: webhook.address,
-                format: 'json',
-              },
-            }),
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          results.push({
-            topic: webhook.topic,
-            status: 'registered',
-            id: data.webhook?.id,
-          });
-          console.log(`Webhook registered: ${webhook.topic}`);
-        } else {
-          const errorText = await response.text();
-          // Check if webhook already exists
-          if (errorText.includes('already taken') || errorText.includes('already exists')) {
-            results.push({
-              topic: webhook.topic,
-              status: 'already_exists',
-            });
-            console.log(`Webhook already exists: ${webhook.topic}`);
-          } else {
-            results.push({
-              topic: webhook.topic,
-              status: 'failed',
-              error: errorText,
-            });
-            console.error(`Failed to register ${webhook.topic}:`, errorText);
-          }
-        }
-      } catch (err: any) {
-        results.push({
-          topic: webhook.topic,
-          status: 'error',
-          error: err.message,
-        });
-        console.error(`Error registering ${webhook.topic}:`, err);
-      }
-    }
+    // Register webhooks using GraphQL
+    const results = await registerWebhooks(connection.shop_domain, accessToken, webhooksToRegister);
 
     return new Response(JSON.stringify({
       success: true,
