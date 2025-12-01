@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logSecurityEvent } from '../_shared/security-logger.ts';
 
 // AES-GCM encryption helper
 async function encryptToken(plaintext: string): Promise<string> {
@@ -36,6 +37,12 @@ async function encryptToken(plaintext: string): Promise<string> {
 }
 
 serve(async (req) => {
+  // Extract security context
+  const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0] || 
+                   req.headers.get('x-real-ip') || 
+                   'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
@@ -44,18 +51,61 @@ serve(async (req) => {
 
     if (!code || !shop || !state) {
       console.error('OAuth callback missing required parameters');
+      
+      // Log missing parameters
+      await logSecurityEvent({
+        event_type: 'AUTH_FAILURE',
+        function_name: 'shopify-oauth-callback',
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        details: { 
+          error: 'missing_required_parameters',
+          action: 'oauth_callback_failed'
+        },
+        severity: 'medium'
+      }, Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!).catch(console.error);
+      
       return redirectToApp('/workspace/integrations?error=missing_params');
     }
 
     // Input validation
     if (code.length > 500 || shop.length > 255 || state.length > 100) {
       console.error('OAuth callback parameter length exceeded');
+      
+      // Log parameter length violation
+      await logSecurityEvent({
+        event_type: 'SUSPICIOUS_ACTIVITY',
+        function_name: 'shopify-oauth-callback',
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        details: { 
+          error: 'parameter_length_exceeded',
+          action: 'oauth_callback_failed'
+        },
+        severity: 'high'
+      }, Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!).catch(console.error);
+      
       return redirectToApp('/workspace/integrations?error=invalid_params');
     }
 
     // Validate shop domain format
     if (!shop.endsWith('.myshopify.com') || shop.includes('..') || shop.includes('//')) {
       console.error('Invalid shop domain in OAuth callback:', shop);
+      
+      // Log invalid shop domain
+      await logSecurityEvent({
+        event_type: 'SUSPICIOUS_ACTIVITY',
+        function_name: 'shopify-oauth-callback',
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        details: { 
+          error: 'invalid_shop_domain',
+          shop_attempted: shop,
+          action: 'oauth_callback_failed'
+        },
+        severity: 'high'
+      }, Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!).catch(console.error);
+      
       return redirectToApp('/workspace/integrations?error=invalid_shop');
     }
 
@@ -78,6 +128,21 @@ serve(async (req) => {
 
     if (!stateRecord) {
       console.error('Invalid or expired state:', state);
+      
+      // Log invalid/expired state (possible CSRF attempt)
+      await logSecurityEvent({
+        event_type: 'SUSPICIOUS_ACTIVITY',
+        function_name: 'shopify-oauth-callback',
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        details: { 
+          error: 'invalid_or_expired_state',
+          shop: shop,
+          action: 'oauth_callback_failed'
+        },
+        severity: 'high'
+      }, Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!).catch(console.error);
+      
       return redirectToApp('/workspace/integrations?error=invalid_state');
     }
 
@@ -262,6 +327,21 @@ serve(async (req) => {
 
     console.log('Shopify connection successful for agent:', stateRecord.agent_id);
 
+    // Log successful OAuth callback
+    await logSecurityEvent({
+      event_type: 'AUTH_SUCCESS',
+      function_name: 'shopify-oauth-callback',
+      agent_id: stateRecord.agent_id,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      details: { 
+        shop_domain: shop,
+        embedded: isEmbedded,
+        action: 'oauth_callback_success'
+      },
+      severity: 'low'
+    }, Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!).catch(console.error);
+
     // Redirect back to app - use embedded route if in embedded context
     const redirectPath = isEmbedded 
       ? `/shopify-admin/settings?shopify_connected=true&embed_ready=true&agent_id=${stateRecord.agent_id}`
@@ -271,6 +351,20 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('OAuth callback error:', error);
+    
+    // Log failed OAuth callback
+    await logSecurityEvent({
+      event_type: 'AUTH_FAILURE',
+      function_name: 'shopify-oauth-callback',
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      details: { 
+        error: error.message,
+        action: 'oauth_callback_failed'
+      },
+      severity: 'medium'
+    }, Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!).catch(console.error);
+    
     return redirectToApp(`/workspace/integrations?error=${encodeURIComponent(error.message)}`);
   }
 });
