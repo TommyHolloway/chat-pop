@@ -102,7 +102,7 @@ serve(async (req) => {
       shop_domain: connection.shop_domain,
       webhooks: results,
       summary: {
-        total: webhooks.length,
+        total: webhooksToRegister.length,
         registered: results.filter(r => r.status === 'registered').length,
         already_exists: results.filter(r => r.status === 'already_exists').length,
         failed: results.filter(r => r.status === 'failed' || r.status === 'error').length,
