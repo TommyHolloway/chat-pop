@@ -41,6 +41,70 @@ export async function shopifyGraphQL<T = any>(
 }
 
 /**
+ * Execute a GraphQL query with automatic retry and rate limit handling
+ */
+export async function shopifyGraphQLWithRetry<T = any>(
+  shop: string,
+  token: string,
+  query: string,
+  variables?: Record<string, any>,
+  maxRetries: number = 3
+): Promise<ShopifyGraphQLResponse<T>> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await shopifyGraphQL<T>(shop, token, query, variables);
+      
+      // Log rate limit info from extensions
+      if (result.extensions?.cost) {
+        const cost = result.extensions.cost;
+        const throttleStatus = cost.throttleStatus || cost;
+        
+        console.log(`Shopify API cost: ${cost.actualQueryCost || 'unknown'}/${throttleStatus.currentlyAvailable || 'unknown'} available`);
+        
+        // Proactive backoff if running low on quota
+        if (throttleStatus.currentlyAvailable && throttleStatus.currentlyAvailable < 100) {
+          const backoffMs = 1000;
+          console.log(`Low API quota (${throttleStatus.currentlyAvailable}), backing off ${backoffMs}ms`);
+          await delay(backoffMs);
+        }
+      }
+      
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      
+      // Check for rate limit error (429 or throttled message)
+      const isRateLimited = 
+        error.message?.includes('429') || 
+        error.message?.includes('Throttled') ||
+        error.message?.includes('rate limit');
+      
+      if (isRateLimited && attempt < maxRetries) {
+        // Exponential backoff with jitter
+        const baseDelay = 1000 * Math.pow(2, attempt - 1);
+        const jitter = Math.random() * 1000;
+        const backoffMs = Math.min(baseDelay + jitter, 30000);
+        
+        console.log(`Shopify rate limited, backing off ${backoffMs.toFixed(0)}ms (attempt ${attempt}/${maxRetries})`);
+        await delay(backoffMs);
+        continue;
+      }
+      
+      // Non-retryable error or max retries reached
+      throw error;
+    }
+  }
+  
+  throw lastError!;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Webhook topic mapping: REST format → GraphQL format
  * As of April 2025, Shopify requires GraphQL for all new apps
  */

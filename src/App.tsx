@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,33 +14,36 @@ import { AuthenticatedNavbar } from "@/components/Layout/AuthenticatedNavbar";
 import { AppSidebar } from "@/components/Layout/AppSidebar";
 import { WorkspaceLayout } from "@/components/Layout/WorkspaceLayout";
 import { Footer } from "@/components/Layout/Footer";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
-// Pages
+// Critical pages (loaded immediately)
 import Landing from "./pages/Landing";
-import { Contact } from "./pages/Contact";
-import { TermsOfService } from "./pages/TermsOfService";
-import { PrivacyPolicy } from "./pages/PrivacyPolicy";
-import { Pricing } from "./pages/Pricing";
-import { Features } from "./pages/Features";
 import { SecureLogin } from "./pages/auth/SecureLogin";
 import { SecureSignup } from "./pages/auth/SecureSignup";
-import { ForgotPassword } from "./pages/auth/ForgotPassword";
-import { ResetPassword } from "./pages/auth/ResetPassword";
-import { WorkspaceOverview } from "./pages/WorkspaceOverview";
-import { Dashboard } from "./pages/Dashboard";
-import { Agents } from "./pages/Agents";
-import { Billing } from "./pages/Billing";
-import { Settings } from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import AdminPortal from "./pages/AdminPortal";
-import { AdminRoute } from "./components/AdminRoute";
-import { AgentLayout } from "./pages/agents/AgentLayout";
 import { PublicChat } from "./pages/agents/PublicChat";
-import { AgentOnboardingWizard } from "./components/onboarding/AgentOnboardingWizard";
-import { ShopifyOnboarding } from "./pages/ShopifyOnboarding";
-import { ShopifyAdminLayout } from "./pages/shopify-admin/ShopifyAdminLayout";
+
+// Non-critical pages (lazy loaded for better performance)
+const Contact = lazy(() => import("./pages/Contact").then(m => ({ default: m.Contact })));
+const TermsOfService = lazy(() => import("./pages/TermsOfService").then(m => ({ default: m.TermsOfService })));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy").then(m => ({ default: m.PrivacyPolicy })));
+const Pricing = lazy(() => import("./pages/Pricing").then(m => ({ default: m.Pricing })));
+const Features = lazy(() => import("./pages/Features").then(m => ({ default: m.Features })));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword").then(m => ({ default: m.ForgotPassword })));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword").then(m => ({ default: m.ResetPassword })));
+const WorkspaceOverview = lazy(() => import("./pages/WorkspaceOverview").then(m => ({ default: m.WorkspaceOverview })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
+const Agents = lazy(() => import("./pages/Agents").then(m => ({ default: m.Agents })));
+const Billing = lazy(() => import("./pages/Billing").then(m => ({ default: m.Billing })));
+const Settings = lazy(() => import("./pages/Settings").then(m => ({ default: m.Settings })));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminPortal = lazy(() => import("./pages/AdminPortal"));
+const AdminRoute = lazy(() => import("./components/AdminRoute").then(m => ({ default: m.AdminRoute })));
+const AgentLayout = lazy(() => import("./pages/agents/AgentLayout").then(m => ({ default: m.AgentLayout })));
+const AgentOnboardingWizard = lazy(() => import("./components/onboarding/AgentOnboardingWizard").then(m => ({ default: m.AgentOnboardingWizard })));
+const ShopifyOnboarding = lazy(() => import("./pages/ShopifyOnboarding").then(m => ({ default: m.ShopifyOnboarding })));
+const ShopifyAdminLayout = lazy(() => import("./pages/shopify-admin/ShopifyAdminLayout").then(m => ({ default: m.ShopifyAdminLayout })));
 
 const queryClient = new QueryClient();
 
@@ -76,6 +79,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>}>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={
@@ -185,6 +189,7 @@ const App = () => (
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

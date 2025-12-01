@@ -18,6 +18,15 @@ serve(async (req) => {
       throw new Error('shop_domain and agent_id are required');
     }
 
+    // Input validation
+    if (typeof shop_domain !== 'string' || typeof agent_id !== 'string') {
+      throw new Error('Invalid input types');
+    }
+
+    if (shop_domain.length > 255 || agent_id.length > 50) {
+      throw new Error('Input length exceeded');
+    }
+
     // Normalize shop domain
     const normalizedShop = shop_domain
       .toLowerCase()
@@ -25,8 +34,14 @@ serve(async (req) => {
       .replace(/^https?:\/\//, '')
       .replace(/\/$/, '');
 
+    // Strict domain validation
     if (!normalizedShop.endsWith('.myshopify.com')) {
       throw new Error('Invalid shop domain. Must be yourstore.myshopify.com');
+    }
+
+    // Additional security: check for suspicious patterns
+    if (normalizedShop.includes('..') || normalizedShop.includes('//')) {
+      throw new Error('Invalid shop domain format');
     }
 
     const supabase = createClient(

@@ -43,7 +43,20 @@ serve(async (req) => {
     const state = url.searchParams.get('state');
 
     if (!code || !shop || !state) {
+      console.error('OAuth callback missing required parameters');
       return redirectToApp('/workspace/integrations?error=missing_params');
+    }
+
+    // Input validation
+    if (code.length > 500 || shop.length > 255 || state.length > 100) {
+      console.error('OAuth callback parameter length exceeded');
+      return redirectToApp('/workspace/integrations?error=invalid_params');
+    }
+
+    // Validate shop domain format
+    if (!shop.endsWith('.myshopify.com') || shop.includes('..') || shop.includes('//')) {
+      console.error('Invalid shop domain in OAuth callback:', shop);
+      return redirectToApp('/workspace/integrations?error=invalid_shop');
     }
 
     const supabase = createClient(
