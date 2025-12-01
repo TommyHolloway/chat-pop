@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { withCircuitBreaker } from '../_shared/circuit-breaker.ts';
+import { checkRateLimit } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +39,24 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 const productSearchCache = new Map<string, { products: any[]; timestamp: number }>();
 const PRODUCT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Fallback responses when OpenAI is unavailable
+const FALLBACK_RESPONSES = {
+  greeting: "I'm currently experiencing some technical difficulties. Please try again in a moment, or feel free to browse our products!",
+  product_inquiry: "I apologize, but I'm temporarily unable to search products. Please use the main navigation to browse our catalog.",
+  general: "I'm having trouble processing your request right now. Please try again shortly.",
+};
+
+function categorizeFallbackMessage(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes('hello') || lower.includes('hi ') || lower.includes('hey')) {
+    return FALLBACK_RESPONSES.greeting;
+  }
+  if (lower.includes('product') || lower.includes('looking for') || lower.includes('search')) {
+    return FALLBACK_RESPONSES.product_inquiry;
+  }
+  return FALLBACK_RESPONSES.general;
+}
+
 function getCachedProducts(query: string, shopifyConfig: any): any[] | null {
   const cacheKey = `${shopifyConfig.store_domain}:${query.toLowerCase()}`;
   const cached = productSearchCache.get(cacheKey);
@@ -65,7 +85,7 @@ function mapCreativityToTemperature(creativityLevel: number | null): number {
   return Math.max(0.1, Math.min(0.9, creativityLevel * 0.08 + 0.02));
 }
 
-// Shopify product search helper
+// Shopify product search helper with circuit breaker
 async function searchShopifyProducts(query: string, shopifyConfig: any) {
   if (!shopifyConfig?.store_domain || !shopifyConfig?.admin_api_token) {
     console.log('Shopify not configured for product search');
@@ -79,40 +99,50 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
   }
   
   try {
-    // Single GraphQL query to get products with inventory
-    const graphqlQuery = `
-      query($query: String!) {
-        products(first: 5, query: $query) {
-          edges {
-            node {
-              id
-              title
-              description
-              handle
-              onlineStoreUrl
-              productType
-              vendor
-              featuredImage {
-                url
-                altText
-              }
-              variants(first: 10) {
-                edges {
-                  node {
-                    id
-                    title
-                    price
-                    compareAtPrice
-                    availableForSale
-                    inventoryItem {
-                      id
-                      inventoryLevels(first: 10) {
-                        edges {
-                          node {
-                            available
-                            location {
-                              id
-                              name
+    // Wrap in circuit breaker with cached fallback
+    const products = await withCircuitBreaker(
+      {
+        name: 'shopify_product_search',
+        failureThreshold: 3,
+        resetTimeoutMs: 120000 // 2 minutes
+      },
+      async () => {
+        // Single GraphQL query to get products with inventory
+        const graphqlQuery = `
+          query($query: String!) {
+            products(first: 5, query: $query) {
+              edges {
+                node {
+                  id
+                  title
+                  description
+                  handle
+                  onlineStoreUrl
+                  productType
+                  vendor
+                  featuredImage {
+                    url
+                    altText
+                  }
+                  variants(first: 10) {
+                    edges {
+                      node {
+                        id
+                        title
+                        price
+                        compareAtPrice
+                        availableForSale
+                        inventoryItem {
+                          id
+                          inventoryLevels(first: 10) {
+                            edges {
+                              node {
+                                available
+                                location {
+                                  id
+                                  name
+                                }
+                              }
                             }
                           }
                         }
@@ -123,95 +153,103 @@ async function searchShopifyProducts(query: string, shopifyConfig: any) {
               }
             }
           }
-        }
-      }
-    `;
+        `;
 
-    const response = await fetch(`https://${shopifyConfig.store_domain}/admin/api/2024-10/graphql.json`, {
-      method: 'POST',
-      headers: {
-        'X-Shopify-Access-Token': shopifyConfig.admin_api_token,
-        'Content-Type': 'application/json'
+        const response = await fetch(`https://${shopifyConfig.store_domain}/admin/api/2024-10/graphql.json`, {
+          method: 'POST',
+          headers: {
+            'X-Shopify-Access-Token': shopifyConfig.admin_api_token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            query: graphqlQuery,
+            variables: { query: `title:*${query}*` }
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Shopify API error: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.errors) {
+          console.error('GraphQL errors:', result.errors);
+          throw new Error('Shopify GraphQL error');
+        }
+        
+        const products = result.data.products.edges.map((edge: any) => {
+          const product = edge.node;
+          const productId = product.id.split('/').pop();
+          
+          // Get variants with inventory
+          const variants = product.variants.edges.map((variantEdge: any) => {
+            const variant = variantEdge.node;
+            const variantId = variant.id.split('/').pop();
+            
+            // Calculate total available inventory across all locations
+            const totalAvailable = variant.inventoryItem?.inventoryLevels?.edges.reduce(
+              (sum: number, levelEdge: any) => sum + (levelEdge.node.available || 0),
+              0
+            ) || 0;
+            
+            return {
+              id: variantId,
+              title: variant.title,
+              price: variant.price,
+              compare_at_price: variant.compareAtPrice,
+              available: totalAvailable > 0,
+              inventory_quantity: totalAvailable,
+            };
+          });
+          
+          // Calculate total stock across all variants
+          const totalStock = variants.reduce((sum: number, v: any) => sum + v.inventory_quantity, 0);
+          
+          // Construct product URL
+          const storeDomain = shopifyConfig.store_domain;
+          let productUrl: string;
+          
+          if (product.onlineStoreUrl) {
+            productUrl = product.onlineStoreUrl;
+          } else if (storeDomain.includes('.myshopify.com')) {
+            const baseUrl = storeDomain.replace('.myshopify.com', '');
+            productUrl = `https://${baseUrl}.myshopify.com/products/${product.handle}`;
+          } else {
+            productUrl = `https://${storeDomain}/products/${product.handle}`;
+          }
+          
+          return {
+            id: productId,
+            title: product.title,
+            price: variants[0]?.price || '0',
+            currency: 'USD',
+            url: productUrl,
+            image: product.featuredImage?.url,
+            description: product.description?.replace(/<[^>]*>/g, '').slice(0, 200),
+            available: totalStock > 0,
+            stock_level: totalStock,
+            low_stock: totalStock > 0 && totalStock < 10,
+            type: product.productType,
+            vendor: product.vendor
+          };
+        });
+        
+        // Cache the results
+        if (products && products.length > 0) {
+          cacheProducts(query, shopifyConfig, products);
+        }
+        
+        return products;
       },
-      body: JSON.stringify({
-        query: graphqlQuery,
-        variables: { query: `title:*${query}*` }
-      })
-    });
-    
-    if (!response.ok) {
-      console.error('Shopify GraphQL error:', response.status);
-      return null;
-    }
-    
-    const result = await response.json();
-    
-    if (result.errors) {
-      console.error('GraphQL errors:', result.errors);
-      return null;
-    }
-    
-    const products = result.data.products.edges.map((edge: any) => {
-      const product = edge.node;
-      const productId = product.id.split('/').pop();
-      
-      // Get variants with inventory
-      const variants = product.variants.edges.map((variantEdge: any) => {
-        const variant = variantEdge.node;
-        const variantId = variant.id.split('/').pop();
-        
-        // Calculate total available inventory across all locations
-        const totalAvailable = variant.inventoryItem?.inventoryLevels?.edges.reduce(
-          (sum: number, levelEdge: any) => sum + (levelEdge.node.available || 0),
-          0
-        ) || 0;
-        
-        return {
-          id: variantId,
-          title: variant.title,
-          price: variant.price,
-          compare_at_price: variant.compareAtPrice,
-          available: totalAvailable > 0,
-          inventory_quantity: totalAvailable,
-        };
-      });
-      
-      // Calculate total stock across all variants
-      const totalStock = variants.reduce((sum: number, v: any) => sum + v.inventory_quantity, 0);
-      
-      // Construct product URL
-      const storeDomain = shopifyConfig.store_domain;
-      let productUrl: string;
-      
-      if (product.onlineStoreUrl) {
-        productUrl = product.onlineStoreUrl;
-      } else if (storeDomain.includes('.myshopify.com')) {
-        const baseUrl = storeDomain.replace('.myshopify.com', '');
-        productUrl = `https://${baseUrl}.myshopify.com/products/${product.handle}`;
-      } else {
-        productUrl = `https://${storeDomain}/products/${product.handle}`;
+      () => {
+        // Fallback: return cached products even if expired
+        console.log('Shopify circuit open, attempting to use stale cache');
+        const cacheKey = `${shopifyConfig.store_domain}:${query.toLowerCase()}`;
+        const cached = productSearchCache.get(cacheKey);
+        return cached?.products || null;
       }
-      
-      return {
-        id: productId,
-        title: product.title,
-        price: variants[0]?.price || '0',
-        currency: 'USD',
-        url: productUrl,
-        image: product.featuredImage?.url,
-        description: product.description?.replace(/<[^>]*>/g, '').slice(0, 200),
-        available: totalStock > 0,
-        stock_level: totalStock,
-        low_stock: totalStock > 0 && totalStock < 10,
-        type: product.productType,
-        vendor: product.vendor
-      };
-    });
-    
-    // Cache the results
-    if (products && products.length > 0) {
-      cacheProducts(query, shopifyConfig, products);
-    }
+    );
     
     return products;
   } catch (error) {
@@ -330,12 +368,38 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get agent details, actions, lead capture settings, and Shopify config
+    // Get agent first to identify user for rate limiting
     const { data: agent, error: agentError } = await supabase
       .from('agents')
       .select('name, description, instructions, user_id, creativity_level, lead_capture_config, shopify_config')
       .eq('id', agentId)
       .single();
+
+    if (agentError || !agent) {
+      throw new Error('Agent not found');
+    }
+
+    // Rate limiting: 100 messages per 10 minutes per user
+    const rateLimitResult = await checkRateLimit(
+      {
+        identifier: `chat_user_${agent.user_id}`,
+        maxRequests: 100,
+        windowMinutes: 10
+      },
+      supabaseUrl,
+      supabaseKey
+    );
+
+    if (!rateLimitResult.allowed) {
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded',
+        message: 'Too many messages. Please wait a moment before sending more.',
+        resetAt: rateLimitResult.resetAt
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // Get agent actions
     const { data: agentActions } = await supabase
@@ -343,10 +407,6 @@ serve(async (req) => {
       .select('*')
       .eq('agent_id', agentId)
       .eq('is_enabled', true);
-
-    if (agentError || !agent) {
-      throw new Error('Agent not found');
-    }
 
     console.log(`Processing chat for agent: ${agent.name}`);
 
@@ -682,21 +742,52 @@ serve(async (req) => {
       requestBody.tool_choice = 'auto';
     }
 
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
+    // Wrap OpenAI call in circuit breaker with fallback
+    const openAIResponse = await withCircuitBreaker(
+      { 
+        name: 'openai', 
+        failureThreshold: 3, 
+        resetTimeoutMs: 60000 
       },
-      body: JSON.stringify(requestBody),
-    });
+      async () => {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
 
-    if (!openAIResponse.ok) {
-      // SECURITY: Log detailed error server-side, return generic message to client
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API error details:', errorData);
-      throw new Error('Unable to generate response. Please try again.');
-    }
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('OpenAI API error details:', errorData);
+          throw new Error(`OpenAI error: ${response.status}`);
+        }
+
+        return response;
+      },
+      async () => {
+        // Fallback when OpenAI is down
+        console.log('OpenAI circuit open, using fallback response');
+        const fallbackMessage = categorizeFallbackMessage(message);
+        
+        // Return a mock response matching OpenAI format
+        return {
+          ok: true,
+          json: async () => ({
+            choices: [{
+              message: {
+                role: 'assistant',
+                content: fallbackMessage
+              }
+            }],
+            usage: { total_tokens: 0 }
+          }),
+          body: null
+        } as any;
+      }
+    );
 
     // Handle streaming responses
     if (stream) {

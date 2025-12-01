@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkRateLimit } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +28,24 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Rate limiting: 30 requests per minute per agent (prevents abuse of public endpoint)
+    const rateLimitResult = await checkRateLimit(
+      {
+        identifier: `public_chat_agent_${agentId}`,
+        maxRequests: 30,
+        windowMinutes: 1
+      },
+      supabaseUrl,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    if (!rateLimitResult.allowed) {
+      return new Response('Rate limit exceeded. Please try again in a moment.', {
+        status: 429,
+        headers: corsHeaders
+      });
+    }
 
     // Fetch agent details using secure function
     const { data: agentData, error } = await supabase.rpc('get_public_agent_data', { agent_uuid: agentId });

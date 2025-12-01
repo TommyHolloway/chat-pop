@@ -1889,6 +1889,7 @@ export type Database = {
       }
       cleanup_empty_conversations: { Args: never; Returns: undefined }
       cleanup_expired_cache: { Args: never; Returns: undefined }
+      cleanup_expired_oauth: { Args: never; Returns: undefined }
       cleanup_expired_oauth_states: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_visitor_data: { Args: never; Returns: undefined }
