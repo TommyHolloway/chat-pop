@@ -1526,6 +1526,7 @@ export type Database = {
           received_at: string | null
           shop_domain: string
           topic: string
+          webhook_id: string | null
         }
         Insert: {
           id?: string
@@ -1534,6 +1535,7 @@ export type Database = {
           received_at?: string | null
           shop_domain: string
           topic: string
+          webhook_id?: string | null
         }
         Update: {
           id?: string
@@ -1542,6 +1544,7 @@ export type Database = {
           received_at?: string | null
           shop_domain?: string
           topic?: string
+          webhook_id?: string | null
         }
         Relationships: []
       }

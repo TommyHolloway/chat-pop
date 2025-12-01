@@ -31,8 +31,9 @@ serve(async (req) => {
     const hmac = req.headers.get('X-Shopify-Hmac-Sha256') || '';
     const topic = req.headers.get('X-Shopify-Topic') || '';
     const shop = req.headers.get('X-Shopify-Shop-Domain') || '';
+    const webhookId = req.headers.get('X-Shopify-Webhook-Id') || '';
 
-    console.log('App uninstall webhook received:', { topic, shop });
+    console.log('App uninstall webhook received:', { topic, shop, webhookId });
 
     // Verify HMAC
     if (!await verifyHmac(body, hmac)) {
@@ -50,6 +51,28 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // Check for duplicate webhook (idempotency)
+    if (webhookId) {
+      const { data: existing } = await supabase
+        .from('shopify_webhook_events')
+        .select('id')
+        .eq('webhook_id', webhookId)
+        .maybeSingle();
+      
+      if (existing) {
+        console.log('Duplicate uninstall webhook detected, skipping:', webhookId);
+        return new Response('OK', { status: 200 });
+      }
+      
+      // Log this webhook event
+      await supabase.from('shopify_webhook_events').insert({
+        webhook_id: webhookId,
+        shop_domain: shop,
+        topic,
+        payload: {},
+      });
+    }
 
     // Find connection by shop domain
     const { data: connection } = await supabase
