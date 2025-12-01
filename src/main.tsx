@@ -5,8 +5,11 @@ import { reportWebVitals } from './utils/performance'
 
 createRoot(document.getElementById("root")!).render(<App />)
 
-// Initialize performance monitoring
-reportWebVitals((metric) => {
-  // Could send to analytics service here
-  console.log(`Performance metric: ${metric.name} = ${metric.value.toFixed(2)} (${metric.rating})`);
-});
+// Initialize performance monitoring with error handling
+try {
+  reportWebVitals((metric) => {
+    console.log(`Performance metric: ${metric.name} = ${metric.value.toFixed(2)} (${metric.rating})`);
+  });
+} catch (error) {
+  console.warn('Performance monitoring failed:', error);
+}
