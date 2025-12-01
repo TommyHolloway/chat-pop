@@ -8,6 +8,7 @@ import { GradientCTABanner } from '@/components/landing/GradientCTABanner';
 import { PricingSection } from '@/components/PricingSection';
 import { InteractiveTriggerDemo } from '@/components/landing/InteractiveTriggerDemo';
 import { StickyFeatureStack } from '@/components/landing/StickyFeatureStack';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 export default function Landing() {
   return (
@@ -82,10 +83,12 @@ export default function Landing() {
           </p>
           <div className="relative">
             <div className="absolute inset-0 gradient-coral-blob opacity-30 blur-3xl" />
-          <img
+          <OptimizedImage
             src="/lovable-uploads/chatpop-laptop-hero.png"
-            alt="Analytics Dashboard"
+            alt="Analytics Dashboard showing revenue attribution and conversion tracking"
             className="relative rounded-2xl shadow-2xl w-full border border-border/50 object-cover"
+            priority={false}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
           />
           </div>
         </div>
