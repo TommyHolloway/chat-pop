@@ -319,8 +319,8 @@ export const AgentOnboardingWizard = () => {
           agent_id: targetAgentId,
           url: `https://${websiteUrl}`,
           status: 'pending',
-          crawl_mode: 'crawl',
-          crawl_limit: 50
+          crawl_mode: 'scrape',
+          crawl_limit: 1
         })
         .select()
         .single();
@@ -329,14 +329,14 @@ export const AgentOnboardingWizard = () => {
       
       // Store the link ID for real-time tracking
       setCurrentLinkId(linkData.id);
-      console.log('Link created, starting crawl:', linkData.id);
+      console.log('Link created, starting scrape:', linkData.id);
       
-      // Start the crawl asynchronously (don't await - let it run in background)
-      agentLinksHook.crawlLink(linkData.id, `https://${websiteUrl}`, 'crawl', 50);
+      // Start the scrape asynchronously (don't await - let it run in background)
+      agentLinksHook.crawlLink(linkData.id, `https://${websiteUrl}`, 'scrape', 1);
       
       toast({
-        title: "Crawling Started",
-        description: "Your website is being crawled and added to the knowledge base.",
+        title: "Scraping Started",
+        description: "Your website homepage is being scraped and added to the knowledge base.",
       });
       
     } catch (error) {
@@ -345,7 +345,7 @@ export const AgentOnboardingWizard = () => {
       setProgressState(prev => ({ ...prev, knowledgeBase: 'completed' }));
       toast({
         title: "Warning",
-        description: "Website crawl may have failed, but you can add it manually later.",
+        description: "Website scraping may have failed, but you can add it manually later.",
         variant: "destructive",
       });
     } finally {
