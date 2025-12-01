@@ -20,43 +20,85 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
-
-    // Get agent_id and validate ownership
-    const tempSupabase = createClient(supabaseUrl, supabaseKey);
-    const { data: linkData, error: linkError } = await tempSupabase
-      .from('agent_links')
-      .select('agent_id')
-      .eq('id', linkId)
-      .single();
-
-    if (linkError || !linkData) throw new Error('Link not found');
-
     const authHeader = req.headers.get('Authorization');
-    const { userId } = await validateAuthAndAgent(authHeader, linkData.agent_id, supabaseUrl, supabaseKey, 'crawl-url');
 
-    // Rate limit: 10 requests per 10 minutes
-    const rateLimitResult = await checkRateLimit({
-      maxRequests: 10,
-      windowMinutes: 10,
-      identifier: `crawl-${linkData.agent_id}`
-    }, supabaseUrl, supabaseKey);
+    let userId: string;
+    let agentId: string | null = null;
 
-    if (!rateLimitResult.allowed) {
-      await logSecurityEvent({
-        event_type: 'RATE_LIMIT_EXCEEDED',
-        function_name: 'crawl-url',
-        agent_id: linkData.agent_id,
-        user_id: userId,
-        severity: 'medium'
+    // Handle two cases: with linkId (agent-linked) or without (simple scraping for onboarding)
+    if (linkId) {
+      // Agent-linked crawling: validate agent ownership
+      const tempSupabase = createClient(supabaseUrl, supabaseKey);
+      const { data: linkData, error: linkError } = await tempSupabase
+        .from('agent_links')
+        .select('agent_id')
+        .eq('id', linkId)
+        .single();
+
+      if (linkError || !linkData) throw new Error('Link not found');
+
+      const authResult = await validateAuthAndAgent(authHeader, linkData.agent_id, supabaseUrl, supabaseKey, 'crawl-url');
+      userId = authResult.userId;
+      agentId = linkData.agent_id;
+
+      // Rate limit by agent
+      const rateLimitResult = await checkRateLimit({
+        maxRequests: 10,
+        windowMinutes: 10,
+        identifier: `crawl-agent-${linkData.agent_id}`
       }, supabaseUrl, supabaseKey);
 
-      return new Response(JSON.stringify({
-        error: 'Rate limit exceeded',
-        resetAt: rateLimitResult.resetAt
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      if (!rateLimitResult.allowed) {
+        await logSecurityEvent({
+          event_type: 'RATE_LIMIT_EXCEEDED',
+          function_name: 'crawl-url',
+          agent_id: linkData.agent_id,
+          user_id: userId,
+          severity: 'medium'
+        }, supabaseUrl, supabaseKey);
+
+        return new Response(JSON.stringify({
+          error: 'Rate limit exceeded',
+          resetAt: rateLimitResult.resetAt
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    } else {
+      // Simple scraping (no agent): just validate user authentication
+      if (!authHeader) throw new Error('Missing authorization header');
+
+      const token = authHeader.replace('Bearer ', '');
+      const tempSupabase = createClient(supabaseUrl, supabaseKey);
+      const { data: { user }, error: authError } = await tempSupabase.auth.getUser(token);
+      
+      if (authError || !user) throw new Error('Invalid authentication token');
+      userId = user.id;
+
+      // Rate limit by user for simple scraping
+      const rateLimitResult = await checkRateLimit({
+        maxRequests: 10,
+        windowMinutes: 10,
+        identifier: `crawl-user-${userId}`
+      }, supabaseUrl, supabaseKey);
+
+      if (!rateLimitResult.allowed) {
+        await logSecurityEvent({
+          event_type: 'RATE_LIMIT_EXCEEDED',
+          function_name: 'crawl-url',
+          user_id: userId,
+          severity: 'medium'
+        }, supabaseUrl, supabaseKey);
+
+        return new Response(JSON.stringify({
+          error: 'Rate limit exceeded',
+          resetAt: rateLimitResult.resetAt
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     if (!firecrawlApiKey) {
@@ -76,7 +118,8 @@ serve(async (req) => {
       const markdown = scrapeResult.markdown || '';
       const title = scrapeResult.metadata?.title || url;
 
-      if (linkId) {
+      // Only update database if this is agent-linked crawling
+      if (linkId && agentId) {
         await supabase.from('agent_links').update({
           title, content: markdown, status: 'completed',
           pages_found: 1, pages_processed: 1, updated_at: 'now()'
