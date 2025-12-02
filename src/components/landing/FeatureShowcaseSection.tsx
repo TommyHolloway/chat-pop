@@ -43,19 +43,19 @@ export const FeatureShowcaseSection = ({
           {imageFullHeight && imagePosition === 'right' && <div className="hidden md:block absolute right-0 top-0 bottom-0 h-full" style={{
           width: imageWidth
         }}>
-              <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" />
+              <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             </div>}
           
           {imageFullHeight && imagePosition === 'left' && <div className="hidden md:block absolute left-0 top-0 bottom-0 h-full" style={{
           width: imageWidth
         }}>
-              <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" />
+              <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             </div>}
 
           <div className={`${imageFullHeight ? '' : 'grid md:grid-cols-2 gap-8 items-center'} ${!imageFullHeight && imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
             {!imageFullHeight && imagePosition === 'left' && <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
                 <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-2xl" />
-                <img src={imageSrc} alt={imageAlt} className="relative rounded-2xl shadow-2xl w-full h-full object-cover" />
+                <img src={imageSrc} alt={imageAlt} className="relative rounded-2xl shadow-2xl w-full h-full object-cover" loading="lazy" decoding="async" />
               </div>}
             
             <div className={`flex flex-col justify-center px-8 md:px-12 ${imageFullHeight && imagePosition === 'right' ? 'md:pr-[42%]' : imageFullHeight && imagePosition === 'left' ? 'md:pl-[42%]' : imagePosition === 'left' ? 'md:order-2' : ''} ${textWidth ? `md:max-w-[${textWidth}]` : ''}`}>
@@ -75,7 +75,7 @@ export const FeatureShowcaseSection = ({
             
             {!imageFullHeight && imagePosition === 'right' && <div className="relative max-h-[280px] md:max-h-[320px] overflow-hidden">
                 <div className="absolute inset-0 gradient-coral-blob opacity-40 blur-2xl" />
-                <img src={imageSrc} alt={imageAlt} className="relative rounded-2xl shadow-2xl w-full h-full object-cover" />
+                <img src={imageSrc} alt={imageAlt} className="relative rounded-2xl shadow-2xl w-full h-full object-cover" loading="lazy" decoding="async" />
               </div>}
           </div>
         </Card>

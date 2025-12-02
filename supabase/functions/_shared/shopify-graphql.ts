@@ -18,7 +18,7 @@ export async function shopifyGraphQL<T = any>(
   query: string,
   variables?: Record<string, any>
 ): Promise<ShopifyGraphQLResponse<T>> {
-  const response = await fetch(`https://${shop}/admin/api/2024-10/graphql.json`, {
+  const response = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
     method: 'POST',
     headers: {
       'X-Shopify-Access-Token': token,

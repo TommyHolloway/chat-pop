@@ -192,6 +192,7 @@ export const InteractiveTriggerDemo = () => {
                   loop
                   muted
                   playsInline
+                  preload="metadata"
                   className={cn(
                     "absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out",
                     isTransitioning ? "-translate-x-full" : "translate-x-0"
@@ -203,6 +204,8 @@ export const InteractiveTriggerDemo = () => {
                 <img 
                   src={activeScenario.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
                   alt="E-commerce store interface"
+                  loading="lazy"
+                  decoding="async"
                   className={cn(
                     "absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out",
                     isTransitioning ? "-translate-x-full" : "translate-x-0"
@@ -219,6 +222,7 @@ export const InteractiveTriggerDemo = () => {
                     loop
                     muted
                     playsInline
+                    preload="metadata"
                     className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out translate-x-0"
                     style={{ transform: 'translateX(0)' }}
                   >
@@ -228,6 +232,8 @@ export const InteractiveTriggerDemo = () => {
                   <img 
                     src={nextScenarioData.imageSrc || "/lovable-uploads/ba9e4a95-0439-42d8-8181-e8892fbe2baa.png"}
                     alt="E-commerce store interface"
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 ease-in-out translate-x-0"
                     style={{ transform: 'translateX(0)' }}
                   />

@@ -37,7 +37,7 @@ serve(async (req) => {
       }
     `;
 
-    const response = await fetch(`https://${storeDomain}/admin/api/2024-10/graphql.json`, {
+    const response = await fetch(`https://${storeDomain}/admin/api/2025-01/graphql.json`, {
       method: 'POST',
       headers: {
         'X-Shopify-Access-Token': adminApiToken,
@@ -124,7 +124,7 @@ serve(async (req) => {
     const missingScopes: string[] = [];
 
     for (const test of scopeTests) {
-      const testResponse = await fetch(`https://${storeDomain}/admin/api/2024-10/graphql.json`, {
+      const testResponse = await fetch(`https://${storeDomain}/admin/api/2025-01/graphql.json`, {
         method: 'POST',
         headers: {
           'X-Shopify-Access-Token': adminApiToken,
@@ -167,7 +167,7 @@ serve(async (req) => {
       shopDomain: shopData.myshopifyDomain,
       email: shopData.email,
       currency: shopData.currencyCode,
-      apiVersion: 'GraphQL 2024-10',
+      apiVersion: 'GraphQL 2025-01',
       message: 'Connection successful'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

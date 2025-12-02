@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     `;
 
     const shopifyResponse = await fetch(
-      `https://${shopifyCredentials.shop}/admin/api/2024-01/graphql.json`,
+      `https://${shopifyCredentials.shop}/admin/api/2025-01/graphql.json`,
       {
         method: 'POST',
         headers: {

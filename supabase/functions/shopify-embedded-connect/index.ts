@@ -125,7 +125,7 @@ serve(async (req) => {
 
     // We need to use the session token to make authenticated GraphQL requests
     // The session token allows us to act on behalf of the app installation
-    const graphqlResponse = await fetch(`https://${shopDomain}/admin/api/2024-10/graphql.json`, {
+    const graphqlResponse = await fetch(`https://${shopDomain}/admin/api/2025-01/graphql.json`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ serve(async (req) => {
       }
     `;
 
-    const shopInfoResponse = await fetch(`https://${shopDomain}/admin/api/2024-10/graphql.json`, {
+    const shopInfoResponse = await fetch(`https://${shopDomain}/admin/api/2025-01/graphql.json`, {
       method: 'POST',
       headers: {
         'X-Shopify-Access-Token': accessToken,
@@ -222,7 +222,7 @@ serve(async (req) => {
     `;
 
     try {
-      const metafieldsResponse = await fetch(`https://${shopDomain}/admin/api/2024-10/graphql.json`, {
+      const metafieldsResponse = await fetch(`https://${shopDomain}/admin/api/2025-01/graphql.json`, {
         method: 'POST',
         headers: {
           'X-Shopify-Access-Token': accessToken,
