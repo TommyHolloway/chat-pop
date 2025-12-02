@@ -83,7 +83,7 @@ serve(async (req) => {
             `;
 
             const recentOrdersResponse = await fetch(
-              `https://${agent.shopify_config.store_domain}/admin/api/2024-10/graphql.json`,
+              `https://${agent.shopify_config.store_domain}/admin/api/2025-01/graphql.json`,
               {
                 method: 'POST',
                 headers: {

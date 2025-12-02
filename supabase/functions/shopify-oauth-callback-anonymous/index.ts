@@ -122,7 +122,7 @@ serve(async (req) => {
       }
     `;
 
-    const shopInfoResponse = await fetch(`https://${shop}/admin/api/2024-01/graphql.json`, {
+    const shopInfoResponse = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
       method: 'POST',
       headers: {
         'X-Shopify-Access-Token': access_token,
@@ -298,7 +298,7 @@ serve(async (req) => {
     `;
 
     try {
-      const metafieldsResponse = await fetch(`https://${shop}/admin/api/2024-10/graphql.json`, {
+      const metafieldsResponse = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
         method: 'POST',
         headers: {
           'X-Shopify-Access-Token': access_token,
